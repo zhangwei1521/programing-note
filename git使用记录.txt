@@ -1,0 +1,68 @@
+
+git添加远程仓库
+git remote add myBase git@172.22.43.132:zhangwwei/askLeave_java.git
+
+推送代码到远程仓库
+<!-- 
+		git push <远程主机名> <本地分支名>:<远程分支名>		--标准写法
+ -->
+git push myBase 1.0.0-dev:1.0.0-dev
+
+//git push myBase 1.0.0-dev
+//直接将本地1.0.0-dev分支推送到myBase的1.0.0-dev分支上，myBase没有1.0.0-dev分支则创建该分支。
+
+git push -u myBase 1.0.0-dev
+//git push 后加参数-u后，以后即可直接用git push 代替git push myBase 1.0.0-dev 
+
+git checkout -- index.html 
+使用暂存区index.html文件（上次commit时的文件）替换工作区文件
+这条命令也可以用来恢复误删除但还没commit的文件
+
+删除命令：
+文件系统中直接删除，再使用:
+git rm test.txt		//删除暂存区的对应文件
+然后commit			//commit后无法通过checkout命令恢复
+
+恢复已经commit的删除：
+git log找到commit删除操作的id号54f6g7....
+git reset --hard id(前面找到的id号54f6g7....的前一次提交id号)
+如果git reset --hard id之后关闭了当前shell，可以使用git reflog查询以前的操作命令，可以查看每次操作后git 的HEAD位置（提交id号）
+
+git rm --cached readme1.txt    删除readme1.txt的跟踪，并保留在本地。
+git rm --f readme1.txt    删除readme1.txt的跟踪，并且删除本地文件。
+
+------
+①git checkout -b 本地分支名x origin/远程分支名x
+使用该方式会在本地新建分支x，并自动切换到该本地分支x。
+例子：git checkout -b 1.0.0-dev origin/1.0.0-dev
+②git fetch origin 远程分支名x:本地分支名x
+使用该方式会在本地新建分支x，但是不会自动切换到该本地分支x，需要手动checkout。
+
+git branch -vv								 
+:查看本地分支和远程分支关系
+①git branch -u origin/master	
+②git branch --set-upstream-to origin/master					 
+:建立当前分支与远程分支的映射关系
+git branch --unset-upstream
+撤销本地分支与远程分支的映射关系
+
+
+git换行符导致的提交整个文件的解决方案
+不同操作系统使用的换行符是不一样的。 
+Unix/Linux使用的是LF，Mac后期也采用了LF，但Windows一直使用CRLF【回车(CR, ASCII 13, \r) 换行(LF, ASCII 10, \n)】作为换行符。
+而git入库的代码采用的是LF格式，它考虑到了跨平台协作的场景，提供了“换行符自动转换”的功能：
+如果在Windows下安装git，在拉取文件时，会自动将LF换行符替换为CRLF；
+在提交时，又会将CRLF转回LF。但是这个转换是有问题的：有时提交时，CRLF转回LF可能会不工作，尤其是文件中出现中文字符后有换行符时。
+1.禁用git的自动换行功能： 
+在本地路径 C:\ Users\ [用户名] \ .gitconfig 下修改git配置[core]，如果没有就直接添加上去：
+[core]
+autocrlf = false
+filemode = false
+safecrlf = true
+或命令：
+git config --global core.autocrlf false
+git config --global core.filemode false
+git config --global core.safecrlf true
+配置IDE开发环境，将它的换行格式指定为(Unix类型)LF: 
+查看config：
+git config --global/--system/--local  --list

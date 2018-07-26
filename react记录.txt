@@ -1,0 +1,398 @@
+原生HTML原生添加ref属性：
+<input ref={(input) => this.input = input} />
+发生了什么？
+当 input 元素在页面上挂载完成以后，React.js 就会调用这个函数，并且把这个挂载以后的 DOM 节点传给这个函数。
+但是，能不用 ref 就不用！
+多余的 DOM 操作其实是代码里面的“噪音”，不利于我们理解和维护。
+其实可以给组件标签也加上 ref：
+<Clock ref={(clock) => this.clock = clock} />
+这样获取到的是这个 Clock 组件在 React.js 内部初始化的实例，通常不会建议使用
+=======================================================================================================
+容器类组件：
+定义外层结构形式，然后可以往里面塞任意的内容：
+class Card extends Component {
+  render () {
+    return (
+      <div className='card'>
+        <div className='card-content'>
+          {this.props.content}
+        </div>
+      </div>
+    )
+  }
+}
+通过属性传入内容，内部用props属性获取
+ReactDOM.render(
+  <Card content={
+    <div>
+      <h2>React.js</h2>
+       <div>开源、免费、专业、简单</div>
+      订阅：<input />
+    </div>
+  } />,
+  document.getElementById('root')
+)
+实际上react支持更直观的写法：
+所有嵌套在组件中的 JSX 结构都可以在组件内部通过 props.children 获取到：
+class Card extends Component {
+  render () {
+    return (
+      <div className='card'>
+        <div className='card-content'>
+          {this.props.children}
+        </div>
+      </div>
+    )
+  }
+}
+使用组件的直接嵌套：
+ReactDOM.render(
+  <Card>
+    <h2>React.js</h2>
+    <div>开源、免费、专业、简单</div>
+    订阅：<input />
+  </Card>,
+  document.getElementById('root')
+)
+React.js 其实是把嵌套的 JSX 元素一个个都放到数组props.children当中
+
+================================================================================================
+表达式插入内容转义和dangerouslySetInnerHTML属性
+在 React.js 当中所有的表达式插入的内容都会被自动转义，任何的 HTML 格式都会被转义掉，
+这是为了避免XSS攻击（插入数据被输入了有害代码）。
+react还是提供了dangerouslySetInnerHTML属性支持插入其他内容不被转义。
+<div
+	dangerouslySetInnerHTML={{__html: this.state.content}} />
+------------------------------
+
+不一样的style属性
+在 React.js 中需要把 CSS 属性变成一个对象再传给元素
+<h1 style={{fontSize: '12px', color: 'red'}}>React.js</h1>
+原来 CSS 属性中带 - 的元素都必须要去掉 - 换成驼峰命名
+
+--------------------------------------------------------------------------------------------------
+跨站脚本攻击(Cross Site Scripting)，简称XSS：
+由于网站程序对用户输入过滤不足，致使攻击者利用输入可以显示在页面上对其他用户造成影响的代码来盗取用户资料、
+利用用户身份进行某种动作或者对访问者进行病毒侵害的一种攻击方式。
+直白点：恶意攻击者往Web页面里插入恶意Script代码，当用户浏览该页之时，
+嵌入其中Web里面的Script代码会被执行，从而达到恶意攻击用户的目的。
+
+--------------------------------
+组件参数验证
+使用组件时传入的属性可能不满足源组件对需要传入的属性的要求，由此可能导致难以定位的错误
+react使用第三方库 prop-types给组件的配置参数加上类型验证
+import PropTypes from 'prop-types'
+增加类属性：
+static propTypes = {
+	comment: PropTypes.object.isRequired
+}
+校验传入的属性必须是对象且不能为空
+react校验支持的属性对象类型：
+	PropTypes.array
+	PropTypes.bool
+	PropTypes.func
+	PropTypes.number
+	PropTypes.object
+	PropTypes.string
+	PropTypes.node
+	PropTypes.element
+
+
+	
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+高阶组件：
+就是一个函数，传给它一个组件，它返回一个新的组件。新的组件使用传入的组件作为子组件。
+高阶组件的作用是用于代码复用，可以把组件之间可复用的代码、逻辑抽离到高阶组件当中。新的组件和传入的组件通过 props 传递信息。
+import React, { Component } from 'react'
+
+export default (WrappedComponent, name) => {
+  class NewComponent extends Component {
+    constructor () {
+      super()
+      this.state = { data: null }
+    }
+
+    componentWillMount () {
+      let data = localStorage.getItem(name)
+      this.setState({ data })
+    }
+
+    render () {
+      return <WrappedComponent data={this.state.data} />
+    }
+  }
+  return NewComponent
+}
+-----------------------------------------------------
+import wrapWithLoadData from './wrapWithLoadData'
+
+class InputWithUserName extends Component {
+  render () {
+    return <input value={this.props.data} />
+  }
+}
+
+InputWithUserName = wrapWithLoadData(InputWithUserName, 'username')
+export default InputWithUserName
+-------------------------------------------------------
+import InputWithUserName from './InputWithUserName'
+
+class Index extends Component {
+  render () {
+    return (
+      <div>
+        用户名：<InputWithUserName />
+      </div>
+    )
+  }
+}
+==================================================================================================
+react context总结：
+一个组件可以通过 getChildContext 方法返回一个对象，这个对象就是子树的 context，提供 context 的组件必须提供 childContextTypes 
+作为 context 的声明和验证。
+
+如果一个组件设置了 context，那么它的子组件都可以直接访问到里面的内容，它就像这个组件为根的子树的全局变量。
+任意深度的子组件都可以通过 contextTypes 来声明你想要的 context 里面的哪些状态，然后可以通过 this.context 访问到那些状态。
+
+context 打破了组件和组件之间通过 props 传递数据的规范，极大地增强了组件之间的耦合性。
+而且，就如全局变量一样，context 里面的数据能被随意接触就能被随意修改，每个组件都能够改 context 里面的内容会导致程序的运行不可预料。
+
+但是这种机制对于前端应用状态管理来说是很有帮助的，因为毕竟很多状态都会在组件之间进行共享，context 会给我们带来很大的方便。
+一些第三方的前端应用状态管理的库（例如 Redux）就是充分地利用了这种机制给我们提供便利的状态管理服务。
+但我们一般不需要手动写 context，也不要用它，只需要用好这些第三方的应用状态管理库就行了。
+
+class Index extends Component {
+  static childContextTypes = {
+    themeColor: PropTypes.string
+  }
+
+  constructor () {
+    super()
+    this.state = { themeColor: 'red' }
+  }
+
+  getChildContext () {
+    return { themeColor: this.state.themeColor }
+  }
+
+  render () {
+    return (
+      <div>
+        <Header />
+        <Main />
+      </div>
+    )
+  }
+}
+class Header extends Component {
+  render () {
+    return (
+    <div>
+      <h2>This is header</h2>
+      <Title />
+    </div>
+    )
+  }
+}
+
+class Main extends Component {
+  render () {
+    return (
+    <div>
+      <h2>This is main</h2>
+      <Content />
+    </div>
+    )
+  }
+}
+
+class Title extends Component {
+  render () {
+    return (
+      <h1>React.js 小书标题</h1>
+    )
+  }
+}
+
+class Content extends Component {
+  render () {
+    return (
+    <div>
+      <h2>React.js 小书内容</h2>
+    </div>
+    )
+  }
+}
+
+ReactDOM.render(
+  <Index />,
+  document.getElementById('root')
+)
+----------------------------------------------------------
+class Title extends Component {
+  static contextTypes = {
+    themeColor: PropTypes.string
+  }
+
+  render () {
+    return (
+      <h1 style={{ color: this.context.themeColor }}>React.js 小书标题</h1>
+    )
+  }
+}
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+组件间共享状态：
+	一个可以被不同模块任意修改共享的数据状态就是魔鬼，一旦数据可以任意修改，所有对共享状态的操作都是不可预料的，
+出现问题的时候 debug 起来就非常困难，这就是老生常谈的尽量避免全局变量。
+	但不同的模块（组件）之间确实需要共享数据，这些模块（组件）还可能需要修改这些共享数据。
+这里的矛盾就是：“模块（组件）之间需要共享数据”，和“数据可能被任意修改导致不可预料的结果”之间的矛盾。
+	我们可以学习 React.js 团队的做法，把事情搞复杂一些，提高数据修改的门槛：模块（组件）之间可以共享数据，也可以改数据。
+但是我们约定，这个数据并不能直接改，你只能执行某些我允许的某些修改，而且你修改的必须大张旗鼓地告诉我。
+定义一个dispatch函数：
+function dispatch (action) {
+  switch (action.type) {
+    case 'UPDATE_TITLE_TEXT':
+      appState.title.text = action.text
+      break
+    case 'UPDATE_TITLE_COLOR':
+      appState.title.color = action.color
+      break
+    default:
+      break
+  }
+}
+	所有对数据的操作必须通过 dispatch 函数。它接受一个参数 action，这个 action 是一个普通的 JavaScript 对象，
+里面必须包含一个 type 字段来声明你到底想干什么。dispatch 在 swtich 里面会识别这个 type 字段，
+能够识别出来的操作才会执行对 appState 的修改。
+dispatch({ type: 'UPDATE_TITLE_TEXT', text: '《React.js 小书》' }) // 修改标题文本
+
+将数据对象state和规定的修改数据的方法dispatch聚合到一起，起个名字叫做 store，然后构建一个函数 createStore，
+用来专门生产这种 state 和 dispatch 的集合
+function createStore (state, stateChanger) {
+  const getState = () => state
+  const dispatch = (action) => stateChanger(state, action)
+  return { getState, dispatch }
+}
+使用观察者模式实现自动重新渲染数据
+function createStore (state, stateChanger) {
+  const listeners = []
+  const subscribe = (listener) => listeners.push(listener)
+  const getState = () => state
+  const dispatch = (action) => {
+    stateChanger(state, action)
+    listeners.forEach((listener) => listener())
+  }
+  return { getState, dispatch, subscribe }
+}
+----------------------------------------------------
+const store = createStore(appState, stateChanger)
+store.subscribe(() => renderApp(store.getState()))
+
+renderApp(store.getState()) // 首次渲染页面
+store.dispatch({ type: 'UPDATE_TITLE_TEXT', text: '《React.js 小书》' }) // 修改标题文本
+store.dispatch({ type: 'UPDATE_TITLE_COLOR', color: 'blue' }) // 修改标题颜色
+// ...后面不管如何 store.dispatch，都不需要重新调用 renderApp
+
+纯函数：
+一个函数的返回结果只依赖于它的参数，并且在执行过程里面没有副作用，我们就把这个函数叫做纯函数
+性能问题：
+每次修改state数据只修改了一部分，但是渲染时却进行了完全重新渲染，解决方案是，
+在每个渲染函数执行渲染操作之前先做个判断，判断传入的新数据和旧的数据是不是相同，相同的话就不渲染了：
+function renderApp (newAppState, oldAppState = {}) { // 防止 oldAppState 没有传入，所以加了默认参数 oldAppState = {}
+  if (newAppState === oldAppState) return // 数据没有变化就不渲染了
+  console.log('render app...')
+  renderTitle(newAppState.title, oldAppState.title)
+  renderContent(newAppState.content, oldAppState.content)
+}
+问题在于直接修改数据，不存在新旧对象的区别
+共享结构对象的概念：
+let newAppState = { // 新建一个 newAppState
+  ...appState, // 复制 appState 里面的内容
+  title: { // 用一个新的对象覆盖原来的 title 属性
+    ...appState.title, // 复制原来 title 对象里面的内容
+    text: '《React.js 小书》' // 覆盖 text 属性
+  }
+}
+修改数据的时候就把修改路径都复制一遍，但是保持其他内容不变，最后的所有对象具有某些不变共享的结构
+既然操作数据的方法每次返回一个新的state数据对象，完全可以将state的初始化也放到该方法中，新的方法就被称为reducer：
+function reducer (state, action) {
+  if (!state) {
+    return {
+      title: {
+        text: 'React.js 小书',
+        color: 'red',
+      },
+      content: {
+        text: 'React.js 小书内容',
+        color: 'blue'
+      }
+    }
+  }
+  switch (action.type) {
+    case 'UPDATE_TITLE_TEXT':
+      return {
+        ...state,
+        title: {
+          ...state.title,
+          text: action.text
+        }
+      }
+    case 'UPDATE_TITLE_COLOR':
+      return {
+        ...state,
+        title: {
+          ...state.title,
+          color: action.color
+        }
+      }
+    default:
+      return state
+  }
+}
+它其实是一个纯函数（Pure Function）
+新的createStore 接受一个叫 reducer 的函数作为参数，这个函数规定是一个纯函数，它接受两个参数，一个是 state，一个是 action。
+
+如果没有传入 state 或者 state 是 null，那么它就会返回一个初始化的数据。如果有传入 state 的话，就会根据 action 来“修改“数据，
+但其实它没有、也规定不能修改 state，而是要通过上节所说的把修改路径的对象都复制一遍，然后产生一个新的对象返回。
+如果它不能识别你的 action，它就不会产生新的数据，而是（在 default 内部）把 state 原封不动地返回。
+
+reducer 是不允许有副作用的。你不能在里面操作 DOM，也不能发 Ajax 请求，更不能直接修改 state，它要做的仅仅是 —— 初始化和计算新的 state。
+---------------------------------
+function createStore (reducer) {
+  let state = null
+  const listeners = []
+  const subscribe = (listener) => listeners.push(listener)
+  const getState = () => state
+  const dispatch = (action) => {
+    state = reducer(state, action)
+    listeners.forEach((listener) => listener())
+  }
+  dispatch({}) // 初始化 state
+  return { getState, dispatch, subscribe }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
