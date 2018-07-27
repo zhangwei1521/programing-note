@@ -1,0 +1,57 @@
+-----------------ORACLE记录-------------------------
+
+查询系统时间：
+	select sysdate from dual;
+字符串转date类型：
+	select to_date('2016/8/19','yyyy/MM/dd') as date1 from dual;
+	select to_date('2016/8/19 01:00:00','yyyy/MM/dd hh24:mi:ss')-to_date('2016/8/18 00:00:00','yyyy/MM/dd hh24:mi:ss') from dual
+		得到的结果：1.04166666666667是以天为单位
+date类型转换字符串：
+	select to_char(sysdate,'yyyy-mm-dd hh24:mi:ss') as dateStr from dual;
+字符串转换timestamp类型：
+	select to_timestamp('2016/8/19','yyyy/MM/dd') as date2 from dual;
+	select to_timestamp('2016-01-01 01:00:00','yyyy-mm-dd hh24:mi:ss')-to_timestamp('2016-01-01 00:00:00','yyyy-mm-dd hh24:mi:ss') from dual;
+		返回结果：+000000000 01:00:00.000000000
+timestamp的反人类设计：
+	select to_timestamp('2016/8/19 12:00:00','yyyy/MM/dd hh24:mi:ss') from dual; 返回结果：19-8月 -16 12.00.00.000000000 下午
+	显示下午12点
+	select to_timestamp('2016/8/19 00:00:00','yyyy/MM/dd hh24:mi:ss') as date1 from dual; 返回结果：19-8月 -16 12.00.00.000000000 上午
+	显示上午12点
+date类型转换为timestamp类型：
+	select cast(sysdate as timestamp) date_to_timestamp from dual; 
+timestamp转换为date类型：
+	select cast(systimestamp as date) from dual;
+timestamp转换为字符串类型：
+	select to_char(systimestamp,'yyyy-mm-dd hh24:mi:ss') as dateStr from dual;
+	
+复制表结构和数据创建新表：
+	create table new_table as select * from old_talbe;
+只复制表结构创建新表：
+	create table new_table as select * from old_table where 1=2;
+		
+复制旧表数据到新表(假设两个表结构一样)：
+	insert into new_table select * from old_table;
+复制旧表数据到新表(假设两个表结构不一样)：
+	insert into new_table(field1,field2,.....) select field1,field2,field3 from old_table;
+清空表数据：
+	truncate table temp_table_xsjfxx;
+	或
+	delete from temp_table_xsjfxx;
+临时表的理解：
+	在 Oracle 中创建一张表，这个表不用于其他的什么功能，主要用于自己的软件系统一些特有功能才用的，
+	用完之后表中的数据就没用了。 Oracle 的临时表创建之后基本不占用表空间，
+	如果没有指定临时表(包括临时表的索引)存放的表空间的时候，插入到临时表的数据是存放在 ORACLE 系统的临时表空间中( TEMP )。	
+会话级的临时表：
+	当前SESSION 不退出的情况下，临时表中的数据就还存在，退出当前SESSION 的时候，临时表中的数据就全部没有了，
+这个时候如果以另外一个SESSION 登陆的时候是看不到另外一个SESSION 中插入到临时表中的数据的。即两个不同的SESSION 所插入的数据是互不相干的。
+当某一个SESSION 退出之后临时表中的数据就被截断(truncate table ，即数据清空)了。会话级的临时表创建方法：
+	Create Global Temporary Table Table_Name  
+	(Col1 Type1,Col2 Type2...) On Commit Preserve Rows ; 
+事务级临时表：
+	是指该临时表与事务相关，当进行事务提交或者事务回滚的时候，临时表中的数据将自行被截断，
+	其他的内容和会话级的临时表的一致(包括退出SESSION 的时候，事务级的临时表也会被自动截断)。事务级临时表的创建方法：
+	Create Global Temporary Table Table_Name  
+	(Col1 Type1,Col2 Type2...) On Commit Delete Rows ; 
+	
+对于session的 必须先truncate ，才能drop
+对于事物的，必须先commit ，才能drop
