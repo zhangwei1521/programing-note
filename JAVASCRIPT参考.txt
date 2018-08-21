@@ -135,7 +135,7 @@ NaN：即Not a Number。非数的指数位全部为1 同时尾数位不全为0�
 非规格化数：指数位全为0 且尾数位不全为0。此时隐含位有效，值为0。另外需要注意，以单精度时为例，真实指数E 并非0-127=-127，
 	而是-126，这样一来就与规格化下最小真实指数E=1-127=-126 达成统一，形成过度。
 
-精度最多只能到53个二进制位，这意味着，绝对值小于等于2的53次方的整数，即-253到253，都可以精确表示。
+精度最多只能到53个二进制位，这意味着，绝对值小于等于2的53次方的整数，都可以精确表示。
 如果一个数大于等于2的1024次方，那么就会发生“正向溢出”，即 JavaScript 无法表示这么大的数，这时就会返回Infinity。
 如果一个数小于等于2的-1075次方（指数部分最小值-1023，再加上小数部分的52位），那么就会发生为“负向溢出”，
 即 JavaScript 无法表示这么小的数，这时会直接返回0。
@@ -143,24 +143,106 @@ NaN：即Not a Number。非数的指数位全部为1 同时尾数位不全为0�
 NaN不等于任何值，包括它本身。
 NaN与任何数（包括它自己）的运算，得到的都是NaN。
 
+十进制：没有前导0的数值。
+八进制：有前缀0o或0O的数值，或者有前导0、且只用到0-7的八个阿拉伯数字的数值。
+十六进制：有前缀0x或0X的数值。
+二进制：有前缀0b或0B的数值。
 
+通常来说，有前导0的数值会被视为八进制，但是如果前导0后面有数字8和9，则该数值被视为十进制。
+0888 // 888
+0777 // 511
+前导0表示八进制，处理时很容易造成混乱。ES5 的严格模式和 ES6，已经废除了这种表示法，但是浏览器为了兼容以前的代码，目前还继续支持这种表示法。
+唯一有区别的场合是，+0或-0当作分母，返回的值是不相等的。
+除以正零得到+Infinity，除以负零得到-Infinity
+需要注意的是，NaN不是独立的数据类型，而是一个特殊数值，它的数据类型依然属于Number，使用typeof运算符可以看得很清楚。
+typeof NaN // 'number'
 
+由于数值正向溢出（overflow）、负向溢出（underflow）和被0除，JavaScript 都不报错，而是返回Infinity，所以单纯的数学运算几乎没有可能抛出错误。但是0除以0会得到NaN。
+0 / 0 // NaN
+0乘以Infinity，返回NaN；0除以Infinity，返回0；Infinity除以0，返回Infinity。
+Infinity加上或乘以Infinity，返回的还是Infinity。、
+nfinity减去或除以Infinity，得到NaN。
+Infinity与undefined计算，返回的都是NaN。
+Infinity与null计算时，null会转成0，等同于与0的计算。
 
+=====================================================
+parseInt
+	parseInt('123') // 123
+	parseInt('   81') // 81
+	parseInt(1.23) // 1
+	// 等同于
+	parseInt('1.23') // 1
+	parseInt('8a') // 8
+	parseInt('12**') // 12
+	parseInt('abc') // NaN
+	parseInt('.3') // NaN
+	parseInt('+1') // 1
+	parseInt('0x10') // 16
+	parseInt('011') // 11
+对于那些会自动转为科学计数法的数字，parseInt会将科学计数法的表示方法视为字符串，因此导致一些奇怪的结果。
+	parseInt(1000000000000000000000.5) // 1
+	// 等同于
+	parseInt('1e+21') // 1
+	parseInt(0.0000008) // 8
+	// 等同于
+	parseInt('8e-7') // 8
+parseInt方法还可以接受第二个参数（2到36之间），表示被解析的值的进制：
+	parseInt('1000', 2) // 8
+	parseInt('1000', 8) // 512
+	parseInt('10', 37) // NaN
+	parseInt('10', 1) // NaN
+	parseInt('10', 0) // 10
+	parseInt('10', null) // 10
+	parseInt('10', undefined) // 10
+	parseInt('1546', 2) // 1
+	parseInt('546', 2) // NaN
+==========================================================
+parseFloat
+	parseFloat('3.14') // 3.14
+	parseFloat('314e-2') // 3.14
+	parseFloat('0.0314E+2') // 3.14
+	parseFloat('3.14more non-digit characters') // 3.14
+	parseFloat('\t\v\r12.34\n ') // 12.34
+	parseFloat([]) // NaN
+	parseFloat('FF2') // NaN
+	parseFloat('') // NaN
+parseFloat和Number比较：
+	parseFloat(true)  // NaN
+	Number(true) // 1
 
+	parseFloat(null) // NaN
+	Number(null) // 0
 
+	parseFloat('') // NaN
+	Number('') // 0
 
-
-
-
-
-
-
-
-
-
-
-
-
+	parseFloat('123.45#') // 123.45
+	Number('123.45#') // NaN
+===========================================================
+isNaN
+	isNaN(NaN) // true
+	isNaN(123) // false
+	isNaN只对数值有效，如果传入其他值，会被先转成数值。比如，传入字符串的时候，字符串会被先转成NaN，所以最后返回true。
+	也就是说，isNaN为true的值，有可能不是NaN，而是一个字符串。
+	isNaN('Hello') // true
+	isNaN({}) // true
+	isNaN(['xzy']) // true
+	对于空数组和只有一个数值成员的数组，isNaN返回false。原因是这些数组能被Number函数转成数值
+	isNaN([]) // false
+	isNaN([123]) // false
+	isNaN(['123']) // false
+判断NaN更可靠的方法是，利用NaN为唯一不等于自身的值的这个特点，进行判断。
+function myIsNaN(value) {
+  return value !== value;
+}
+============================================================
+isFinite方法返回一个布尔值，表示某个值是否为正常的数值
+	isFinite(Infinity) // false
+	isFinite(-Infinity) // false
+	isFinite(NaN) // false
+	isFinite(undefined) // false
+	isFinite(null) // true
+	isFinite(-1) // true
 
 
 
