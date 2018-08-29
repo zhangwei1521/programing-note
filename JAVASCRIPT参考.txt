@@ -128,14 +128,14 @@ IEEE 754标准
 在IEEE-754 标准下，浮点数一共分为：
 
 无穷数：指数位全部为1 同时尾数位全为0。
-规格化数：指数位不全为1 同时尾不全为0。此时浮点数的隐含位有效，其值为1。
+规格化数：指数位不全为1 同时不全为0。此时浮点数的隐含位有效，其值为1。
 0 ：指数位与尾数位都全为0，根据符号位决定正负。
 NaN：即Not a Number。非数的指数位全部为1 同时尾数位不全为0。在此前提下，根据尾数位首位是否为1，NaN 还可以分为SNaN 和QNaN 两类。
 	前者参与运算时将会发生异常。
-非规格化数：指数位全为0 且尾数位不全为0。此时隐含位有效，值为0。另外需要注意，以单精度时为例，真实指数E 并非0-127=-127，
+非规格化数：指数位全为0 且尾数位不全为0。此时隐含位有效，值为0。另外需要注意，以单精度时为例，真实(32位单精度)指数E 并非0-127=-127，
 	而是-126，这样一来就与规格化下最小真实指数E=1-127=-126 达成统一，形成过度。
 
-精度最多只能到53个二进制位，这意味着，绝对值小于等于2的53次方的整数，都可以精确表示。
+64位双精度浮点数，精度最多只能到53个二进制位，这意味着，绝对值小于等于2的53次方的整数，都可以精确表示。
 如果一个数大于等于2的1024次方，那么就会发生“正向溢出”，即 JavaScript 无法表示这么大的数，这时就会返回Infinity。
 如果一个数小于等于2的-1075次方（指数部分最小值-1023，再加上小数部分的52位），那么就会发生为“负向溢出”，
 即 JavaScript 无法表示这么小的数，这时会直接返回0。
@@ -247,7 +247,8 @@ isFinite方法返回一个布尔值，表示某个值是否为正常的数值
 //////////////////////////////////////////////////////////////////
 字符串
 字符串就是零个或多个排在一起的字符，放在单引号或双引号之中。
-字符串默认只能写在一行内，分成多行将会报错。如果长字符串必须分成多行，可以在每一行的尾部使用反斜杠。连接运算符（+）可以连接多个单行字符串，将长字符串拆成多行书写，输出的时候也是单行。
+字符串默认只能写在一行内，分成多行将会报错。如果长字符串必须分成多行，可以在每一行的尾部使用反斜杠。
+连接运算符（+）可以连接多个单行字符串，将长字符串拆成多行书写，输出的时候也是单行。
 反斜杠（\）在字符串内有特殊含义，用来表示一些特殊字符，所以又称为转义符。
 三种码点表示法：
 （1）\HHH
@@ -282,7 +283,7 @@ JavaScript 不仅以 Unicode 储存字符，还允许直接在程序中使用 Un
 JavaScript 对 UTF-16 的支持是不完整的，由于历史原因，只支持两字节的字符，不支持四字节的字符。
 对于码点在U+10000到U+10FFFF之间的字符，JavaScript 总是认为它们是两个字符（length属性为2）。也就是说，JavaScript 返回的字符串长度可能是不正确的。
 
-Base64 编码可以将ASCII 码0到31无法打印出来的符号转成可以打印的字符。使用它的主要目的，不是为了加密，而是为了不出现特殊字符，简化程序的处理。
+Base64 编码可以将无法打印出来的字符（如ASCII 码0到31）转成可以打印的字符。使用它的主要目的，不是为了加密，而是为了不出现特殊字符，简化程序的处理。
 JavaScript 原生提供两个 Base64 相关的方法：
 btoa()：任意值转为 Base64 编码
 atob()：Base64 编码转为原来的值
@@ -488,81 +489,402 @@ eval没有自己的作用域，都在当前作用域内执行，因此可能会�
 	})()	
 为了保证eval的别名不影响代码优化，JavaScript 的标准规定，凡是使用别名执行eval，eval内部一律是全局作用域。
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+数组
+任何类型的数据，都可以放入数组。
+本质上，数组属于一种特殊的对象。typeof运算符会返回数组的类型是object。 
+数组的特殊性体现在，它的键名是按次序排列的一组整数（0，1，2...）。
+	var arr = ['a', 'b', 'c'];
+	Object.keys(arr)
+	// ["0", "1", "2"]
+JavaScript 语言规定，对象的键名一律为字符串，所以，数组的键名其实也是字符串。之所以可以用数值读取，是因为非字符串的键名会被转为字符串。
+数组的健名是数字，所以不能使用点结构访问。数组成员只能用方括号arr[0]表示（方括号是运算符，可以接受数值）。
+JavaScript 使用一个32位整数，保存数组的元素个数。这意味着，数组成员最多只有 4294967295 个
+只要是数组，就一定有length属性。该属性是一个动态的值，等于键名中的最大整数加上1。
+	var arr = ['a', 'b'];
+	arr.length // 2
+	arr[1000] = 'e';
+	arr.length // 1001
+数组的数字键不需要连续，length属性的值总是比最大的那个整数键大1。
+length属性是可写的。如果人为设置一个小于当前成员个数的值，该数组的成员会自动减少到length设置的值。清空数组的一个有效方法，就是将length属性设为0。
+	var arr = [ 'a', 'b', 'c' ];
+	arr.length = 0;
+	arr // []
+如果人为设置length大于当前元素个数，则数组的成员数量会增加到这个值，新增的位置都是空位。
+可以为数组添加属性，但是这不影响length属性的值。
+	var a = [];
+	a['p'] = 'abc';
+	a.length // 0
+	a[2.1] = 'abc';
+	a.length // 0
+如果数组的键名是添加超出范围的数值，该键名会自动转为字符串。arr[-1] = 'a';
+
+in运算符检查某个健名是否存在于对象中，所以也适用于数组。如果数组的某个位置是空位，in运算符返回false。
+for...in不仅会遍历数组所有的数字键，还会遍历非数字键。所以，不推荐使用for...in遍历数组。
+forEach方法：
+	var colors = ['red', 'green', 'blue'];
+	colors.forEach(function (color) {
+	  console.log(color);
+	});
+当数组的某个位置是空元素，即两个逗号之间没有任何值，我们称该数组存在空位（hole）。var a = [1, , 1]; a.length // 3
+数组的空位是可以读取的，返回undefined。使用delete命令删除一个数组成员，会形成空位，并且不会影响length属性。
+数组的某个位置是空位，与某个位置是undefined，是不一样的。
+如果是空位，使用数组的forEach方法、for...in结构、以及Object.keys方法进行遍历，空位都会被跳过。
+如果某个位置是undefined，遍历的时候就不会被跳过。
+
+如果一个对象的所有键名都是正整数或零，并且有length属性，那么这个对象就很像数组，语法上称为“类似数组的对象”（array-like object）。
+典型的“类似数组的对象”是函数的arguments对象，以及大多数 DOM 元素集，还有字符串。
+数组的slice方法可以将“类似数组的对象”变成真正的数组。
+var arr = Array.prototype.slice.call('arrayLike');
+通过call()也可以把数组的方法放到“类似数组的对象”上面。
+	function logArgs() {
+	  Array.prototype.forEach.call(arguments, function (elem, i) {
+		console.log(i + '. ' + elem);
+	  });
+	}
+但是这种方法比直接使用数组原生的forEach要慢，所以最好还是先将“类似数组的对象”转为真正的数组，然后再直接调用数组的forEach方法。
+	var arr = Array.prototype.slice.call('abc');
+	arr.forEach(function (chr) {
+	  console.log(chr);
+	});
+
+===========================================================================================
+运算符
+加法运算符是在运行时决定，到底是执行相加，还是执行连接。也就是说，运算子的不同，导致了不同的语法行为，这种现象称为“重载”（overload）。
+由于加法运算符存在重载，可能执行两种运算
+如果运算子是对象，必须先转成原始类型的值，然后再相加。
+对象转成原始类型的值，规则如下：
+首先，自动调用对象的valueOf方法。
+	var obj = { p: 1 };
+	obj.valueOf() // { p: 1 }
+一般来说，对象的valueOf方法总是返回对象自身，这时再自动调用对象的toString方法，将其转为字符串。
+对象的toString方法默认返回[object Object]。可以自己定义valueOf方法或toString方法，得到想要的结果。
+这里有一个特例，如果运算子是一个Date对象的实例，那么会优先执行toString方法。
++数值运算符
+作用在于可以将任何值转为数值（与Number函数的作用相同）。
+指数运算符（**）
+完成指数运算，前一个运算子是底数，后一个运算子是指数。
+
+相等比较和非相等比较。两者的规则是不一样的。
+对于非相等的比较，算法是先看两个运算子是否都是字符串，如果是的，就按照字典顺序比较（实际上是比较 Unicode 码点）；
+否则，将两个运算子都转成数值，再比较数值的大小。
+任何值（包括NaN本身）与NaN比较，返回的都是false。
+如果运算子是对象，会转为原始类型的值，再进行比较。
+两个复合类型（对象、数组、函数）的数据比较时，不是比较它们的值是否相等，而是比较它们是否指向同一个地址。
+undefined和null与自身严格相等。
+建议不要使用相等运算符（==），最好只使用严格相等运算符（===）。
+0 == ''             // true
+0 == '0'            // true
+2 == true           // false
+2 == false          // false
+
+对于非布尔值，取反运算符会将其转为布尔值。可以这样记忆，以下六个值取反后为true，其他值都为false。
+!undefined // true
+!null // true
+!0 // true
+!false //true
+!NaN // true
+!"" // true
+
+!!x
+// 等同于
+Boolean(x)
+且运算符（&&）往往用于多个表达式的求值:
+如果第一个运算子的布尔值为true，则返回第二个运算子的值（注意是值，不是布尔值）；如果第一个运算子的布尔值为false，则直接返回第一个运算子的值，且不再对第二个运算子求值。
+	't' && 'f' // "f"
+	'' && 'f' // ""
+短路机制：	
+	if (i) {
+	  doSomething();
+	}
+	// 等价于
+	i && doSomething();
+&&运算符可以多个连用，这时返回第一个布尔值为false的表达式的值。
+	true && 'foo' && '' && 4 && 'foo' && true
+	// ''
+或运算符（||）
+如果第一个运算子的布尔值为true，则返回第一个运算子的值，且不再对第二个运算子求值；如果第一个运算子的布尔值为false，则返回第二个运算子的值。
+	't' || 'f' // "t"
+	'' || 'f' // "f"
+||或运算符常用于为一个变量设置默认值。
+saveText(this.text || '')
+三元运算符：
+	't' ? 'hello' : 'world' // "hello"
+	0 ? 'hello' : 'world' // "world"
+void运算符的作用是执行一个表达式，然后不返回任何值，或者说返回undefined。
+逗号运算符用于对两个表达式求值，并返回后一个表达式的值。
+===============================================================================================================
+数据类型的转换
+JS中虽然变量的数据类型是不确定的，但是各种运算符对数据类型是有要求的。如果运算符发现，运算子的类型与预期不符，就会自动转换类型。
+强制转换主要指使用Number()、String()和Boolean()三个函数，手动将各种类型的值，分别转换成数字、字符串或者布尔值。
+Number()转换原始类型：
+Number(324) // 324
+Number('324') // 324
+Number('324abc') // NaN
+Number('') // 0
+Number(true) // 1
+Number(false) // 0
+Number(undefined) // NaN
+Number(null) // 0
+Number函数和parseInt一样也会自动过滤一个字符串前导和后缀的空格。Number('\t\v\r12.34\n') // 12.34
+Number()转换对象：
+Number方法的参数是对象时，将返回NaN，除非是包含单个值的数组。Number([]) // 0
+转换规则：
+第一步，调用对象自身的valueOf方法。如果返回原始类型的值，则直接对该值使用Number函数，不再进行后续步骤。
+第二步，如果valueOf方法返回的还是对象，则改为调用对象自身的toString方法。
+	如果toString方法返回原始类型的值，则对该值使用Number函数，不再进行后续步骤。
+第三步，如果toString方法返回的是对象，就报错。
+默认情况下，对象的valueOf方法返回对象本身，所以一般总是会调用toString方法，
+而toString方法返回对象的类型字符串（比如[object Object]）。所以，Number({}) // NaN
+如果toString方法返回的不是原始类型的值，结果就会报错。
+
+String() 可以将任意类型的值转化成字符串：
+转换原始类型：
+String(123) // "123"
+String('abc') // "abc"
+String(true) // "true"
+String(undefined) // "undefined"
+String(null) // "null"
+转换对象：
+如果是对象，返回一个类型字符串；如果是数组，返回该数组的字符串形式。
+	String({a: 1}) // "[object Object]"
+	String([1, 2, 3]) // "1,2,3"
+	String([]) // ""
+String方法背后的转换规则，与Number方法基本相同，只是互换了valueOf方法和toString方法的执行顺序。
+先调用对象自身的toString方法。如果返回原始类型的值，则对该值使用String函数，不再进行以下步骤。
+如果toString方法返回的是对象，再调用原对象的valueOf方法。如果valueOf方法返回原始类型的值，则对该值使用String函数，不再进行以下步骤。
+如果valueOf方法返回的是对象，就报错。
+String({a: 1})
+// "[object Object]"
+// 等同于
+String({a: 1}.toString())
+// "[object Object]"
+
+Boolean函数可以将任意类型的值转为布尔值。
+Boolean(undefined) // false
+Boolean(null) // false
+Boolean(0) // false
+Boolean(NaN) // false
+Boolean('') // false
+所有对象（包括空对象）的转换结果都是true，甚至连false对应的布尔对象new Boolean(false)也是true，// new Boolean(new Boolean(false))//true
+
+自动转换数据类型的三种场景：
+第一种情况，不同类型的数据互相运算。123 + 'abc' // "123abc"
+第二种情况，对非布尔值类型的数据求布尔值。
+	if ('abc') {
+	  console.log('hello')
+	}  // "hello"
+第三种情况，对非数值类型的值使用一元运算符（即+和-）。
+	+ {foo: 'bar'} // NaN
+	- [1, 2, 3] // NaN
+自动转换的规则是这样的：预期什么类型的值，就调用该类型的转换函数。
+比如，某个位置预期为字符串，就调用String函数进行转换。如果该位置即可以是字符串，也可能是数值，那么默认转为数值。
+通常不建议使用自动转换。
+
+-----------------------------------------------------------------------------------------------------------
+错误处理
+JavaScript 解析或运行时，一旦发生错误，引擎就会抛出一个错误对象。JavaScript 原生提供Error构造函数，所有抛出的错误都是这个构造函数的实例。
+	var err = new Error('出错了');
+	err.message // "出错了"
+JavaScript 语言标准只提到，Error实例对象必须有message属性，表示出错时的提示信息，没有提到其他属性。
+大多数 JavaScript 引擎，对Error实例还提供name和stack属性，分别表示错误的名称和错误的堆栈，但它们是非标准的，不是每种实现都有。
+存在Error的6个派生对象：
+1、SyntaxError 对象；
+	// 变量名错误
+	var 1a;
+	// Uncaught SyntaxError: Invalid or unexpected token
+2、ReferenceError 对象 
+	ReferenceError对象是引用一个不存在的变量时发生的错误。另一种触发场景是，将一个值分配给无法分配的对象，比如对函数的运行结果或者this赋值。
+	// 使用一个不存在的变量
+	unknownVariable
+	// Uncaught ReferenceError: unknownVariable is not defined
+3、RangeError 对象 
+	RangeError对象是一个值超出有效范围时发生的错误。
+4、TypeError 对象
+	TypeError对象是变量或参数不是预期类型时发生的错误。比如，对字符串、布尔值、数值等原始类型的值使用new命令
+5、URIError 对象
+	URI 相关函数的参数不正确时抛出的错误，主要涉及encodeURI()、decodeURI()等
+6、EvalError 对象
+	eval函数没有被正确执行时，会抛出EvalError错误
+自定义错误
+	function UserError(message) {
+	  this.message = message || '默认信息';
+	  this.name = 'UserError';
+	}
+
+	UserError.prototype = new Error();
+	UserError.prototype.constructor = UserError;
+throw语句的作用是手动中断程序执行，抛出一个错误。实际上，throw可以抛出任何类型的值。也就是说，它的参数可以是任何值。
+JavaScript 提供了try...catch结构，允许对错误进行处理，选择是否往下执行。
+try...catch结构允许在最后添加一个finally代码块，表示不管是否出现错误，都必需在最后运行的语句。
+	function cleansUp() {
+	  try {
+		throw new Error('出错了……');
+		console.log('此行不会执行');
+	  } finally {
+		console.log('完成清理工作');
+	  }
+	}
+、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、
+Object 对象
+JavaScript 的所有其他对象都继承自Object对象，即那些对象都是Object的实例。
+Object对象的原生方法分成两类：Object本身的方法与Object的实例方法。
+所谓”本身的方法“就是直接定义在Object对象的方法。
+所谓实例方法就是定义在Object原型对象Object.prototype上的方法。它可以被Object实例直接使用。
+Object本身是一个函数，可以当作工具方法使用，将任意值转为对象。
+如果参数为空（或者为undefined和null），Object()返回一个空对象。
+var obj = Object(undefined);
+var obj = Object(null);
+obj instanceof Object // true
+如果参数是原始类型的值，Object方法将其转为对应的包装对象的实例
+如果Object方法的参数是一个对象，它总是返回该对象，即不用转换。
+Object作为构造函数
+用法与工具方法很相似，几乎一模一样。使用时，可以接受一个参数，
+如果该参数是一个对象，则直接返回这个对象；如果是一个原始类型的值，则返回该值对应的包装对象
+Object本身的方法：
+	Object.keys()，Object.getOwnPropertyNames()遍历对象的属性。
+	Object.keys方法只返回可枚举的属性，Object.getOwnPropertyNames方法还返回不可枚举的属性名。
+	Object.getPrototypeOf()：获取对象的Prototype对象。
+Object实例对象的方法：
+	Object.prototype.valueOf()：返回当前对象对应的值。
+	Object.prototype.toString()：返回当前对象对应的字符串形式。
+	Object.prototype.toLocaleString()：返回当前对象对应的本地字符串形式。
+	Object.prototype.hasOwnProperty()：判断某个属性是否为当前对象自身的属性，还是继承自原型对象的属性。方法接受一个字符串作为参数，返回一个布尔值，表示该实例对象自身是否具有该属性。
+	Object.prototype.isPrototypeOf()：判断当前对象是否为另一个对象的原型。
+	Object.prototype.propertyIsEnumerable()：判断某个属性是否可枚举。
+Object.prototype.toString可以看出一个值到底是什么类型：
+	Object.prototype.toString.call(2) // "[object Number]"
+	Object.prototype.toString.call('') // "[object String]"
+	Object.prototype.toString.call(true) // "[object Boolean]"
+	Object.prototype.toString.call(undefined) // "[object Undefined]"
+	Object.prototype.toString.call(null) // "[object Null]"
+	Object.prototype.toString.call(Math) // "[object Math]"
+	Object.prototype.toString.call({}) // "[object Object]"
+	Object.prototype.toString.call([]) // "[object Array]"
+===========================================================================================================
+属性描述对象
+作为JavaScript提供的一种内部数据结构，属性描述对象用来描述对象的属性，控制对象属性的行为，比如该属性是否可写、可遍历等等。
+每个属性都有自己对应的属性描述对象，保存该属性的一些元信息。
+属性描述对象提供6个元属性：
+{
+  value: 123,
+  writable: false,
+  enumerable: true,
+  configurable: false,
+  get: undefined,
+  set: undefined
+}
+Object.getOwnPropertyDescriptor方法可以获取属性描述对象。它接受两个参数，第一个参数是一个对象，第二个参数是对象的某个属性名。
+	var obj = { p: 'a' };
+	Object.getOwnPropertyDescriptor(obj, 'p')
+	// Object { value: "a",
+	//   writable: true,
+	//   enumerable: true,
+	//   configurable: true
+	// }
+Object.getOwnPropertyDescriptor方法只能用于对象自身的属性，不能用于继承的属性。
+	Object.getOwnPropertyDescriptor(obj, 'toString')
+	// undefined
+Object.getOwnPropertyNames方法返回一个数组，成员是参数对象自身的全部属性的属性名，不管该属性是否可遍历。
+	var obj = Object.defineProperties({}, {
+	  p1: { value: 1, enumerable: true },
+	  p2: { value: 2, enumerable: false }
+	});
+	Object.getOwnPropertyNames(obj);
+	// ["p1","p2"]
+Object.keys只返回对象自身的可遍历属性的全部属性名。
+
+Object.defineProperty方法允许通过属性描述对象，定义或修改一个属性，然后返回修改后的对象，它接受三个参数，
+	第一个是对象，第二个是要定义或修改的属性名，第三个是属性描述对象。
+	var obj = Object.defineProperty({}, 'p', {
+	  value: 123,
+	  writable: false,
+	  enumerable: true,
+	  configurable: false
+	});
+var obj = {};这种普通方式创建的对象的属性的属性描述对象的默认值如下：value、get和set都是undefined，writable、enumerable和configurable都是true;
+Object.defineProperty方法的第三个参数即属性描述对象writable、enumerable、configurable默认值都是false。
+可以使用Object.defineProperties方法一次性定义或修改多个属性。
+	var obj = Object.defineProperties({}, {
+	  p1: { value: 123, enumerable: true },
+	  p2: { value: 'abc', enumerable: true },
+	  p3: { get: function () { return this.p1 + this.p2 },
+		enumerable:true,
+		configurable:true
+	  }
+	});
+一旦定义了取值函数get（或存值函数set），就不能将writable属性设为true，或者同时定义value属性，否则会报错。
+
+Object.prototype.propertyIsEnumerable() 
+实例对象的propertyIsEnumerable方法返回一个布尔值，用来判断某个属性是否可遍历。
+	var obj = {};
+	obj.p = 123;
+
+	obj.propertyIsEnumerable('p') // true
+	obj.propertyIsEnumerable('toString') // false
+属性描述对象的属性称为元属性：
+value、writable、enumerable、configurable、set、get
+
+正常模式下，对writable为false的属性赋值不会报错，只会默默失败。但是，严格模式下会报错，即使对a属性重新赋予一个同样的值。
+如果原型对象的某个属性的writable为false，那么子对象将无法自定义这个属性。
+	var proto = Object.defineProperty({}, 'foo', {
+	  value: 'a',
+	  writable: false
+	});
+
+	var obj = Object.create(proto);
+
+	obj.foo = 'b';
+	obj.foo // 'a'
+in运算符不管某个属性是对象自身的还是继承的，都会返回true。
+如果一个属性的enumerable为false，下面三个操作不会取到该属性：
+for..in循环
+Object.keys方法
+JSON.stringify方法
+
+configurable和writable都为false，则value不允许修改；
+configurable为false，writable不允许从false改为true，enumerable和configurable都不能再被修改。
+configurable决定了目标属性是否可以被删除（delete）。
+
+set和get是函数：
+	var obj = Object.defineProperty({}, 'p', {
+	  get: function () {
+		return 'getter';
+	  },
+	  set: function (value) {
+		console.log('setter: ' + value);
+	  }
+	});
+另一种写法：
+	var obj = {
+	  get p() {
+		return 'getter';
+	  },
+	  set p(value) {
+		console.log('setter: ' + value);
+	  }
+	};
+	obj.p();	//"getter"
+get和set使得属性可以作为函数调用，被称为存取器，往往用于属性的值依赖对象内部数据的场合。
+
+Object.preventExtensions方法可以使得一个对象无法再添加新的属性。
+	var obj = new Object();
+	Object.preventExtensions(obj);
+
+	Object.defineProperty(obj, 'p', {
+	  value: 'hello'
+	});
+	// TypeError: Cannot define property:p, object is not extensible.
+
+	obj.p = 1;
+	obj.p // undefined
+Object.isExtensible方法用于检查一个对象是否使用了Object.preventExtensions方法。
+Object.seal方法使得一个对象既无法添加新属性，也无法删除旧属性。Object.seal只是禁止新增或删除属性，并不影响修改某个属性的值。
+Object.isSealed方法用于检查一个对象是否使用了Object.seal方法。
+Object.freeze方法可以使得一个对象无法添加新属性、无法删除旧属性、也无法改变属性的值，使得这个对象实际上变成了常量。
+Object.isFrozen方法用于检查一个对象是否使用了Object.freeze方法。
+上面的三个方法锁定对象的可写性有一个漏洞：可以通过改变原型对象，来为对象增加属性。
+另外一个局限是，如果属性值是对象，上面这些方法只能冻结属性所在的对象，而不能冻结属性指向的对象。
 
 
 
