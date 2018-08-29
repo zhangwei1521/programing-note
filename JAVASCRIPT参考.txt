@@ -549,7 +549,7 @@ var arr = Array.prototype.slice.call('arrayLike');
 	});
 
 ===========================================================================================
-+运算符
+运算符
 加法运算符是在运行时决定，到底是执行相加，还是执行连接。也就是说，运算子的不同，导致了不同的语法行为，这种现象称为“重载”（overload）。
 由于加法运算符存在重载，可能执行两种运算
 如果运算子是对象，必须先转成原始类型的值，然后再相加。
@@ -628,7 +628,7 @@ Number(undefined) // NaN
 Number(null) // 0
 Number函数和parseInt一样也会自动过滤一个字符串前导和后缀的空格。Number('\t\v\r12.34\n') // 12.34
 Number()转换对象：
-Number方法的参数是对象时，将返回NaN，除非是包含单个数值的数组。Number([]) // 0
+Number方法的参数是对象时，将返回NaN，除非是包含单个值的数组。Number([]) // 0
 转换规则：
 第一步，调用对象自身的valueOf方法。如果返回原始类型的值，则直接对该值使用Number函数，不再进行后续步骤。
 第二步，如果valueOf方法返回的还是对象，则改为调用对象自身的toString方法。
@@ -666,7 +666,7 @@ Boolean(null) // false
 Boolean(0) // false
 Boolean(NaN) // false
 Boolean('') // false
-所有对象（包括空对象）的转换结果都是true，甚至连false对应的布尔对象new Boolean(false)也是true
+所有对象（包括空对象）的转换结果都是true，甚至连false对应的布尔对象new Boolean(false)也是true，// new Boolean(new Boolean(false))//true
 
 自动转换数据类型的三种场景：
 第一种情况，不同类型的数据互相运算。123 + 'abc' // "123abc"
@@ -725,11 +725,166 @@ try...catch结构允许在最后添加一个finally代码块，表示不管是�
 		console.log('完成清理工作');
 	  }
 	}
+、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、
+Object 对象
+JavaScript 的所有其他对象都继承自Object对象，即那些对象都是Object的实例。
+Object对象的原生方法分成两类：Object本身的方法与Object的实例方法。
+所谓”本身的方法“就是直接定义在Object对象的方法。
+所谓实例方法就是定义在Object原型对象Object.prototype上的方法。它可以被Object实例直接使用。
+Object本身是一个函数，可以当作工具方法使用，将任意值转为对象。
+如果参数为空（或者为undefined和null），Object()返回一个空对象。
+var obj = Object(undefined);
+var obj = Object(null);
+obj instanceof Object // true
+如果参数是原始类型的值，Object方法将其转为对应的包装对象的实例
+如果Object方法的参数是一个对象，它总是返回该对象，即不用转换。
+Object作为构造函数
+用法与工具方法很相似，几乎一模一样。使用时，可以接受一个参数，
+如果该参数是一个对象，则直接返回这个对象；如果是一个原始类型的值，则返回该值对应的包装对象
+Object本身的方法：
+	Object.keys()，Object.getOwnPropertyNames()遍历对象的属性。
+	Object.keys方法只返回可枚举的属性，Object.getOwnPropertyNames方法还返回不可枚举的属性名。
+	Object.getPrototypeOf()：获取对象的Prototype对象。
+Object实例对象的方法：
+	Object.prototype.valueOf()：返回当前对象对应的值。
+	Object.prototype.toString()：返回当前对象对应的字符串形式。
+	Object.prototype.toLocaleString()：返回当前对象对应的本地字符串形式。
+	Object.prototype.hasOwnProperty()：判断某个属性是否为当前对象自身的属性，还是继承自原型对象的属性。方法接受一个字符串作为参数，返回一个布尔值，表示该实例对象自身是否具有该属性。
+	Object.prototype.isPrototypeOf()：判断当前对象是否为另一个对象的原型。
+	Object.prototype.propertyIsEnumerable()：判断某个属性是否可枚举。
+Object.prototype.toString可以看出一个值到底是什么类型：
+	Object.prototype.toString.call(2) // "[object Number]"
+	Object.prototype.toString.call('') // "[object String]"
+	Object.prototype.toString.call(true) // "[object Boolean]"
+	Object.prototype.toString.call(undefined) // "[object Undefined]"
+	Object.prototype.toString.call(null) // "[object Null]"
+	Object.prototype.toString.call(Math) // "[object Math]"
+	Object.prototype.toString.call({}) // "[object Object]"
+	Object.prototype.toString.call([]) // "[object Array]"
+===========================================================================================================
+属性描述对象
+作为JavaScript提供的一种内部数据结构，属性描述对象用来描述对象的属性，控制对象属性的行为，比如该属性是否可写、可遍历等等。
+每个属性都有自己对应的属性描述对象，保存该属性的一些元信息。
+属性描述对象提供6个元属性：
+{
+  value: 123,
+  writable: false,
+  enumerable: true,
+  configurable: false,
+  get: undefined,
+  set: undefined
+}
+Object.getOwnPropertyDescriptor方法可以获取属性描述对象。它接受两个参数，第一个参数是一个对象，第二个参数是对象的某个属性名。
+	var obj = { p: 'a' };
+	Object.getOwnPropertyDescriptor(obj, 'p')
+	// Object { value: "a",
+	//   writable: true,
+	//   enumerable: true,
+	//   configurable: true
+	// }
+Object.getOwnPropertyDescriptor方法只能用于对象自身的属性，不能用于继承的属性。
+	Object.getOwnPropertyDescriptor(obj, 'toString')
+	// undefined
+Object.getOwnPropertyNames方法返回一个数组，成员是参数对象自身的全部属性的属性名，不管该属性是否可遍历。
+	var obj = Object.defineProperties({}, {
+	  p1: { value: 1, enumerable: true },
+	  p2: { value: 2, enumerable: false }
+	});
+	Object.getOwnPropertyNames(obj);
+	// ["p1","p2"]
+Object.keys只返回对象自身的可遍历属性的全部属性名。
 
+Object.defineProperty方法允许通过属性描述对象，定义或修改一个属性，然后返回修改后的对象，它接受三个参数，
+	第一个是对象，第二个是要定义或修改的属性名，第三个是属性描述对象。
+	var obj = Object.defineProperty({}, 'p', {
+	  value: 123,
+	  writable: false,
+	  enumerable: true,
+	  configurable: false
+	});
+var obj = {};这种普通方式创建的对象的属性的属性描述对象的默认值如下：value、get和set都是undefined，writable、enumerable和configurable都是true;
+Object.defineProperty方法的第三个参数即属性描述对象writable、enumerable、configurable默认值都是false。
+可以使用Object.defineProperties方法一次性定义或修改多个属性。
+	var obj = Object.defineProperties({}, {
+	  p1: { value: 123, enumerable: true },
+	  p2: { value: 'abc', enumerable: true },
+	  p3: { get: function () { return this.p1 + this.p2 },
+		enumerable:true,
+		configurable:true
+	  }
+	});
+一旦定义了取值函数get（或存值函数set），就不能将writable属性设为true，或者同时定义value属性，否则会报错。
 
+Object.prototype.propertyIsEnumerable() 
+实例对象的propertyIsEnumerable方法返回一个布尔值，用来判断某个属性是否可遍历。
+	var obj = {};
+	obj.p = 123;
 
+	obj.propertyIsEnumerable('p') // true
+	obj.propertyIsEnumerable('toString') // false
+属性描述对象的属性称为元属性：
+value、writable、enumerable、configurable、set、get
 
+正常模式下，对writable为false的属性赋值不会报错，只会默默失败。但是，严格模式下会报错，即使对a属性重新赋予一个同样的值。
+如果原型对象的某个属性的writable为false，那么子对象将无法自定义这个属性。
+	var proto = Object.defineProperty({}, 'foo', {
+	  value: 'a',
+	  writable: false
+	});
 
+	var obj = Object.create(proto);
+
+	obj.foo = 'b';
+	obj.foo // 'a'
+in运算符不管某个属性是对象自身的还是继承的，都会返回true。
+如果一个属性的enumerable为false，下面三个操作不会取到该属性：
+for..in循环
+Object.keys方法
+JSON.stringify方法
+
+configurable和writable都为false，则value不允许修改；
+configurable为false，writable不允许从false改为true，enumerable和configurable都不能再被修改。
+configurable决定了目标属性是否可以被删除（delete）。
+
+set和get是函数：
+	var obj = Object.defineProperty({}, 'p', {
+	  get: function () {
+		return 'getter';
+	  },
+	  set: function (value) {
+		console.log('setter: ' + value);
+	  }
+	});
+另一种写法：
+	var obj = {
+	  get p() {
+		return 'getter';
+	  },
+	  set p(value) {
+		console.log('setter: ' + value);
+	  }
+	};
+	obj.p();	//"getter"
+get和set使得属性可以作为函数调用，被称为存取器，往往用于属性的值依赖对象内部数据的场合。
+
+Object.preventExtensions方法可以使得一个对象无法再添加新的属性。
+	var obj = new Object();
+	Object.preventExtensions(obj);
+
+	Object.defineProperty(obj, 'p', {
+	  value: 'hello'
+	});
+	// TypeError: Cannot define property:p, object is not extensible.
+
+	obj.p = 1;
+	obj.p // undefined
+Object.isExtensible方法用于检查一个对象是否使用了Object.preventExtensions方法。
+Object.seal方法使得一个对象既无法添加新属性，也无法删除旧属性。Object.seal只是禁止新增或删除属性，并不影响修改某个属性的值。
+Object.isSealed方法用于检查一个对象是否使用了Object.seal方法。
+Object.freeze方法可以使得一个对象无法添加新属性、无法删除旧属性、也无法改变属性的值，使得这个对象实际上变成了常量。
+Object.isFrozen方法用于检查一个对象是否使用了Object.freeze方法。
+上面的三个方法锁定对象的可写性有一个漏洞：可以通过改变原型对象，来为对象增加属性。
+另外一个局限是，如果属性值是对象，上面这些方法只能冻结属性所在的对象，而不能冻结属性指向的对象。
 
 
 
