@@ -885,6 +885,444 @@ Object.freeze方法可以使得一个对象无法添加新属性、无法删除�
 Object.isFrozen方法用于检查一个对象是否使用了Object.freeze方法。
 上面的三个方法锁定对象的可写性有一个漏洞：可以通过改变原型对象，来为对象增加属性。
 另外一个局限是，如果属性值是对象，上面这些方法只能冻结属性所在的对象，而不能冻结属性指向的对象。
+===================================================================================================
+Array
+	var arr = new Array(2);
+	arr.length // 2
+	arr // [ empty x 2 ]
+	arr[0] // undefined
+	0 in arr //false
+Array作为构造函数，行为很不一致。因此，不建议使用它生成新数组，直接使用数组字面量是更好的做法。
+如果参数是一个正整数，返回数组的成员都是空位。虽然读取的时候返回undefined，但实际上该位置没有任何值。虽然可以取到length属性，但是取不到键名。
+静态方法Array.isArray方法可以识别数组。
+数组的valueOf方法返回数组本身。	var arr = [1, 2, 3];  arr.valueOf() // [1, 2, 3]
+数组的toString方法返回数组的字符串形式。var arr = [1, 2, 3];	arr.toString() // "1,2,3"
+push和pop方法使得数组可以作为栈使用，对空数组使用pop方法，不会报错，而是返回undefined。
+shift方法用于删除数组的第一个元素，并返回该元素。shift：移位；
+push和shift结合使用，就构成了“先进先出”的队列结构（queue）。
+unshift方法可以接受多个参数，这些参数都会添加到目标数组头部。
+	var arr = [ 'c', 'd' ];
+	arr.unshift('a', 'b') // 4
+	arr // [ 'a', 'b', 'c', 'd' ]
+join方法以指定参数作为分隔符，将所有数组成员连接为一个字符串返回。如果不提供参数，默认用逗号分隔。如果数组成员是undefined或null或空位，会被转成空字符串。
+var a = [1, 2, 3, 4];	a.join(' | ') // "1 | 2 | 3 | 4"
+通过call方法，这个方法也可以用于字符串或类似数组的对象。
+	var obj = { 0: 'a', 1: 'b', length: 2 };
+	Array.prototype.join.call(obj, '-')
+	// 'a-b'
+concat方法用于多个数组的合并。它将新数组的成员，添加到原数组成员的后部，然后返回一个新数组，原数组不变。
+	['hello'].concat(['world'], ['!'])
+	// ["hello", "world", "!"]
+	[1, 2, 3].concat(4, 5, 6)
+	// [1, 2, 3, 4, 5, 6]
+如果数组成员包括对象，concat方法返回当前数组的一个浅拷贝。
+reverse方法用于颠倒排列数组元素，返回改变后的数组。
+slice方法用于提取目标数组的一部分，返回一个新数组，原数组不变。slice:切片
+slice方法的一个重要应用，是将类似数组的对象转为真正的数组。
+	Array.prototype.slice.call({ 0: 'a', 1: 'b', length: 2 })
+	// ['a', 'b']
+splice方法用于删除原数组的一部分成员，并可以在删除的位置添加新的数组成员，返回值是被删除的元素。注意，该方法会改变原数组。splice:铰接
+sort方法对数组成员进行排序，默认是按照字典顺序排序。排序后，原数组将被改变。
+	['d', 'c', 'b', 'a'].sort()
+	// ['a', 'b', 'c', 'd']
+传入函数自定义排序规则：
+	[10111, 1101, 111].sort(function (a, b) {
+	  return a - b;
+	})
+	// [111, 1101, 10111]
+map方法将数组的所有成员依次传入参数函数，然后把每一次的执行结果组成一个新数组返回。
+	[1, 2, 3].map(function(elem, index, arr) {
+	  return elem * index;
+	});
+	// [0, 2, 6]
+map方法还可以接受第二个参数，用来绑定回调函数内部的this变量
+	var arr = ['a', 'b', 'c'];
+
+	[1, 2].map(function (e) {
+	  return this[e];
+	}, arr)
+	// ['b', 'c']
+如果数组有空位，map方法的回调函数在这个位置不会执行，会跳过数组的空位。
+forEach方法不返回值，只用来操作数据。
+	function log(element, index, array) {
+	  console.log('[' + index + '] = ' + element);
+	}
+
+	[2, 5, 9].forEach(log);
+filter方法用于过滤数组成员，满足条件的成员组成一个新数组返回。
+	[1, 2, 3, 4, 5].filter(function (elem) {
+	  return (elem > 3);
+	})
+	// [4, 5]
+some方法是只要一个成员的返回值是true，则整个some方法的返回值就是true，否则返回false。
+	var arr = [1, 2, 3, 4, 5];
+	arr.some(function (elem, index, arr) {
+	  return elem >= 3;
+	});
+	// true
+	arr.every(function (elem, index, arr) {
+	  return elem >= 3;
+	});
+	// false
+注意，对于空数组，some方法返回false，every方法返回true，回调函数都不会执行。
+
+reduce方法和reduceRight方法依次处理数组的每个成员，最终累计为一个值。
+	[1, 2, 3, 4, 5].reduce(function (a, b) {
+	  console.log(a, b);
+	  return a + b;
+	})
+	// 1 2
+	// 3 3
+	// 6 4
+	// 10 5
+	//最后结果：15
+
+	[1, 2, 3, 4, 5].reduce(function (a, b) {
+	  return a + b;
+	}, 10);
+	// 25
+
+	function substract(prev, cur) {
+	  return prev - cur;
+	}
+	[3, 2, 1].reduce(substract) // 0
+	[3, 2, 1].reduceRight(substract) // -4
+indexOf和lastIndexOf:	
+var a = ['a', 'b', 'c'];
+a.indexOf('b') // 1
+['a', 'b', 'c'].indexOf('a', 1) // -1
+ [2, 5, 9, 2].lastIndexOf(2) // 3
+链式使用：
+	var users = [
+	  {name: 'tom', email: 'tom@example.com'},
+	  {name: 'peter', email: 'peter@example.com'}
+	];
+
+	users
+	.map(function (user) {
+	  return user.email;
+	})
+	.filter(function (email) {
+	  return /^t/.test(email);
+	})
+	.forEach(console.log);
+	// "tom@example.com"
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+包装对象
+Number、String、Boolean
+这三个对象作为构造函数使用（带有new）时，可以将原始类型的值转为对象；
+作为普通函数使用时（不带有new），可以将任意类型的值，转为原始类型的值。
+原始类型的值，可以自动当作包装对象调用，即调用包装对象的属性和方法。这时，JavaScript 引擎会自动将原始类型的值转为包装对象实例，在使用后立刻销毁实例。
+'abc'.length // 3
+自动转换生成的包装对象是只读的，无法修改。所以，字符串无法添加新属性。
+var s = 'Hello World';
+s.x = 123;
+s.x // undefined
+给包装对象添加方法和属性：
+	String.prototype.double = function () {
+	  return this.valueOf() + this.valueOf();
+	};
+
+	'abc'.double()
+	// abcabc
+
+	Number.prototype.double = function () {
+	  return this.valueOf() + this.valueOf();
+	};
+
+	(123).double()  //括号不能少
+	// 246
+false对应的包装对象实例，布尔运算结果也是true。因为所有对象对应的布尔值都是true
+	//作为工具方法使用：
+	if (Boolean(false)) {
+	  console.log('true');
+	} // 无输出
+
+	//作为构造函数使用
+	if (new Boolean(false)) {
+	  console.log('true');
+	} // true
+Number静态属性：
+	POSITIVE_INFINITY	正无穷
+	NEGATIVE_INFINITY	负无穷
+	NaN					非数
+	MAX_VALUE
+	MIN_VALUE
+	MAX_SAFE_INTEGER
+	MIN_SAFE_INTEGER
+实例方法：
+	(10).toString() // "10"
+	(10).toString(2) // "1010" 或
+	10..toString(2)  // "1010" 或
+	10 .toString(2)  // "1010" 或
+	10.0.toString(2) // "1010" 或
+	10['toString'](2) // "1010"
+	toFixed方法先将一个数转为指定位数的小数，然后返回这个小数对应的字符串。参数为小数位数，有效范围为0到20，超出这个范围将抛出 RangeError 错误。
+	10.005.toFixed(2) // "10.01"
+	toExponential方法用于将一个数转为科学计数法形式。参数范围为0到20，超出这个范围，会抛出一个 RangeError 错误。
+	(1234).toExponential()  // "1.234e+3"
+	toPrecision方法用于将一个数转为指定位数的有效数字。用于四舍五入时不太可靠，跟浮点数不是精确储存有关。
+	(12.34).toPrecision(3) // "12.3"
+自定义方法：
+	Number.prototype.add = function (x) {
+	  return this + x;
+	};
+
+	8['add'](2) // 10
+
+字符串对象：
+字符串对象是一个类似数组的对象（很像数组，但不是数组）。
+	new String('abc');			// String {0: "a", 1: "b", 2: "c", length: 3}
+	(new String('abc'))[1] 		// "b"
+作为工具函数使用：String(true)  // "true"
+静态方法：
+	String.fromCharCode() 	//该方法不支持 Unicode 码点大于0xFFFF的字符，即传入的参数不能大于0xFFFF（即十进制的 65535）;对于大于65535的字符需要使用四个字节的UTF-16编码
+		String.fromCharCode(97) // "a"
+		String.fromCharCode(104, 101, 108, 108, 111)	// "hello"
+		String.fromCharCode(0xD842, 0xDFB7)				// "𠮷"
+实例属性：
+	String.prototype.length
+实例方法：
+	String.prototype.charAt() 		'abcd'.charAt(1)或'abcd'[1]		//b返回的是字符串
+	charCodeAt						'abc'.charCodeAt(1)     // 98	'abc'.charCodeAt(-1) // NaN
+	concat							'abc'.concat('def')		//'abcdef'
+	slice							'JavaScript'.slice(0, -6) // "Java"
+	substring						'JavaScript'.substring(10, 4) // "Script"	// 等同于 'JavaScript'.substring(4, 10) // "Script"		'JavaScript'.substring(4, -3) // "Java" 
+	substr							'JavaScript'.substr(4, 6) // "Script"
+	indexOf和lastIndexOf
+	trim
+	toLowerCase和toUpperCase		它们都返回一个新字符串，不改变原字符串。
+	match							'cat, bat, sat, fat'.match('at') // ["at"]		返回的数组还有index属性和input属性，分别表示匹配字符串开始的位置和原始字符串。
+	search							返回匹配的第一个位置
+	replace							'aaa'.replace('a', 'b') // "baa"
+	split(分裂)							'a|b|c'.split('|') // ["a", "b", "c"]			'a|b|c'.split() // ["a|b|c"]
+									如果分割规则为空字符串，则返回数组的成员是原字符串的每一个字符	'a|b|c'.split('') // ["a", "|", "b", "|", "c"]
+	localeCompare					按自然语言的顺序比较，返回一个整数，如果小于0，表示第一个字符串小于第二个字符串；如果等于0，表示两者相等；如果大于0，表示第一个字符串大于第二个字符串。
+									'B'.localeCompare('a') // 1
+
+、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、
+Math对象
+	静态属性：						Math.E	Math.PI等
+	静态方法：						abs();sqrt();ceil();random()
+	Math.random()返回0到1之间的一个伪随机数，可能等于0，但是一定小于1。
+		function getRandomArbitrary(min, max) {
+			return Math.random() * (max - min) + min;
+		}
+
+		getRandomArbitrary(1.5, 6.5)
+		// 2.4942810038223864
+
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+Date对象
+Date对象是 JavaScript 原生的时间库。它以1970年1月1日00:00:00作为时间的零点，可以表示的时间范围是前后各1亿天（单位为毫秒）。
+Date对象可以作为普通函数直接调用，返回一个代表当前时间的字符串。即使带有参数，Date作为普通函数使用时，返回的还是当前时间。
+	Date(2000, 1, 1)返回当前时间
+作为构造函数使用：
+	var today = new Date();
+	返回的是本地时间
+	对Date对象求值时总是调用toString方法。
+	参数可以是毫秒数（可为负值）、字符串、多个整数
+		new Date(-1378218728000)	// Fri Apr 30 1926 17:27:52 GMT+0800 (CST)
+		new Date('January 6, 2013');
+		new Date(2013, 0, 1, 0, 0, 0, 0)
+	只要是能被Date.parse()方法解析的字符串，都可以当作参数。参数会被解释为当前时区的时间
+	使用多个整数作参数时，至少需要两个参数，因为如果只使用“年”这一个参数，Date会将其解释为毫秒数。月份从0开始计算
+Date.parse
+	日期字符串应该符合 RFC 2822 和 ISO 8061 这两个标准，即YYYY-MM-DDTHH:mm:ss.sssZ格式，其中最后的Z表示时区。但是，其他格式也可以被解析
+Date.UTC 接受年、月、日等变量作为参数，返回毫秒值
+	Date.UTC方法的参数，会被解释为 UTC 时间（世界标准时间），Date构造函数的参数会被解释为当前时区的时间。
+	Date实例对象的valueOf方法和getTime方法返回的都是本地时间对应的UTC时间和时间零点的毫秒差值：
+	Date o = new Date(1970,0,1,0,0,0);
+	o.valueOf();	//-28800000
+	get*方法返回的都是当前时区的时间，getUTC*方法返回UTC时间
+	o.getDate();	//1						o.getUTCDate();	//31
+	o.getFullYear()	//1970						o.getUTCFullYear()	//1969
+	toString返回本地时间，toUTCString和toISOString都返回UTC时间， toISOString返回ISO8601 写法：// "2012-12-31T16:00:00.000Z"
+	toJSON和toISOString返回完全相同
+显示本地时间格式：
+Date.prototype.toLocaleString()：完整的本地时间。
+Date.prototype.toLocaleDateString()：本地日期（不含小时、分和秒）。
+Date.prototype.toLocaleTimeString()：本地时间（不含年月日）。
+可选项使用：dateObj.toLocaleString([locales[, options]])
+d.toLocaleString('en-US') 
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+正则表达式对象
+RegExp对象提供正则表示式的功能。JavaScript 的正则表达式体系是参照 Perl 5 建立的。
+两种构造方式：
+	var regex = /xyz/;					//引擎编译代码时，就会新建正则表达式
+	var regex = new RegExp('xyz'); 		//运行时新建正则表达式
+带修饰符：
+	var regex = new RegExp('xyz', 'i');
+	// 等价于
+	var regex = /xyz/i;
+实例属性：
+	ignoreCase、global、multiline	返回布尔值，表示是否设置了对应修饰符
+	lastIndex  返回一个整数，表示下一次开始搜索的位置。该属性可读写
+	source：返回正则表达式的字符串形式（不包括反斜杠），该属性只读。
+实例方法：
+	test：返回一个布尔值，表示当前模式是否能匹配参数字符串。	/cat/.test('cats and dogs') // true
+如果正则表达式带有g修饰符，则每一次test方法都从上一次结束的位置开始向后匹配。
+注意，带有g修饰符时，正则表达式内部会记住上一次的lastIndex属性，这时不应该更换所要匹配的字符串，否则会有一些难以察觉的错误。
+	var r = /bb/g;
+	r.test('bb') // true
+	r.test('-bb-') // false 
+如果正则模式是一个空字符串，则匹配所有字符串。
+	exec：返回匹配结果。如果发现匹配，就返回一个数组，成员是匹配成功的子字符串，否则返回null。 /x/.exec('_x_x')	  //["x"]
+	var s = '_x_x';
+	var r = /_(x)/;
+	r.exec(s) // ["_x", "x"]
+exec方法的返回数组还包含以下两个属性：input、index
+	var reg = /a/g;
+	var str = 'abc_abc_abc'
+
+	while(true) {
+	  var match = reg.exec(str);
+	  if (!match) break;
+	  console.log('#' + match.index + ':' + match[0]);
+	}
+	// #0:a
+	// #4:a
+	// #8:a
+字符串实例对象与正则表达式相关的四个方法：
+match：正则匹配，返回匹配结果。		
+	'_x_x'.match(/x/);		//["x"]
+	'_x_x'.match(/x/g);		//["x","x"]
+设置正则表达式的lastIndex属性，对match方法无效，匹配总是从字符串的第一个字符开始。	
+search：返回第一个满足条件的匹配结果在整个字符串中的位置。如果没有任何匹配，则返回-1。
+	'_x_x'.search(/x/)		// 1
+replace：替换匹配的值。它接受两个参数，第一个是正则表达式，表示搜索模式，第二个是替换的内容。返回替换后的字符串，不修改原字符串
+	'aaa'.replace(/a/g, 'b') // "bbb"
+replace方法的第二个参数可以使用美元符号$，用来指代所替换的内容。
+	'hello world'.replace(/(\w+)\s(\w+)/, '$2 $1')
+	// "world hello"
+	'abc'.replace('b', '[$`-$&-$\']')
+	//"a[a-b-c]c"
+$&：匹配的子字符串。
+$`：匹配结果前面的文本。
+$'：匹配结果后面的文本。
+$n：匹配成功的第n组内容，n是从1开始的自然数。
+：指代美元符号`$`。	
+	replace方法的第二个参数还可以是函数：
+	var prices = {
+	  'p1': '$1.99',
+	  'p2': '$9.99',
+	  'p3': '$5.00'
+	};
+
+	var template = '<span id="p1"></span>'
+	  + '<span id="p2"></span>'
+	  + '<span id="p3"></span>';
+
+	template.replace(
+	  /(<span id=")(.*?)(">)(<\/span>)/g,
+	  function(match, $1, $2, $3, $4){
+		return $1 + $2 + $3 + prices[$2] + $4;
+	  }
+	);
+	// "<span id="p1">$1.99</span><span id="p2">$9.99</span><span id="p3">$5.00</span>"	
+split：按照正则规则分割字符串，返回一个由分割后的各个部分组成的数组。
+	'a,  b,c, d'.split(/, */, 2)
+	[ 'a', 'b' ]
+字面量字符和元字符
+元字符：
+点号（.）：	匹配除回车（\r）、换行(\n) 、行分隔符（\u2028）和段分隔符（\u2029）以外的所有字符。
+^ 			表示字符串的开始位置
+$ 			表示字符串的结束位置
+竖线符号（|）：	在正则表达式中表示“或关系”（OR），即cat|dog表示匹配cat或dog。
+脱字符^:	[^xyz]表示除了x、y、z之外都可以匹配。
+连字符-：	[A-Z]表示26个大写字母。
+预定义模式：
+	\d 匹配0-9之间的任一数字，相当于[0-9]
+	\D 匹配所有0-9以外的字符，相当于[^0-9]。
+	\w 匹配任意的字母、数字和下划线，相当于[A-Za-z0-9_]。
+	\W 除所有字母、数字和下划线以外的字符，相当于[^A-Za-z0-9_]。
+	\s 匹配空格（包括换行符、制表符、空格符等），相等于[ \t\r\n\v\f]。
+	\S 匹配非空格的字符，相当于[^ \t\r\n\v\f]。
+	\b 匹配词的边界。
+	\B 匹配非词边界，即在词的内部。
+	[\S\s]可以用来指代一切字符
+量词符：
+	? 问号表示某个模式出现0次或1次，等同于{0, 1}。
+	* 星号表示某个模式出现0次或多次，等同于{0,}。
+	+ 加号表示某个模式出现1次或多次，等同于{1,}。
+贪婪模式：
+	var s = 'aaa';
+	s.match(/a+/) // ["aaa"]
+非贪婪模式：
+	var s = 'aaa';
+	s.match(/a+?/) // ["a"]
+m修饰符：
+	m修饰符表示多行模式（multiline），会修改^和$的行为。默认情况下（即不加m修饰符时），^和$匹配字符串的开始处和结尾处，
+	加上m修饰符以后，^和$还会匹配行首和行尾，即^和$会识别换行符（\n）。
+	/world$/.test('hello world\n') // false
+	/world$/m.test('hello world\n') // true
+	/^b/m.test('a\nb') // true
+组匹配：
+	var m = 'abcabc'.match(/(.)b(.)/);
+	m
+	// ['abc', 'a', 'c']
+使用/i代表匹配组：
+	/(.)b(.)\1b\2/.test("abcabc")
+	// true
+(?:x)称为非捕获组（Non-capturing group），表示不返回该组匹配的内容，即匹配的结果中不计入这个括号。
+	var m = 'abc'.match(/(?:.)b(.)/);
+	m // ["abc", "c"]
+x(?=y)称为先行断言（Positive look-ahead），x只有在y前面才匹配，y不会被计入返回结果。
+	var m = 'abc'.match(/b(?=c)/);
+	m // ["b"]																
+x(?!y)称为先行否定断言（Negative look-ahead），x只有不在y前面才匹配，y不会被计入返回结果。
+	/\d+(?!\.)/.exec('3.14')
+	// ["14"]  小数点前的都不匹配，小数点不返回
+---------------------------------------------------------------------------------------------------------
+JSON
+JSON 格式（JavaScript Object Notation 的缩写）是一种用于数据交换的文本格式
+每个 JSON 对象就是一个值，可能是一个数组或对象，也可能是一个原始类型的值
+JSON的格式要求：
+	复合类型的值只能是数组或对象，不能是函数、正则表达式对象、日期对象。
+
+	原始类型的值只有四种：字符串、数值（必须以十进制表示）、布尔值和null（不能使用NaN, Infinity, -Infinity和undefined）。
+
+	字符串必须使用双引号表示，不能使用单引号。
+
+	对象的键名必须放在双引号里面。
+
+	数组或对象最后一个成员的后面，不能加逗号。
+	
+	属性值不能使用函数和日期对象
+JSON对象是 JavaScript 的原生对象，用来处理 JSON 格式数据。
+静态方法：
+stringify：将一个值转为 JSON 格式的值（JSON字符串）：
+	JSON.stringify('abc') // ""abc""
+	JSON.stringify([1, "false", false])	// '[1,"false",false]'
+	JSON.stringify({ name: "张三" })	// '{"name":"张三"}'
+	JSON.stringify('foo') === "\"foo\"" // true
+如果对象的属性是undefined、函数或 XML 对象，该属性会被JSON.stringify过滤。
+如果数组的成员是undefined、函数或 XML 对象，则这些值被转成null。
+正则对象会被转成空对象。
+JSON.stringify方法会忽略对象的不可遍历的属性。
+JSON.stringify方法还可以接受一个数组，作为第二个参数，指定需要转成字符串的属性。第二个参数还可以是一个函数，用来更改JSON.stringify的返回值。
+JSON.stringify还可以接受第三个参数，用于增加返回的 JSON 字符串的可读性。如果是数字，表示每个属性前面添加的空格（最多不超过10个）；
+	如果是字符串（不超过10个字符），则该字符串会添加在每行前面。
+如果参数对象有自定义的toJSON方法，那么JSON.stringify会使用这个方法的返回值作为参数，而忽略原对象的其他属性。
+
+JSON.parse方法用于将 JSON 字符串转换成对应的值。
+JSON.parse('[1, 5, "false"]') // [1, 5, "false"]
+var o = JSON.parse('{"name": "张三"}');
+传入的字符串不是有效的 JSON 格式，JSON.parse方法将报错。
+JSON.parse("'String'") // illegal single quotes
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
