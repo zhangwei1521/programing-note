@@ -64,7 +64,8 @@ top:
       console.log('i=' + i + ', j=' + j);
     }
   }
-
+括号表达式：
+(exp1,exp2)返回exp2
 
 ------数据类型------
 
@@ -1312,11 +1313,223 @@ var o = JSON.parse('{"name": "张三"}');
 传入的字符串不是有效的 JSON 格式，JSON.parse方法将报错。
 JSON.parse("'String'") // illegal single quotes
 
+++++++++++++++++++++++++++++++++++++==++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+JavaScript面向对象编程模型
 
+对象是单个实物的抽象。对象是一个容器，封装了属性（property）和方法（method）。
 
+典型的面向对象编程语言（比如 C++ 和 Java），都有“类”（class）这个概念。所谓“类”就是对象的模板，对象就是“类”的实例。
+但是，JavaScript 语言的对象体系，不是基于“类”的，而是基于构造函数（constructor）和原型链（prototype）。
+JavaScript 语言使用构造函数（constructor）作为对象的模板。所谓”构造函数”，就是专门用来生成实例对象的函数。它就是对象的模板，描述实例对象的基本结构。
+构造函数的特点有两个：
+	函数体内部使用了this关键字，代表了所要生成的对象实例。
+	生成对象的时候，必须使用new命令。
+如果不使用new命令调用构造函数，构造函数就变成了普通函数，并不会生成实例对象。
+而且，this这时代表全局对象，将造成一些意想不到的结果。
+构造函数内部使用严格模式，即第一行加上use strict。这样的话，一旦忘了使用new命令，直接调用构造函数就会报错。
+严格模式中，函数内部的this不能指向全局对象，默认等于undefined，导致不加new调用会报错（JavaScript 不允许对undefined添加属性）。
 
+使用new命令时，它后面的函数依次执行下面的步骤:
+	创建一个空对象，作为将要返回的对象实例。
+	将这个空对象的原型，指向构造函数的prototype属性。
+	将这个空对象赋值给函数内部的this关键字。
+	开始执行构造函数内部的代码。
+如果构造函数内部有return语句，而且return后面跟着一个对象，new命令会返回return语句指定的对象；否则，就会不管return语句，返回this对象。
+如果return语句返回的是一个跟this无关的新对象，new命令会返回这个新对象，而不是this对象。
+如果对普通函数（内部没有this关键字的函数）使用new命令，则会返回一个空对象。
+函数内部可以使用new.target属性。如果当前函数是new命令调用，new.target指向当前函数，否则为undefined。
+以这个现有的对象作为模板，生成新的实例对象，这时就可以使用Object.create()方法。
 
+-----------------------------======----------------------------------=========---------------------------------------
+
+this
+简单说，this就是属性或方法“当前”所在的对象。
+由于对象的属性可以赋给另一个对象，所以属性所在的当前对象是可变的，即this的指向是可变的。
+	var A = {
+	  name: '张三',
+	  describe: function () {
+		return '姓名：'+ this.name;
+	  }
+	};
+
+	var B = {
+	  name: '李四'
+	};
+
+	B.describe = A.describe;
+	B.describe()
+	// "姓名：李四"
+原始的对象以字典结构保存，每一个属性名都对应一个属性描述对象。
+当属性值是一个函数时，引擎会将函数单独保存在内存中，然后再将函数的地址赋值给对象属性的value属性。
+由于函数是一个单独的值，所以它可以在不同的环境（上下文）执行。
+this的设计目的就是在函数体内部，指代函数当前的运行环境。
+this的使用场景：
+1、全局环境使用this，它指的就是顶层对象window。
+2、构造函数中的this，指的是实例对象。
+3、如果对象的方法里面包含this，this的指向就是方法运行时所在的对象。该方法赋值给另一个对象，就会改变this的指向。
+	var obj ={
+	  foo: function () {
+		console.log(this);
+	  }
+	};
+
+	obj.foo() // obj
+	// 情况一
+	(obj.foo = obj.foo)() // window
+	// 情况二
+	(false || obj.foo)() // window
+	// 情况三
+	(1, obj.foo)() // window
+以上三种情况都返回foo函数，然后在全局环境中调用。
+严格模式下，如果函数内部的this指向顶层对象，就会报错。
+使用变量固定this指向：
+	var o = {
+	  f1: function() {
+		console.log(this);
+		var that = this;
+		var f2 = function() {
+		  console.log(that);
+		}();
+	  }
+	}
+
+	o.f1()
+	// Object
+	// Object
+数组处理方法中this的误用：
+	var o = {
+	  v: 'hello',
+	  p: [ 'a1', 'a2' ],
+	  f: function f() {
+		this.p.forEach(function (item) {
+		  console.log(this.v + ' ' + item);
+		});
+	  }
+	}
+
+	o.f()
+	// undefined a1
+	// undefined a2
+两种正确的处理方式是：使用变量固定this指向或将this作为第二个参数传入数组处理方法（forEach、map）
+回调函数中this的误用：
+	var o = new Object();
+	o.f = function () {
+	  console.log(this === o);
+	}
+
+	// jQuery 的写法
+	$('#button').on('click', o.f);
+上面只是将f函数绑定到了click事件，点击将打印false
+绑定this到指定对象：
+1、函数实例的call方法：
+	var obj = {};
+
+	var f = function () {
+	  return this;
+	};
+
+	f() === window // true
+	f.call(obj) === obj // true
+call方法将函数体中的this固定为传入的参数对象，然后执行该函数；
+call方法的参数，应该是一个对象。如果参数为空、null和undefined，则默认传入全局对象。
+如果call方法的参数是一个原始值，那么这个原始值会自动转成对应的包装对象，然后传入call方法。
+call方法还可以接受多个参数。call的第一个参数就是this所要指向的那个对象，后面的参数则是函数调用时所需的参数。
+使用call调用原生方法：
+	var obj = {};
+	obj.hasOwnProperty('toString') // false
+
+	// 覆盖掉继承的 hasOwnProperty 方法
+	obj.hasOwnProperty = function () {
+	  return true;
+	};
+	obj.hasOwnProperty('toString') // true
+
+	Object.prototype.hasOwnProperty.call(obj, 'toString') // false
+2、函数实例的apply方法，与call方法类似，区别是apply方法接收一个数组作为函数执行时的参数，和call方法一样，apply也是立即执行的方法。
+	function f(x, y){
+	  console.log(x + y);
+	}
+
+	f.call(null, 1, 1) // 2
+	f.apply(null, [1, 1]) // 2
+调用数组构造函数：
+	Array.apply(null, ['a', ,'b'])
+	// [ 'a', undefined, 'b' ]
+使用数组的slice方法转换对象为数组：被处理的对象必须有length属性，以及相对应的数字键。
+	Array.prototype.slice.apply({0: 1, length: 1}) // [1]
+3、bind方法：
+bind方法用于将函数体内的this绑定到某个对象，然后返回一个新函数。
+	var d = new Date();
+	d.getTime() // 1481869925657
+
+	var print = d.getTime;
+	print() // Uncaught TypeError: this is not a Date object.
+将日期对象的getTime方法单独拿出来后，调用它就找不到上下文导致报错。
+使用bind解决这个问题：
+	var print = d.getTime.bind(d);
+	print() // 1481869925657
+this绑定到其他对象也是可以的：
+	var counter = {
+	  count: 0,
+	  inc: function () {
+		this.count++;
+	  }
+	};
+
+	var obj = {
+	  count: 100
+	};
+	var func = counter.inc.bind(obj);
+	func();
+	obj.count // 101
+bind还可以接受更多的参数，将这些参数绑定原函数的参数。
+	var add = function (x, y) {
+	  return x * this.m + y * this.n;
+	}
+
+	var obj = {
+	  m: 2,
+	  n: 2
+	};
+
+	var newAdd = add.bind(obj, 5);
+	newAdd(5) // 20
+bind方法每运行一次，就返回一个新函数，这会产生一些问题：
+	element.addEventListener('click', o.m.bind(o));
+	element.removeEventListener('click', o.m.bind(o));//无效
+click事件绑定bind方法生成的一个匿名函数。这样会导致无法取消绑定
+bind和call的结合使用（麻烦）：
+	Array.prototype.slice.call([1, 2, 3], 0, 1) // [1]
+	//解释1：对[1,2,3]应用slice方法，参数是0,1
+	//解释2：将slice的上下文替换为[1,2,3]并立即调用
+call方法实质上是调用Function.prototype.call方法，因此上面的表达式可以用bind方法改写。
+	var slice = Function.prototype.call.bind(Array.prototype.slice);
+	slice([1, 2, 3], 0, 1) // [1]
+	//返回一个call方法的拷贝，其上下文是slice，对该方法（call）的调用，实际是对call所属函数实例的调用
+	var push = Function.prototype.call.bind(Array.prototype.push);
+	var pop = Function.prototype.call.bind(Array.prototype.pop);
+
+	var a = [1 ,2 ,3];
+	push(a, 4)
+	a // [1, 2, 3, 4]
+
+	pop(a)
+	a // [1, 2, 3]
+将call的上下文修改为bind
+	function f() {
+	  console.log(this.v);
+	}
+
+	var o = { v: 123 };
+	var bind = Function.prototype.call.bind(Function.prototype.bind);
+	bind(f, o)() // 123
+1、call的上下文（函数体中的this）是一个函数实例，
+2、xxx.call(obj,arg1...);
+	将xxx的上下文替换为obj，arg1...是参数列表；xxx是函数实例；call的上下文是xxx；对 call 的调用实际是对xxx的调用；
+3、var callx = Function.prototype.call.bind(xxx);
+   callx(obj,arg1...);
+    callx的上下文是xxx；调用callx实际是调用callx的上下文xxx，且xxx的上下文被设置为obj，arg1...是参数；
 
 
 
