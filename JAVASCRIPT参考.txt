@@ -1530,6 +1530,206 @@ call方法实质上是调用Function.prototype.call方法，因此上面的表�
 3、var callx = Function.prototype.call.bind(xxx);
    callx(obj,arg1...);
     callx的上下文是xxx；调用callx实际是调用callx的上下文xxx，且xxx的上下文被设置为obj，arg1...是参数；
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+原型和原型链
+	function Cat(name, color) {
+	  this.name = name;
+	  this.color = color;
+	  this.meow = function () {
+		console.log('喵喵');
+	  };
+	}
+
+	var cat1 = new Cat('大毛', '白色');
+	var cat2 = new Cat('二毛', '黑色');
+
+	cat1.meow === cat2.meow
+	// false
+上面的代码，两个对象实例的meow方法互相独立，但方法实际是一样的，完全不需要产生两个，这样的重复方法浪费了系统资源。
+JavaScript设计了原型对象，其所有属性和方法，都能被实例对象共享
+JavaScript 规定，每个函数都有一个prototype属性，指向一个对象。
+对于普通函数来说，该属性基本无用。但是，对于构造函数来说，生成实例的时候，该属性会自动成为实例对象的原型。
+（实例对象会获得原型对象上的属性，但是获得的属性不是直接属于实例对象）
+原型对象的属性不是实例对象自身的属性。只要修改原型对象，变动就立刻会体现在所有实例对象上。
+	Animal.prototype.color = 'yellow';
+	cat1.color // "yellow"
+	cat2.color // "yellow"
+
+JavaScript 规定，所有对象都有自己的原型对象（prototype），但是实例对象不能通过obj.prototype访问自己的原型对象。
+Object.prototype对象的原型是null，由于null没有任何属性，所以原型链到此为止。
+读取对象的某个属性时，JavaScript 引擎先寻找对象本身的属性，如果找不到，就到它的原型去找，如果还是找不到，就到原型的原型去找。
+如果直到最顶层的Object.prototype还是找不到，则返回undefined。
+	var MyArray = function () {};
+
+	MyArray.prototype = new Array();
+	MyArray.prototype.constructor = MyArray;
+
+	var mine = new MyArray();
+	mine.push(1, 2, 3);
+	mine.length // 3
+	mine instanceof Array // true
+实例对象应该是获得了它的原型对象（原型链上的所有对象）的属性和方法的地址引用。
+prototype对象有一个constructor属性，默认指向prototype对象所在的构造函数。
+constructor的用法：
+	function Constr() {}
+	var x = new Constr();
+
+	var y = new x.constructor();
+	y instanceof Constr // true
+instanceof运算符的左边是实例对象，右边是构造函数。它会检查右边构建函数的原型对象（prototype），是否在左边对象的原型链上。
+	v instanceof Vehicle
+	// 等同于
+	Vehicle.prototype.isPrototypeOf(v)
+	
+	var d = new Date();
+	d instanceof Date // true
+	d instanceof Object // true
+//d的原型链上含有Date和Object的原型对象
+	Object.create(null) instanceof Object // false
+//Object.create(null)返回的对象的原型链上只有null，没有Object的原型对象
+对于undefined和null，instanceOf运算符总是返回false。instanceof运算符只能用于对象，不适用原始类型的值。
+
+继承构造函数：
+	function Super() {
+	  this.x = 0;
+	  this.y = 0;
+	}
+	function Sub(value) {
+	  Super.call(this);
+	  this.prop = value;
+	}
+	Sub.prototype = Object.create(Super.prototype);
+	Sub.prototype.constructor = Sub;
+Super.call(this);将Super构造函数中的this修改为当前的子类实例对象。
+这种写法子类对象实例将直接获得父类构造函数中定义的属性，而不是出现在其原型上，其原型上的属性和方法只有父类构造方法的原型链上的属性和方法。
+另一种写法：
+	Sub.prototype = new Super();
+这种写法子类对象实例继承父类的属性出现在其原型对象上，不直接属于子类实例。
+子类方法中使用父类方法：
+	ClassB.prototype.print = function() {
+	  ClassA.prototype.print.call(this);
+	  // some code
+	}
+完全多重继承：
+function M1() {
+  this.hello = 'hello';
+}
+
+function M2() {
+  this.world = 'world';
+}
+
+function S() {
+  M1.call(this);
+  M2.call(this);
+}
+
+// 继承 M1
+S.prototype = Object.create(M1.prototype);
+// 继承链上加入 M2
+Object.assign(S.prototype, M2.prototype);
+
+// 指定构造函数
+S.prototype.constructor = S;
+
+var s = new S();
+s.hello // 'hello：'
+s.world // 'world'
+
+function StringBuilder() {
+  var buffer = [];
+}
+//这种方式定义的变量不属于实例对象，无法通过实例变量访问，实际上，构造函数外部无法访问该变量。
+这种方法将私有变量封装在构造函数中，导致构造函数与实例对象是一体的，总是存在于内存之中，无法在使用完成后清除。
+这意味着，构造函数有双重作用，既用来塑造实例对象，又用来保存实例对象的数据，违背了构造函数与实例对象在数据上相分离的原则
+（即实例对象的数据，不应该保存在实例对象以外）。同时，非常耗费内存。
+
+使用立即执行函数实现模块化：
+	var module1 = (function () {
+	　var _count = 0;
+	　var m1 = function () {
+	　  //...
+	　};
+	　var m2 = function () {
+	　　//...
+	　};
+	　return {
+	　　m1 : m1,
+	　　m2 : m2
+	　};
+	})();
+放大模式：
+	var module1 = (function (mod){
+	　mod.m3 = function () {
+	　　//...
+	　};
+	　return mod;
+	})(module1);
+宽放大模式：可以避免加载了空对象报错
+	var module1 = (function (mod) {
+	　//...
+	　return mod;
+	})(window.module1 || {});
+独立性是模块的重要特点，模块内部最好不与程序的其他部分直接交互。
+为了在模块内部调用全局变量，必须显式地将其他变量输入模块。
+var module1 = (function ($, YAHOO) {
+　//...
+})(jQuery, YAHOO);
+
+立即执行函数还可以起到命名空间的作用，对外暴露接口：
+	(function($, window, document) {
+
+	  function go(num) {
+	  }
+
+	  function handleEvents() {
+	  }
+
+	  function initialize() {
+	  }
+
+	  function dieCarouselDie() {
+	  }
+
+	  //attach to the global scope
+	  window.finalCarousel = {
+		init : initialize,
+		destroy : dieCouraselDie
+	  }
+
+	})( jQuery, window, document );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
