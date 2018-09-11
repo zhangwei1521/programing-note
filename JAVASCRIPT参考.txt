@@ -1546,7 +1546,7 @@ call方法实质上是调用Function.prototype.call方法，因此上面的表�
 
 	cat1.meow === cat2.meow
 	// false
-上面的代码，两个对象实例的meow方法互相独立，但方法实际是一样的，完全不需要产生两个，这样的重复方法浪费了系统资源。
+上面的代码，两个对象实例的meow方法互相独立，但方法实际是一样的，完全不需要产生两个，这样的重复方法浪费了系统资源。这和js的解释执行模型有关。
 JavaScript设计了原型对象，其所有属性和方法，都能被实例对象共享
 JavaScript 规定，每个函数都有一个prototype属性，指向一个对象。
 对于普通函数来说，该属性基本无用。但是，对于构造函数来说，生成实例的时候，该属性会自动成为实例对象的原型。
@@ -1624,7 +1624,6 @@ function S() {
   M1.call(this);
   M2.call(this);
 }
-
 // 继承 M1
 S.prototype = Object.create(M1.prototype);
 // 继承链上加入 M2
@@ -1636,7 +1635,7 @@ S.prototype.constructor = S;
 var s = new S();
 s.hello // 'hello：'
 s.world // 'world'
-
+-------------------------------
 function StringBuilder() {
   var buffer = [];
 }
@@ -1699,31 +1698,71 @@ var module1 = (function ($, YAHOO) {
 	  }
 
 	})( jQuery, window, document );
+构造函数本身也是一个对象，可以有自己的属性（如prototype）和方法（静态方法）。
 
+构造函数可以直接获得自己的原型对象（如Array.prototype），实例对象需要使用Object的静态方法获取自己的原型对象：Object.getPrototypeOf(obj);
+构造函数不能直接调用自己原型对象上的实例方法。
+对象的属性方法分类：
+	1、构造函数中定义的属于对象实例的属性方法，
+	2、构造函数的原型对象自己定义的属性方法，（这两类属性方法都只能通过构造函数创建的实例对象使用）
+	3、构造函数定义在自己上面的静态属性方法，
+	4、构造函数的原型对象继承的属性方法，（这两类属性方法都是构造函数作为对象可以使用的属性方法）
 
+=======================================================================================================================
+Object的静态方法
+Object.getPrototypeOf(obj)用于获取一个对象的原型对象
+Object.setPrototypeOf(obj,proto)用于为一个对象设置原型对象
+	var f = new F();
+	// 等同于
+	var f = Object.setPrototypeOf({}, F.prototype);
+	F.call(f);
+Object.create(proto)用于使用一个给定对象作为原型构造一个对象；
+	var obj = Object.create(null);obj不具有任何属性和方法
+Object.create方法生成的对象，继承了它的原型对象的构造函数。
+	function A() {}
+	var a = new A();
+	var b = Object.create(a);
 
+	b.constructor === A // true
+	b instanceof A // true
+Object.getOwnPropertyNames()返回一个数组，成员是参数对象本身的所有属性的键名，不包含继承的属性键名。
+Object.keys(keys)获取对象可以遍历的属性数组
+	
+Object的原型对象上的方法：（任何对象都具有改类方法）
+Object.prototype.isPrototypeOf()用来判断该对象是否为参数对象的原型。
+Object.prototype.__proto__（属性）返回该对象的原型。
+该属性可读写。根据语言标准，__proto__属性只有浏览器才需要部署，其他环境可以没有这个属性。
+获取实例对象obj的原型对象，有三种方法：
+	obj.__proto__
+	obj.constructor.prototype
+	Object.getPrototypeOf(obj)
+前两种都不是很可靠。__proto__属性只有浏览器才需要部署，其他环境可以不部署。而obj.constructor.prototype在手动改变原型对象时，可能会失效。
+Object.prototype.hasOwnProperty()用于判断某个属性定义在对象自身，还是定义在原型链上。
+与之相对应的in运算符则只判断对象是否具有某个属性。
+获得对象的所有可遍历属性（不管是自身的还是继承的），可以使用for...in循环。
+如果要拷贝一个对象，需要做到下面两件事情：
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+严格模式
+早期的 JavaScript 语言有很多设计不合理的地方，但是为了兼容以前的代码，又不能改变老的语法，只能不断添加新的语法，引导程序员使用新语法。
+明确禁止一些不合理、不严谨的语法，减少 JavaScript 语言的一些怪异行为。
+增加更多报错的场合，消除代码运行的一些不安全之处，保证代码运行的安全。
+提高编译器效率，增加运行速度。
+为未来新版本的 JavaScript 语法做好铺垫。
+进入严格模式的标志，是一行字符串use strict。 
+'use strict';需要放在脚本第一行或者函数内第一行。严格地说，只要前面不是产生实际运行结果的语句，use strict可以不在第一行，比如直接跟在一个空的分号后面，或者跟在注释后面。
+严格模式提供了更多的显示报错；比如写只读属性、写只设置了取值器的属性、扩展禁止扩展的对象
+严格模式下，使用eval或者arguments作为标识名，将会报错；函数不能有重名的参数；禁止八进制的前缀0表示法
+安全性增强：
+正常模式中，如果一个变量没有声明就赋值，默认是全局变量。严格模式禁止这种用法，全局变量必须显式声明。
+正常模式下，函数内部的this可能会指向全局对象，严格模式禁止这种用法，避免无意间创造全局变量。
+严格模式下，函数内部不得使用fn.caller、fn.arguments，否则会报错。这意味着不能在函数内部得到调用栈了。
+严格模式下无法删除变量，如果使用delete命令删除一个变量，会报错。只有对象的属性，且属性的描述对象的configurable属性设置为true，才能被delete命令删除。
+严格模式下，使用with语句将报错。因为with语句无法在编译时就确定，某个属性到底归属哪个对象，从而影响了编译效果。
+严格模式下，eval语句本身就是一个作用域，不再能够在其所运行的作用域创设新的变量了
+严格模式下，函数内部改变参数与arguments的联系被切断了，两者不再存在联动关系。
+为了向将来 JavaScript 的新版本过渡，严格模式新增了一些保留字（implements、interface、let、package、private、protected、public、static、yield等）。使用这些词作为变量名将会报错。
+严格模式只允许在全局作用域或函数作用域声明函数。也就是说，不允许在非函数的代码块内声明函数。
 
 
 
