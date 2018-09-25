@@ -330,12 +330,56 @@ hashCode方法。
 	@MyAnno(str="bbb",val=22)
 	public void test(){}
 	
-	Annotation anno = m.getAnnotation(MyAnnoContainer.class);
-
-
-
-
-
+	Annotation anno = m.getAnnotation(MyAnnoContainer.class);m是test方法的反射对象
+										第十章 IO基础及其他
+	java使用“流”进行输入输出抽象，“流”是一种对接对象，输入流和输入源对接，提供一系列方法从数据源获取数据，输出流提供一系列
+方法将数据导出到目的地。java提供基于字节操作和字符操作的两类流。
+	字节流家族：InputStream、
+					BufferedInputStream、ByteArrayInputStream、DataInputStream、FileInputStream等
+				OutputStream
+					BufferedOutputStream、ByteArrayOutputStream、DataOutputStream、FileOutputStream等
+	字符流家族：Reader
+					BufferedReader、CharArrayReader、FileReader等
+				Writer
+					BufferedWriter、CharArrayWriter、FileWriter等
+	System类有三个静态的预定义流成员变量：out、in、err. in是InputStream的实例对象，out和err是PrintStream的实例对象。
+	可以使用BuffredReader读取控制台输入：
+		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+		BufferedReader的read方法读取单个字符，readLine方法读取一行字符串。System.in采用按行缓冲。
+	向控制台输出使用PrintWriter和使用System.out(PrintStream)的区别（好处）在于更好的国际化支持。
+	读写文件：使用文件名构造FileInputStream和FileOutputStream 的实例对象都可能抛出文件不存在异常，对于输出流其实是指
+不能打开文件或者创建文件，如果有原文件会先销毁原文件。
+	JDK1.7之前需要手动关闭流，JDK1.7新增了“自动资源管理”的特性，对于实现了AutoCloseable接口的资源类，可以使用扩展的try
+语法实现自动关闭资源，事实上所以流都实现了该接口，所以可以使用该新特性。
+	try(FileInputStream fin = new FileInputStream("fileName")){
+		...
+	}
+	try后括号中的资源实际上被隐式声明成final类型，所以不能修改。
+	Applet简单介绍：所有的Applet需要继承Applet类，需要重写paint方法，大部分Applet没有main方法。
+	开发阶段使用appletViewer查看和测试applet。
+	transient修饰符：用来修饰不需要被永久性存储的实例变量。
+	volatile修饰符：多线程中告诉各个线程使用最新的变量主副本。
+	instanceof运算符：检查对象和类型（接口）是否匹配。
+	strictfp修饰符：修饰类、接口、方法，指明使用严格浮点运算（java2开始浮点运算变得更宽松），基本用不到。
+	本地方法：目的是为了获得更高的效率，声明方式：
+	public native return-type method-name();
+	通常使用C语言实现本地方法，将C代码集成到java代码中的机制称为JDI（java本地接口）
+	定义本地方法的类中使用System.loadLibrary(String fileName) 加载动态链接库
+	使用javah -jni className 生成头文件，其中包含本地方法的函数原型。
+	编写C源码实现本地方法后编译生成dll动态链接文件。
+	然后就可以运行java类调用本地方法了。
+	assert用于开发期间快速测试，语法：
+		assert condition;或 assert condition: exp;
+	condition返回false则断言失败，直接抛出AssertException异常。
+	运行时使用-ea选项启用断言，也可以使用使用-da:package-name禁用指定包中的断言。
+	静态导入：
+		两种语法：import static java.lang.Math.pow; 或 import static java.lang.Math.*;
+		导入指定类中的指定静态成员或所有静态成员。
+	this调用重载的构造方法辨析：如果初始化代码很多，则使用this重载可以精简代码，但是使用this重载构造方法效率比使用
+完整实现的构造方法低。
+	java8将API库的子集组织成3个所谓“紧凑配置文件”：compact1、compact2、compact3，后一个完整包含前一个，使用：
+	javac -profile compactn Demo.java
+	可以只加载需要使用的库，加载会更快。
 
 
 
