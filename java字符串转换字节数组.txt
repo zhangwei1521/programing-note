@@ -1,0 +1,40 @@
+字节数组转换为字符串（本质上是将8位二进制转换为十六进制数的字符串形式）
+	//bos是ByteArrayoutputSteam类型对象
+	byte[] bytesArray = bos.toByteArray();
+	//方案一
+	char[] res = new char[bytesArray.length * 2]; // 每个byte对应两个字符
+	final char hexDigits[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+	for (int i = 0, j = 0; i < bytesArray.length; i++) {
+		res[j++] = hexDigits[bytesArray[i] >> 4 & 0x0f]; // 先存byte的高4位
+		res[j++] = hexDigits[bytesArray[i] & 0x0f]; // 再存byte的低4位
+	}
+	String str = new String(res);
+	
+	//方案二
+	StringBuilder stringBuilder = new StringBuilder("");
+	for (int i = 0; i < bytesArray.length; i++) { 
+	// 之所以用byte和0xff相与，是因为int是32位，与0xff相与后就舍弃前面的24位，只保留后8位
+		String str = Integer.toHexString(bytesArray[i] & 0xff); 
+		if (str.length() < 2) { // 不足两位要补0
+			stringBuilder.append(0); 
+		} 
+		stringBuilder.append(str); 
+	} 					
+	String str = stringBuilder.toString();
+	
+字符串转字节数组
+			//oriStr为待转换字符串(组成字符都是0-9a-f)
+			int length = oriStr.length() / 2; 
+			char[] hexChars = oriStr.toCharArray(); 
+			byte[] bytes = new byte[length]; 
+			String hexDigits = "0123456789abcdef";
+			for (int i = 0; i < length; i++) {
+				int pos = i * 2; // 两个字符对应一个byte
+				int h = hexDigits.indexOf(hexChars[pos]) << 4;
+				int l = hexDigits.indexOf(hexChars[pos + 1]);
+				if(h == -1 || l == -1) { // 非16进制字符
+					throw new RuntimeException("字节数组转换错误");
+				}
+				bytes[i] = (byte) (h | l); 
+			}			
+		
