@@ -159,9 +159,123 @@
 		@Autowired
 		private DiscoverryClient discovertyClient;
 	使用DiscoverryClient：
-		ServiceInstance instance = discovertyClient.getLocalServiceInstance();
-		String host = instance.getHost();
-		String id = instance.getServiceId();
+		@RequestMapping(value="/hello", method=RequestMethod.GET)
+		public String hello(){
+			ServiceInstance instance = discovertyClient.getLocalServiceInstance();
+			String host = instance.getHost();
+			String id = instance.getServiceId();
+			return "hello";
+		}		
 	修改配置文件application.properties:
 		spring.application.name=hello-sevice
 		eureka.client.serviceUrl.defaultZone=http://localhost:1111/eureka/
+	
+	高可用注册中心：服务注册中心非常重要，因此需要考虑故障的应对方法，Eureka server的设计考虑到了这一点，提供了服务
+注册中心互相注册的机制，通过这种互相注册实现服务清单的互相同步。
+	构建一个双节点的服务注册中心集群：
+	为前面的服务注册中心工程 eureka-server 添加两个配置文件：application-peer1.properties和application-peer2.properties:
+	application-peer1.properties
+		spring.application.name=eureka-server
+		server.port=1111
+		eureka.instance.hostname=peer1
+		eureka.client.serviceUrl.defaultZone=http://peer2:1112/eureka/
+	application-peer2.properties
+		spring.application.name=eureka-server
+		server.port=1112
+		eureka.instance.hostname=peer2
+		eureka.client.serviceUrl.defaultZone=http://peer1:1111/eureka/
+	修改host文件：
+		127.0.0.1 peer1
+		127.0.0.1 peer2
+	分别启动两个eureka-server：
+		java -jar eureka-server-1.0.0.jar --spring.profiles.active=peer1
+		java -jar eureka-server-1.0.0.jar --spring.profiles.active=peer2
+	注册hello-service到eureka-server集群上：修改hello-service配置文件：application.properties
+		spring.application.name=hello-sevice
+		eureka.client.serviceUrl.defaultZone=http://peer1:1111/eureka/,http://peer2:1112/eureka/
+	使用IP地址而不是主机名作为eureka服务注册中心的地址：添加配置项：
+		eureka.instance.prefer-ip-address=true  //需要验证该配置项的位置是注册中心配置文件还是客户端配置文件  
+												//也许是指服务注册中心登记的服务实例的登记名是IP还是主机名
+	
+	使用Ribbon进行客户端负载均衡消费服务：
+	将hello-service在两个端口启动，向注册中心注册两个hello-service服务：
+		java -jar hello-sevice-0.0.1-SNAPSHOT.jar --server.port=8081
+		java -jar hello-sevice-0.0.1-SNAPSHOT.jar --server.port=8082
+	新建一个服务消费者项目：ribbon-consumer：
+	pom依赖：
+		<parent>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-parent</artifactId>
+			<version>1.3.7.RELEASE</version>
+			<relativePath/>
+		</parent>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-web</artifactId>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-cloud-starter-ribbon</artifactId>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-starter-eureka</artifactId>
+			</dependency>
+		</dependencies>
+		</dependencyManagement>
+			<dependencies>
+				<!-- 同上-->
+			</dependencies>
+		</dependencyManagement>
+	启动类上添加注解：@EnableDiscoveryClient
+	声明RestTemplate类型的bean,使用@LoadBalanced注解开启客户端负载均衡：
+		@Bean
+		@LoadBalanced
+		RestTemplate restTemplate(){
+			return new RestTemplate();
+		}
+	服务消费，使用hello-service服务：
+		String hello = restTemplate.getForEntity("http://HELLO-SERVICE/hello");
+	修改配置文件application：
+		spring.application.name=ribbon-consumer
+		server.port=9000
+		eureka.client.serviceUrl.defaultZone=http://localhost:1111/eureka/
+	Ribbon使用轮询的方式交替访问可用的服务，实现负载均衡
+	
+	Eureka服务治理基础架构的三个核心要素：服务注册中心、服务提供者、服务消费者
+	服务治理机制：
+	服务注册：服务提供者在启动时就会将自己的信心通过请求发送给服务注册中心，服务注册中心使用一个双层Map结构保存
+服务实例信息，第一层key值是服务名，第二层key值是服务实例名。如果在启动时不希望注册服务到注册中心，可以使用如下配置：
+		eureka.client.register-with-eureka=false  //该值默认为true
+	服务同步：在高可用注册中心集群中，当服务提供者发送注册请求到一个注册中心时，该注册中心将会把这个注册请求转发给
+集群内与之相连的其他注册中心，从而实现服务注册中心间服务清单的同步。
+	服务续约：注册服务后，服务提供者会维护一个心跳向注册中心持续地报告自身状态。注册中心使用两个属性来确定客户端发送
+心跳的间隔时间和服务失效时间：
+		eureka.instance.lease-renewal-interval-in-seconds=30
+		eureka.instance.lease-expiration-duration-in-seconds=90
+	服务消费者：服务消费者启动的时候会向注册中心发送一个请求以获取注册中心注册的服务清单，注册中心（Eureka Server）会
+维护一份只读的服务清单返回给客户端，并且30秒更新一次该清单。要从注册中心获取服务清单必须确保:
+		eureka.client.fetch-registry=true
+	客户端使用属性：
+		eureka.client.registry-fetch-interval-seconds
+	的值（默认为30秒）更新缓存的服务清单。
+	服务调用：Eureka使用Region和Zone的概念划分服务分组，一个Region中可以包含多个Zone，每个客户端被注册到一个zone，因此
+一个客户端对应一个Zone和一个Region，服务调用时优先访问同一个zone的服务提供者，找不到再访问同一个Region的服务提供者。
+	服务下线：当服务实例正常关闭时，会想注册中心发送一个请求告知下线，注册中心将该服务设置为下线，并传播该事件。
+	失效剔除：注册中心(Eureka Server)在启动时会创建一个定时任务，每隔一段时间（默认60秒）检测服务清单，将超时（默认90秒）
+没有续约的服务剔除。通常是服务实例非正常结束（内存溢出等）导致注册中心进行失效剔除。
+	自我保护：注册中心运行时统计每个服务实例在15分钟内心跳失败的比例，如果高于85%，注册中心就保护当前实例，这样这个服务
+实例就不会过期被剔除，但是这样可能会造成客户端拿到的服务实例是不可用的，这需要服务消费者自己去实现容错处理。通常本地调试
+容易触发自我保护，实际环境通常是网络不稳定触发自我保护。注册中心使用属性
+		eureka.server.enable-self-preservation=false
+关闭自我保护机制。
+	设置Region属性：eureka.client.region=?
+	设置zone属性：  eureka.client.availability-zones=?,?
+	Region默认值为default，Zone默认值为defaultZone
+	@EnableDiscoveryClient注解用于开启DiscoveryClient的实例，使用eureka客户端就是创建DiscoveryClient的实现类EurekaDiscoveryClient
+的实例对象，该对象使用netflix的DiscoveryClient对象完成服务注册和发现。
+	
+	
+	
