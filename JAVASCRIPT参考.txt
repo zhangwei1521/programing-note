@@ -1627,13 +1627,13 @@ function S() {
 // 继承 M1
 S.prototype = Object.create(M1.prototype);
 // 继承链上加入 M2
-Object.assign(S.prototype, M2.prototype);
+Object.assign(S.prototype, M2.prototype);  //Object.assign() 方法用于将所有可枚举属性的值从一个或多个源对象复制到目标对象。它将返回目标对象。
 
 // 指定构造函数
 S.prototype.constructor = S;
 
 var s = new S();
-s.hello // 'hello：'
+s.hello // 'hello'
 s.world // 'world'
 -------------------------------
 function StringBuilder() {
@@ -1848,7 +1848,7 @@ fulfilled和rejected合在一起称为resolved（已定型）。状态变化：�
 异步操作成功，Promise 实例传回一个值（value），状态变为fulfilled。
 异步操作失败，Promise 实例抛出一个错误（error），状态变为rejected。
 Promise构造函数接受一个函数作为参数，该函数的两个参数分别是resolve和reject。它们是两个函数，由 JavaScript 引擎提供，不用自己实现。
-函数内自己处理执行结果：
+函数内自己处理执行结果：(使用resolve和reject将执行结果通知给promise的回调函数)
 	var promise = new Promise(function (resolve, reject) {
 	  // ...
 
@@ -1863,26 +1863,67 @@ then方法可以接受两个回调函数，第一个是异步操作成功时（�
 var p1 = new Promise(function (resolve, reject) {
   resolve('成功');
 });
-p1.then(console.log, console.error);
+p1.then(console.log, console.error);或
+p1.then(function(resp){
+	...
+}).catch(function(e){
+	...
+});
 返回P1实例时异步函数已经开始执行了，执行结果将被传递给then方法的参数
 Promise 的回调函数属于异步任务，会在同步任务之后执行。
 但是，Promise 的回调函数不是正常的异步任务，而是微任务（microtask）。它们的区别在于，正常任务追加到下一轮事件循环，微任务追加到本轮事件循环。
 这意味着，微任务的执行时间一定早于正常任务。
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+DOM
+DOM：文档对象模型，是一个接口规范，规定了将结构化文档构造(抽象)成一个什么样的对象，提供什么样的对外接口。浏览器会根据 DOM 模型，
+将结构化文档（比如 HTML 和 XML）解析成一系列的节点，再由这些节点组成一个树状结构（DOM Tree）。所有的节点和最终的树状结构，都有规范的对外接口。
+DOM 不是 JavaScript 语法的一部分，但是 DOM 操作是 JavaScript 最常见的任务。
+DOM定义的最小对象单元是节点，一个文档的所有节点联系在一起的总体叫DOM树。节点的类型有7种：
+Document、DocumentType(比如<!DOCTYPE html>)、Element、Attribute、Text、Comment、DocumentFragment
+浏览器提供一个原生的节点对象Node，上面这七种节点都继承了Node，因此具有一些共同的属性和方法
+浏览器原生提供document节点，代表整个文档。文档的第一层只有一个节点，就是 HTML 网页的第一个标签<html>，它构成了树结构的根节点（root node），
+其他 HTML 标签节点都是它的下级节点。
+除了根节点，其他节点都有三种层级关系：父节点关系、子节点关系、同级节点关系
+DOM 提供操作接口，用来获取这三种关系的节点。比如，子节点接口包括firstChild（第一个子节点）和lastChild（最后一个子节点）等属性，
+同级节点接口包括nextSibling（紧邻在后的那个同级节点）和previousSibling（紧邻在前的那个同级节点）属性
+=============================================================================================================================================
+Node 接口
+属性：
+Node.prototype.nodeType     返回一个整数值，表示节点的类型。  document.nodeType // 9  Node 对象定义了几个常量，对应这些类型值。Node.DOCUMENT_NODE //9
+Node.prototype.nodeName     返回节点的名称。元素节点（element）返回大写的标签名
+Node.prototype.nodeValue    返回一个字符串，表示当前节点本身的文本值，该属性可读写。div是元素节点，nodeValue属性返回null。div.firstChild是文本节点，所以可以返回文本值。
+Node.prototype.textContent  返回当前节点和它的所有后代节点的文本内容，该属性是可读写的。会自动忽略当前节点内部的 HTML 标签，返回所有文本内容。
+							document.getElementById('foo').textContent = '<p>GoodBye!</p>';这里<p>标签解释为文本，而不会当作标签处理。文档节点和文档类型节点的textContent属性为null
+Node.prototype.baseURI      返回一个字符串，表示当前网页的绝对路径。可以使用 HTML 的<base>标签，改变该属性的值。
+Node.prototype.ownerDocument    返回当前节点所在的顶层文档对象，即document对象。document对象本身的ownerDocument属性，返回null。
+Node.prototype.nextSibling      返回紧跟在当前节点后面的第一个同级节点。如果当前节点后面没有同级节点，则返回null。该属性还包括文本节点和注释节点
+Node.prototype.previousSibling  返回当前节点前面的、距离最近的一个同级节点。如果当前节点前面没有同级节点，则返回null。该属性还包括文本节点和注释节点
+Node.prototype.parentNode       返回当前节点的父节点。对于一个节点来说，它的父节点只可能是三种类型：元素节点（element）、文档节点（document）和文档片段节点。
+								文档节点（document）和文档片段节点（documentfragment）的父节点都是null
+Node.prototype.parentElement    返回当前节点的父元素节点。如果当前节点没有父节点，或者父节点类型不是元素节点，则返回null。父节点只可能是三种类型：
+								元素节点、文档节点（document）和文档片段节点（documentfragment）。parentElement属性相当于把后两种父节点都排除了。
+Node.prototype.firstChild		返回当前节点的第一个子节点，如果当前节点没有子节点，则返回null，如果父元素与子元素之间有空白字符，这导致firstChild返回的是文本节点。
+Node.prototype.lastChild		返回当前节点的最后一个子节点，如果当前节点没有子节点，则返回null
+Node.prototype.childNodes		返回一个类似数组的对象（NodeList集合），成员包括当前节点的所有子节点。文档节点就有两个子节点：文档类型节点docType和 HTML根元素节点。
+Node.prototype.isConnected		返回一个布尔值，表示当前节点是否在文档之中。
+方法：
+Node.prototype.appendChild()		接受一个节点对象作为参数，将其作为最后一个子节点，插入当前节点。该方法的返回值就是插入文档的子节点。
+									如果参数节点是 DOM 已经存在的节点，appendChild方法会将其从原来的位置，移动到新位置。
+									如果appendChild方法的参数是DocumentFragment节点，那么插入的是DocumentFragment的所有子节点，而不是DocumentFragment节点本身。返回值是一个空的DocumentFragment节点。
+Node.prototype.hasChildNodes()		返回一个布尔值，表示当前节点是否有子节点。子节点包括所有类型的节点，并不仅仅是元素节点。哪怕节点只包含一个空格，hasChildNodes方法也会返回true。
+Node.prototype.cloneNode()			克隆一个节点。它接受一个布尔值作为参数，表示是否同时克隆子节点。它的返回值是一个克隆出来的新节点，会丧失addEventListener方法和on-属性
+Node.prototype.insertBefore() 		用于将某个节点插入父节点内部的指定位置。如果insertBefore方法的第二个参数为null，则新节点将插在当前节点内部的最后位置，即变成最后一个子节点。
+									如果所要插入的节点是当前 DOM 现有的节点，则该节点将从原有的位置移除，插入新的位置。
+不存在insertAfter方法，可以使用parent.insertBefore(s1, s2.nextSibling);实现该功能。
+Node.prototype.removeChild()		接受一个子节点作为参数，用于从当前节点移除该子节点。返回值是移除的子节点。被移除的节点依然存在于内存之中，但不再是 DOM 的一部分。
+Node.prototype.replaceChild()		用于将一个新的节点，替换当前节点的某一个子节点。var replacedNode = parentNode.replaceChild(newChild, oldChild);
+Node.prototype.contains()			返回一个布尔值，表示参数节点是否满足以下三个条件之一。参数节点为当前节点；参数节点为当前节点的子节点；参数节点为当前节点的后代节点。
+Node.prototype.compareDocumentPosition() 返回一个七个比特位的二进制值，表示参数节点与当前节点的关系。0表示两个节点相同；16表示当前节点包含参数节点；8表示参数节点包含当前节点
+Node.prototype.isEqualNode()		返回一个布尔值，用于检查两个节点是否相等。所谓相等的节点，指的是两个节点的类型相同、属性相同、子节点相同。
+Node.prototype.isSameNode()			返回一个布尔值，表示两个节点是否为同一个节点。
+Node.prototype.normalize() 			清理当前节点内部的所有文本节点（text）。它会去除空的文本节点，并且将毗邻的文本节点合并成一个，也就是说不存在空的文本节点，以及毗邻的文本节点。
+Node.prototype.getRootNode()		返回当前节点所在文档的根节点，与ownerDocument属性的作用相同。
 
 
 
