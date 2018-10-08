@@ -380,13 +380,113 @@ hashCode方法。
 	java8将API库的子集组织成3个所谓“紧凑配置文件”：compact1、compact2、compact3，后一个完整包含前一个，使用：
 	javac -profile compactn Demo.java
 	可以只加载需要使用的库，加载会更快。
-
-
-
-
-
-
-
+											第十一章 泛型
+	JDK1.5引入了泛型，泛型从两个方面影响或者说改变了java，一是增加了新的语法元素，二是改变了核心API中很多类和方法。
+	使用泛型的类、接口或者方法可以以类型安全的方式使用各种类型的数据，这样可以为算法相同而数据类型不同的程序只编写
+一个通用的程序单元。集合框架是受泛型影响最大的API了，引入泛型使得集合框架的使用更加安全。
+	泛型的意思：参数化类型，或者说成是类型参数化，使用占位符定义，而使用时被实际类型替换。引入泛型之前，是通过使用
+Object引用所有类型对象，这样的方式并不安全，比如手动类型转换时进行了非法的转换，则会导致运行时错误，而泛型不需要进行
+手动类型转换，可以在编译期就避开这种问题。
+	泛型类： 
+	class Gen<T>{
+		T t;
+		public Gen(T t){
+			this.t = t;
+		}
+		T getT(){
+			return t;
+		}
+	}
+	两个泛型类型：
+	class TwoGen<K,V>{
+		K k;
+		V v;
+		TwoGen(K k, V v){
+			this.k = k;
+			this.v = v;
+		}
+	}
+	声明泛型类的实例对象时，只能使用引用类型：Gen<int> gen = new Gen<int>(55); // Error
+	有界的泛型：
+	class Stats<T extends Number>{
+		T[] nums;
+		Stats(T[] nums){
+			this.nums = nums;
+		}
+		double average(){
+			double sum = 0.0;
+			for(int i =0; i < nums.length; i++){
+				sum += nums[i].doubleValue();
+			}
+			return sum / nums.length;
+		}
+	}
+	这样nums[i].doubleValue()就可以编译通过，并且不能使用Stats<String>这种非Number的子类泛型参数。
+	事实上，还可以声明泛型类型的父接口，或者同时声明父类和父接口：
+	class Gen<T extends MyClass & MyInterface>{...}
+	通配符问题：当泛型类的某个方法需要接受另一个泛型类对象作为参数，而该参数对象的泛型可能不是当前对象的泛型类型：
+	Stats<T extends Number>方法public boolean sameAvg(Stats<T> stats){...}
+	Stats<Integer> istats = new Stats<Integer>(inums);
+    Stats<Double> dstats = new Stats<>(dnums);
+	istats.sameAvg(dstats);//不能通过编译
+	问题在于编译时将istats中的泛型类型都替换为Integer了，所以传入泛型为Double的对象不能通过编译。
+	解决方案是使用通配符 ? ，
+	public boolean sameAvg(Stats<?> stats){...}这样stats就可以是任意泛型类型的Stats对象了。当然这里的泛型类型仍然只能
+是Number的子类。
+	有界的通配符：泛型类指定的泛型类型只能是某个类的子类，但是有些方法需要的参数泛型类对象的泛型不能是任意的有效泛型
+类型：
+	class NegNumber extends Number{//负数类}
+	class PosNumber extends Number{//正数类}
+	Gen类定义方法 public double sum2(Stats<?> stats){//对stats中的数组的元素先开方再求和}
+	这里如果使用NegNumber作为泛型类型的对象是可以传入sum2方法的，但是会出现错误。
+	使用有界的通配符： public double sum2(Stats<? extends PosNumber> stats){//对stats中的数组的元素先开方再求和}
+	也可以定义通配符下界： <? super subClass> //这里不包括subClass
+	泛型方法：<type-param-list> ret-type method-name(param-list){...}
+	这里泛型参数类型声明需要放在返回值类型前面。泛型方法可以是静态的，也可以是非静态的。
+	泛型构造函数：可以在非泛型类中定义泛型构造方法：
+	class Gen{
+		double num;
+		<T extends Number> Gen(T t){
+			this.num = t.doubleValue();
+		}
+	}
+	泛型接口：
+	public interface MinMax<T> {
+		T min();
+		T max();
+	}
+	实现接口：
+	class MyClass<T> implements MinMax{...}
+	这里需要把接口中的泛型声明写到子类后面
+	class MyClass implements MinMax<Integer>{...} 这种写法是允许的
+	为了某些需要和原始代码兼容，可以按照原始代码方式使用泛型类：Gen gen = new Gen(...);
+	子类继承带泛型的父类时，必须也声明泛型：
+	class Gen2<T> extends Gen<T>{...}
+	也可以添加自己的泛型类型：
+	class Gen2<T,V> extends Gen<T>{...}
+	extends Gen<T>可以简写成 extends Gen
+	非泛型类可以作为泛型类的超类
+	运行时不能使用泛型类型信息：
+	gen instanceof Gen<Integer> //编译不能通过
+	gen instanceof Gen<?>       //OK
+	(Gen<Integer>)gen 			//强制类型转换是允许的，但是并不安全
+	JDK1.7新增了泛型类型推断，即所谓“菱形运算符”：Gen<Integer> igen = new Gen<>(55);
+	模糊性错误：
+	public class MyGenClass<K,V extends Number> {
+		K k;
+		V v;
+		void set(K k){
+			this.k = k;
+		}
+		void set(V v){
+			this.v = v;
+		}
+	}
+	这里重载的set方法可以通过编译，但是如果使用MyGenClass<Number,Number>类型对象调用set方法就会导致错误。
+	泛型类不能继承Throwable，不能创建包括特定泛型类型的数组：
+	Gen<Integer> gens = new Gen<Integer>[10];  //wrong
+	可以使用通配符：
+	Gen<?> gens = new Gen<?>[10];  //OK
 
 
 
