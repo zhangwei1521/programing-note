@@ -44,9 +44,6 @@
 		2、sudo chown -R $(whoami) $(npm config get prefix)/{lib/node_modules,bin,share} //修改npm安装目录权限为当前用户
 	npm outdated -g --depth=0 查看全局安装的包的版本信息，npm update -g <package>更新指定的包；npm update -g更新全局所有包
 	npm uninstall -g <package> 卸载全局安装的指定包
-	npm run 是 npm run-script 的缩写，npm run 会创建一个Shell，执行指定的命令，并临时将node_modules/.bin加入PATH 变量，这意味着本地模块可以直接运行。
-	npm 可以直接运行 package.json 中 scripts 指定的脚本（命令）：npm run build
-	直接运行 npm run 会列出当前项目的 package.json 中 scripts 属性下的所有脚本命令
 	npm info <package-name> 可以查看指定包的信息
 	npm adduser 用于在npmjs.com注册一个用户
 	npm home <package-name>命令可以打开指定模块的主页； 
@@ -64,6 +61,27 @@
 还需要修改环境变量path（用户环境变量path）：path ：E:\zhangweei\js-repo\npm-repo\
 全局安装的包会被下载到d:\js-repo\npm-repo\node_modules\下。
 	执行npm config set prefix "D:\Program Files(×86)\nodejs\node_global" 后npm命令失效，需要删除用户主目录下的.npmrc文件
+	npm脚本：
+	"scripts": {
+		"build": "node build.js"
+	}
+	scripts字段是一个对象。它的每一个属性，对应一段脚本。使用npm run命令，就可以执行这段脚本：npm run build 等同于执行 node build.js
+	直接使用 npm run 可以查看当前项目的所有 npm 脚本命令
+	每当执行npm run，就会自动新建一个 Shell，将当前目录的node_modules/.bin子目录加入PATH变量，执行结束后，再将PATH变量恢复原样。在这个 Shell 里面执行指定的脚本命令，
+就可以使用安装的工具了。npm脚本就是shell脚本，所以可以使用通配符：*表示任意文件名，**表示任意一层子目录。
+	如果 npm 脚本里面需要执行多个任务，那么需要明确它们的执行顺序：使用&符号表示同时并行执行，使用&&表示在前一个任务成功后才会执行后一个任务。
+	npm 提供了两个默认脚本命令：
+		"start": "node server.js"，#如果自己的js脚本不是这个名字，就要复写这条脚本
+		"install": "node-gyp rebuild" #这个应该已经过时了
+	npm 脚本有pre和post两个钩子，pre表示在执行xxx命令脚本前先执行prexxx命令脚本，post表示在执行xxx命令脚本后执行postxxx命令脚本，npm默认提供preinstall，postinstall，
+preuninstall，postuninstall，prestart，poststart等。也可以自定义自己脚本的钩子命令。
+	npm start是npm run start的简写，npm 脚本中通过npm_package_前缀可以拿到package.json里面的字段
+	npm脚本示例：
+		"clean": "rimraf dist/*",#删除目录
+		"open:dev": "opener http://localhost:9090",#打开浏览器
+		"livereload": "live-reload --port 9091 dist/",#实时刷新
+		
+
 	
 
 

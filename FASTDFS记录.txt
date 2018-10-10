@@ -18,3 +18,10 @@ FASTDFS:
 	storage节点内卷服务器定期和tracker节点通信，通知tracker节点所存文件的文件标识（卷名和文件名）；同时storage节点完成卷内各个存储服务器间的数据同步。
 文件下载过程：
 	客户端先访问tracker节点，传递文件标识给tracker节点，tracker服务器返回对应的storage节点内卷服务器地址，client直接和storage内卷服务器通讯完成文件下载。
+
+一次fastdfs排错记录：
+之前迁移微服务A模块的文件到生产环境，但是迁移的文件无法下载，检查服务器确定文件确实已经上传成功，且文件路径没有错误。对比正常的另一个可以正常下载的微服务模块B的下载方法，
+没有发现问题，直接使用服务B的方法也不能下载服务A迁移的文件，然后检查服务B上传的文件却找不到，怀疑其上传服务器地址不正确，于是更新了服务B的上传地址后重新上传，却发现服务B
+上传新文件失败，报错日志显示：storageClient1.upload_file1(bytes, ext, meta_list) 报上传错误，storageClient1.upload_file1方法报unsupportedencodingexception: utf-8 ，
+查看fastdfs-client代码找到这一行：masterFilenameBytes = master_filename.getBytes(ClientGlobal.g_charset);这里转回项目查看设置的编码，意外发现配置的编码UTF-8后面多了个空格。
+修改后再上传文件就成功了，再次使用服务B的接口下载迁移的文件，可以正常下载，再检查服务A的配置发现A的配置存在明显错误。
