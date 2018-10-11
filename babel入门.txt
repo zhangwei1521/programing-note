@@ -1,4 +1,4 @@
-													babel入门
+													babel入门（参考：阮一峰：Babel 入门教程）
 	babel是什么？
 	Babel是一个广泛使用的转码器，可以将ES6代码转为ES5代码，从而在现有环境执行。
 	Babel的配置文件是.babelrc，存放在项目的根目录下。使用Babel的第一步，就是配置这个文件。该文件用来设置转码规则和插件，基本格式如下：
@@ -36,5 +36,37 @@
 		 },	
 	转码命令： npm run build
 	babel-cli带有一个babel-node命令，可以进入支持ES6的REPL（交互式）环境。也可以使用babel-node es6script.js直接执行es6脚本
+	babel-register可以为require命令添加钩子，使得使用require加载.js、.jsx、.es和.es6后缀名的文件，会先用Babel进行转码。安装：npm install --save-dev babel-register 
+使用前先使用require加载babel-register,babel-register只会对require命令加载的文件转码，而不会对当前文件转码:
+		require("babel-register");
+		require("./index.js");
+	babel-core可以让我们在代码中调用Babel的API进行转码，安装：npm install --save bable-core
+		var babel = require('babel-core');
+		// 字符串转码
+		babel.transform('code();', options);  //这里options是一个对象，如var options = {presets:{"es2015"}}
+		// => { code, map, ast }
+	babel(babel-core、babel-cli)默认只转换新的js句法，而不转换新增的API接口，如Array对象新增的from方法。babel-polyfill用来转码这些新的API，安装：
+npm install --save babel-polyfill ,引入到脚本：
+		import 'babel-polyfill';
+		// 或者
+		require('babel-polyfill');
+	浏览器环境转码：需要使用babel6.0之前的版本，npm install babel-core@old ,然后在引入browser.js(或browser.min.js)：
+	<script src="node_modules/babel-core/browser.js"></script>
+	<script type="text/babel">
+		// Your ES6 code
+		console.log(...[1, 2, 3]);
+	</script>
+	也可以使用<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.4.4/babel.min.js"></script>
+	网页中实时将ES6代码转为ES5，对性能会有影响。生产环境需要加载已经转码完成的脚本(放到webpack中)
+	使用babel配合eslint静态检查代码：
+		npm install --save-dev eslint babel-eslint
+		配置.eslint文件：
+			{
+			  "parser": "babel-eslint",
+			  "rules": {
+				...
+			  }
+			}
+		package.json中scripts添加："lint": "eslint my-files.js"
 	
 	

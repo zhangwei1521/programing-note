@@ -1,0 +1,75 @@
+											webpack入门（参考：https://segmentfault.com/a/1190000006178770）
+	什么是Webpack
+	WebPack可以看做是模块打包机：它做的事情是，分析你的项目结构，找到JavaScript模块以及其它的一些浏览器不能直接运行的拓展语言（Scss，TypeScript等），
+并将其转换和打包为合适的格式供浏览器使用。
+	Webpack的工作方式是：把你的项目当做一个整体，通过一个给定的主文件（如：index.js），Webpack将从这个文件开始找到你的项目的所有依赖文件，使用loaders处理它们，
+最后打包为一个（或多个）浏览器可识别的JavaScript文件。
+	安装到项目目录	npm install --save-dev webpack
+	终端中使用：webpack {entry file} {destination for bundled file} //全局安装
+				node_modules/.bin/webpack {entry file} {destination for bundled file} //项目中安装
+	配置文件：webpa.config.js:
+	module.exports = {
+	  entry:  __dirname + "/app/main.js",//已多次提及的唯一入口文件
+	  output: {
+		path: __dirname + "/public",//打包后的文件存放的地方
+		filename: "bundle.js"//打包后输出文件的文件名
+	  }
+	}
+	“__dirname”是node.js中的一个全局变量，它指向当前执行脚本所在的目录。
+	这样在终端执行 webpack 命令会引用该配置文件的内容。
+	也可以在package.json中的scripts中定义一个命令脚本，如 "build": "webpack",这样就可以使用npm 调用webpack了：npm run build
+	配置 devtool: 'eval-source-map',使用eval打包源文件模块，在同一个文件中生成干净的完整的source map。这个选项可以在不影响构建速度的前提下生成完整的sourcemap，
+但是对打包后输出的JS文件的执行具有性能和安全的隐患。在开发阶段这是一个非常好的选项，在生产阶段则一定不要启用这个选项；
+	安装webpack-dev-server： npm install --save-dev webpack-dev-server 配置：
+	devServer: {
+		contentBase: "./public",//本地服务器所加载的页面所在的目录
+		historyApiFallback: true,//不跳转
+		inline: true,//实时刷新
+		port: 8765 //端口
+	},
+	package.json中的scripts中定义一个命令脚本start："start": "webpack-dev-server --open" 使用npm start 开启服务器
+	webpack通过不同的loader调用外部脚本或工具来处理各种文件，如使用babel转换es6为es5语法。
+	安装babel、babel-loader、babel-preset：npm install --save-dev babel-core babel-loader babel-preset-env babel-preset-react
+	配置babel-loader:webpack.config.js中添加：
+	module: {
+        rules: [
+            {
+                test: /(\.jsx|\.js)$/,
+                use: {
+                    loader: "babel-loader",
+                    options: {
+                        presets: [
+                            "env", "react"
+                        ]
+                    }
+                },
+                exclude: /node_modules/
+            }
+        ]
+    }
+	#test：一个用以匹配loaders所处理文件的拓展名的正则表达式（必须）
+	#loader：loader的名称（必须）
+	#include/exclude:手动添加必须处理的文件（文件夹）或屏蔽不需要处理的文件（文件夹）（可选）；
+	#query：为loaders提供额外的设置选项（可选）
+	也可以把babel的配置放到babel的配置文件中.babelrc中:
+		{
+		  "presets": ["react", "env"]
+		}
+	css-loader使你能够使用类似@import 和 url(...)的方法实现 require()的功能,CSS modules意在把JS的模块化思想带入CSS中来，通过CSS模块，所有的类名，动画名默认都只作用于当前模块。
+	style-loader将所有的计算后的样式加入页面中，二者组合在一起使你能够把样式表嵌入webpack打包后的JS文件中。
+	loaders是在打包构建过程中用来处理源文件的（JSX，Scss，Less..），一次处理一个，插件并不直接操作单个文件，它直接对整个构建过程其作用，
+而插件（Plugins）是用来拓展Webpack功能的，它们会在整个构建过程中生效，执行相关的任务。
+	使用内置插件BannerPlugin（添加版权提示）、UglifyJsPlugin（压缩JS代码）：
+		const webpack = require('webpack');
+		plugins: [
+			new webpack.BannerPlugin('版权所有，翻版必究'),
+			new webpack.optimize.UglifyJsPlugin()
+		],
+	使用第三方插件ExtractTextPlugin（分离CSS和JS文件）：安装 npm install --save-dev extract-text-webpack-plugin 配置：
+		const ExtractTextPlugin = require('extract-text-webpack-plugin');
+		plugins: [
+			...
+			new ExtractTextPlugin("style.css")
+		],
+	
+	
