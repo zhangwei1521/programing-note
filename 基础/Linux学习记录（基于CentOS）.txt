@@ -1,0 +1,43 @@
+										Linux学习记录（基于CentOS）
+	Linux是一个操作系统内核，RHEL、CentOS、Ubuntu等发行版是将linux内核和各种GNU工具打包在一起后发布的完整操作系统。几种
+常见linux发行版：早期 Red Hat --> Fedora		Debian -->		Slackware -->
+						|						   |				|
+					  RHEL --> 					  Ubuntu -->		SUSE -->
+						|
+					  CentOS --> 
+	CentOS安装:基于Vmware Workstation
+	新建虚拟机：vmware中选择创建新的虚拟机，然后选择“稍后安装操作系统”，继续直到选择安装位置，选择一个有足够空间的盘符下的文件夹，
+输入虚拟机名，下一步设置分配的磁盘容量，使用默认20G就够了，下一步后点击“自定义硬件”，其中“CD/DVD”项不修改，网络设备
+选择NAT，然后关闭就结束了。
+	几种网络模式说明：桥接模式——虚拟机和物理机以并列方式连接同一个网络，NAT模式——物理机作为虚拟机的“路由器”，
+仅主机模式——相当于使用网线直接连接虚拟机和物理机。
+	安装linux：在新建的虚拟机主页，点击“编辑虚拟机设置”，“CD/DVD”项选择“使用ISO镜像文件”，选择下载的centos镜像。然后确定。
+虚拟机主页点击“开启此虚拟机”，进入安装过程，选择第一行“Install ...”，回车后设置语言等，继续到安装信息摘要，点击“安装位置”，
+选中“我要配置分区”，点击“完成”，进入分区界面，LVM下拉框选择“标准分区”，点击 + 号设置挂载点为 /boot，期望容量为 200M，然后
+添加挂载点。继续添加 swap 分区，4GB，根分区 /，期望容量留空，表示将剩下的空间全部给根挂载点。点击完成-->接受更改-->开始安装，
+点击“ROOT密码”设置root密码，然后继续直到安装完成，点击重启。输入root、root密码后登陆系统。
+	使用 dhclient 自动获取一个ip地址，使用 ip addr查看ip地址。使用 ping -c 4 www.baidu.com 测试网络联通性。
+	使用 vi /etc/sysconfig/network-scripts/ifcfg-ens33 设置静态ip：ONBOOT=no 改为yes（网卡驱动随着系统一起启动），
+BOOTPROTO=dhcp 改为static（静态ip），新增：
+		IPADDR=192.168.112.88
+		NETMASK=255.255.255.0
+		GATEWAY=192.168.112.2
+		DNS1=119.29.29.29
+	使用 systemctl restart network.service 重启网络服务。
+	使用图形用户界面登陆，默认在tty1，但是tty命令显示是0，可以使用Ctrl+Alt+(F2~F6)不关闭图形服务切换到命令行，使用
+Ctrl+Alt+F1切换回图形用户界面。
+	图形用户界面使用 init 3 关闭图形服务并切换到命令行界面。
+	使用 startx 开启图形服务。（最好不使用）
+	快捷键：Ctrl+D 退出当前终端 Ctrl+C 结束当前命令 Ctrl+Z暂停当前进程，使用fg恢复 Ctrl+A移动光标到行首，Ctrl+E移动
+光标到行尾。
+	关机：shutdown -h now/10   -r（重启） 关机前使用sync将内存中数据写到磁盘。
+	忘记root用户密码处理方法：
+	1重启系统，加载内核前使用下键停止继续启动，然后移动到第一行输入e进入编辑界面，找到linux16开头的行，修改ro为
+rw init=/sysroot/bin/bash，然后Ctrl+x进入emergency模式，使用chroot切换到sysroot（原始系统），使用LANG=en改变当前终端
+语言为英语，然后使用passwd输入新密码,touch /.autorebabel 使修改生效，然后使用Ctrl+D，reboot重启系统。
+	2使用rescue模式：虚拟机中电源处选择“打开电源进入固件”，进入BIOS后设置启动系统从光驱开始（将CD-ROM移到最前），F10
+保存退出后进入光驱启动模式，使用下键选择Troubleshooting，回车后选择Rescue a CentOS...连续回车到输出提示，输入1继续，
+然后chroot /mnt/sysimage进入初试系统，使用passwd改密码。Ctrl+D退出Rescue模式，reboot重启。
+
+	
+	
