@@ -1924,13 +1924,31 @@ Node.prototype.isEqualNode()		返回一个布尔值，用于检查两个节点�
 Node.prototype.isSameNode()			返回一个布尔值，表示两个节点是否为同一个节点。
 Node.prototype.normalize() 			清理当前节点内部的所有文本节点（text）。它会去除空的文本节点，并且将毗邻的文本节点合并成一个，也就是说不存在空的文本节点，以及毗邻的文本节点。
 Node.prototype.getRootNode()		返回当前节点所在文档的根节点，与ownerDocument属性的作用相同。
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+DOM 提供两种节点集合，用于容纳多个节点：NodeList和HTMLCollection。许多 DOM 属性和方法，返回的结果是NodeList实例或HTMLCollection实例。
+主要区别是，NodeList可以包含各种类型的节点，HTMLCollection只能包含 HTML 元素节点。
+NodeList 接口
+NodeList实例是一个类似数组的对象，它的成员是节点对象。通过以下方法可以得到NodeList实例。
+	Node.childNodes			//var children = document.body.childNodes; children instanceof NodeList // true  Array.isArray(children) // false
+	document.querySelectorAll()等节点搜索方法
+NodeList 实例可能是动态集合，也可能是静态集合。所谓动态集合就是一个活的集合，DOM 删除或新增一个相关节点，都会立刻反映在 NodeList 实例。
+目前，只有Node.childNodes返回的是一个动态集合，其他的 NodeList 都是静态集合。
+NodeList 实例children不是数组，但是具有length属性和forEach方法。使用var nodeArr = Array.prototype.slice.call(children);将NodeList实例转换为（构造新的）数组
+NodeList 实例有一个item方法，参数为索引下标，实际用途和[]一样，通常直接使用[]而不使用item方法
+NodeList 实例提供keys()方法返回子元素索引的遍历器，提供values()方法返回所有子元素的遍历器，entries()方法返回索引和子元素键值对的遍历器，可以通过for...of循环遍历器获取每一个成员的信息
+	var children = document.body.childNodes;
+	for (var entry of children.entries()) {
+		console.log(entry);
+	}
+	// Array [ 0, #text ]
+	...
 
-
-
-
-
-
-
+HTMLCollection 接口
+HTMLCollection是一个节点对象的集合，只能包含元素节点（element），不能包含其他类型的节点。HTMLCollection没有forEach方法，只能使用for循环遍历。
+返回HTMLCollection实例的，主要是一些Document对象的集合属性，比如document.links、docuement.forms、document.images等。
+HTMLCollection实例都是动态集合，节点的变化会实时反映在集合中。
+可以直接使用原生的id或name属性获取元素：var lik = document.links.lnkBlogLogo //<a id="lnkBlogLogo" href="https://www.cnblogs.com/penghongwei/">aaa</a>
+也可以使用namedItem(idName)方法通过id或name获取子元素，item(i)方法和[]用法相同。
 
 
 
