@@ -1,0 +1,226 @@
+															react-router4路由原理
+		（原文地址：https://www.jianshu.com/p/4e86372cb2fb?utm_campaign=maleskine&utm_content=note&utm_medium=seo_notes&utm_source=recommendation）
+	页面内更改页面路径通常只有两种方式：一种是使用浏览器的前进和后退功能，另一种是使用超链接。对于使用前进后退的方式，React Router 使用了 History工程里的 .listen 方法
+来监听当前 URL 的变化，为了简单也可以使用 HTML5 的 popstate 事件来实现这一功能。用户点击了后退/前进按钮，popstate 就被触发，让Route监听 popstate ，当页面URL发生变化时
+就重新渲染UI。
+	class Route extends Component {
+		...
+		componentWillMount() {
+			addEventListener("popstate", this.handlePop)
+		}
+		componentWillUnmount() {
+			removeEventListener("popstate", this.handlePop)
+		}
+		handlePop = () => {
+			this.forceUpdate()
+		}
+		...
+	}
+	渲染UI时匹配页面URL和路由路径，如果匹配就渲染当前组件，使用Route需要提供path、exact（不提供则默认false）、component或render
+	class Route extends Component {
+		static propTypes: {
+			path: PropTypes.string,
+			exact: PropTypes.bool,
+			component: PropTypes.func,
+			render: PropTypes.func,
+		}
+		...
+		render() {
+			const {
+				path,
+				exact,
+				component,
+				render,
+			} = this.props
+			const match = matchPath(location.pathname, { path, exact })
+			if (!match)
+			  return null
+			if (component)
+			  return React.createElement(component, { match })
+			if (render)
+			  return render({ match })
+			return null
+		}
+	}
+	matchPath使用正则表达式进行匹配，exact指定是否进行精确匹配：
+	const matchPath = (pathname, options) => {
+		const { exact = false, path } = options
+		if (!path) {
+			return {
+				path: null,
+				url: pathname,
+				isExact: true
+			}
+		}
+		const match = new RegExp(`^${path}`).exec(pathname)
+		if (!match)
+			return null
+		const url = match[0]
+		const isExact = pathname === url
+		if (exact && !isExact)
+			return null
+		return {
+			path,
+			url,
+			isExact,
+		}
+	}
+	使用Link组件来实现通过超链接改变页路径，使用Link需提供 to 和 replace，
+	class Link extends Component {
+		static propTypes = {
+			to: PropTypes.string.isRequired,
+			replace: PropTypes.bool,
+		}
+		handleClick = (event) => {
+			const { replace, to } = this.props
+			event.preventDefault()
+			replace ? historyReplace(to) : historyPush(to)
+		}
+		render() {
+			const { to, children} = this.props
+			return (
+				<a href={to} onClick={this.handleClick}>
+					{children}
+				</a>
+			)
+		}
+	}
+	使用event.preventDefault()阻止页面刷新，为了简单，使用 HTML5 的 pushState 和 replaceState改变页面URL，React Router 使用了 History工程里的push 和 replace 方法实现
+这个功能。并且将每个Route保存到一个数组中，每次更新页面URL后，就遍历数组强制更新所有Route。
+	let instances = []
+	const register = (comp) => instances.push(comp)
+	const unregister = (comp) =>      instances.splice(instances.indexOf(comp), 1)
+	const historyPush = (path) => {
+		history.pushState({}, null, path)
+		instances.forEach(instance => instance.forceUpdate())
+	}
+	const historyReplace = (path) => {
+		history.replaceState({}, null, path)
+		instances.forEach(instance => instance.forceUpdate())
+	}
+	组件加载时将组件保存到数组：
+	class Route extends Component {
+		componentWillMount() {
+			addEventListener("popstate", this.handlePop)
+			register(this)
+		}
+		componentWillUnmount() {
+			unregister(this)
+			removeEventListener("popstate", this.handlePop)
+		}
+	}
+	
+	完整代码：Route.js
+
+import React, { PropTypes, Component } from 'react'
+
+let instances = []
+const register = (comp) => instances.push(comp)
+const unregister = (comp) =>      instances.splice(instances.indexOf(comp), 1)
+const historyPush = (path) => {
+  history.pushState({}, null, path)
+  instances.forEach(instance => instance.forceUpdate())
+}
+const historyReplace = (path) => {
+  history.replaceState({}, null, path)
+  instances.forEach(instance => instance.forceUpdate())
+}
+
+const matchPath = (pathname, options) => {
+  const { exact = false, path } = options
+  if (!path) {
+    return {
+      path: null,
+      url: pathname,
+      isExact: true
+    }
+  }
+  const match = new RegExp(`^${path}`).exec(pathname)
+  if (!match)
+    return null
+  const url = match[0]
+  const isExact = pathname === url
+  if (exact && !isExact)
+    return null
+  return {
+    path,
+    url,
+    isExact,
+  }
+}
+
+class Route extends Component {
+  static propTypes: {
+    path: PropTypes.string,
+    exact: PropTypes.bool,
+    component: PropTypes.func,
+    render: PropTypes.func,
+  }
+  componentWillMount() {
+    addEventListener("popstate", this.handlePop)
+    register(this)
+  }
+  componentWillUnmount() {
+    unregister(this)
+    removeEventListener("popstate", this.handlePop)
+  }
+  handlePop = () => {
+    this.forceUpdate()
+  }
+  render() {
+    const {
+      path,
+      exact,
+      component,
+      render,
+    } = this.props
+    const match = matchPath(location.pathname, { path, exact })
+    if (!match)
+      return null
+    if (component)
+      return React.createElement(component, { match })
+    if (render)
+      return render({ match })
+    return null
+  }
+}
+
+class Link extends Component {
+  static propTypes = {
+    to: PropTypes.string.isRequired,
+    replace: PropTypes.bool,
+  }
+  handleClick = (event) => {
+    const { replace, to } = this.props
+    event.preventDefault()
+    replace ? historyReplace(to) : historyPush(to)
+  }
+  render() {
+    const { to, children} = this.props
+    return (
+      <a href={to} onClick={this.handleClick}>
+        {children}
+      </a>
+    )
+  }
+}
+
+class Redirect extends Component {
+  static defaultProps = {
+    push: false
+  }
+  static propTypes = {
+    to: PropTypes.string.isRequired,
+    push: PropTypes.bool.isRequired,
+  }
+  componentDidMount() {
+    const { to, push } = this.props
+    push ? historyPush(to) : historyReplace(to)
+  }
+  render() {
+    return null
+  }
+}
+	
+	
+	
