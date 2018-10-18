@@ -275,6 +275,29 @@
 	Region默认值为default，Zone默认值为defaultZone
 	@EnableDiscoveryClient注解用于开启DiscoveryClient的实例，使用eureka客户端就是创建DiscoveryClient的实现类EurekaDiscoveryClient
 的实例对象，该对象使用netflix的DiscoveryClient对象完成服务注册和发现。
+	客户端配置：eureka.client作为前缀
+	指定注册中心：eureka.client.serviceUrl.defaultZone = http://localhost:1111/eureka/ #默认值为http://localhost:8761/eureka/
+				  eureka.client.serviceUrl.defaultZone = http://<username>:<password>@localhost:1111/eureka/ #添加安全校验
+	启用客户端：  eureka.client.enabled = true #默认为true
+	启用过滤：	  eureka.client.filterOnlyUpInstances = true  #默认为true
+	...
+	服务实例配置：eureka.intance作为前缀
+	实例名配置：  eureka.intance.instanceId = ${spring.application.name}:${random.int}
+	通常微服务实例需要使用spring-boot-starter-actuator提供应用运行状态数据，eureka注册中心默认使用/info端点作为服务实例状态页接口，
+当开启了healthCheck后使用/health端点作为作为健康检查接口。如果应用设置了context-path，则actuator端点会添加一个前缀，需要修改/info
+端点和/health端点配置：
+	management.context-path = /hello
+	eureka.instance.statusPageUrlPath = ${management.context-path}/info
+	eureka.instance.healthCheckUrlPath = ${management.context-path}/health
+	修改端点路径：
+	endpoints.info = /appInfo
+	eureka.instance.statusPageUrlPath = ${endpoints.info}
+	eureka注册中心使用http暴露服务实例的端点，如果实例端点实际使用https暴露端点，需要配置绝对路径：
+	eureka.instance.statusPageUrl = https://${eureka.instance.hostname}/info
+	开启健康检查：
+	eureka.client.healthcheck = true
+	eureka.instance.appname = hello #默认使用spring.application.name
+	配置随机端口号：server.port = 0 或 server.port = ${random.int[10000,19999]}
 	
 	
 	
