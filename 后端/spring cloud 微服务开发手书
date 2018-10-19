@@ -298,6 +298,42 @@
 	eureka.client.healthcheck = true
 	eureka.instance.appname = hello #默认使用spring.application.name
 	配置随机端口号：server.port = 0 或 server.port = ${random.int[10000,19999]}
+															第三章 Ribbon
+	Spring Cloud Ribbon是一个工具类框架，由于微服务间的调用和网关转发请求几乎都会使用Ribbon，因此Ribbon几乎存在于所有微服务和基础构件中。
+	服务端负载均衡：通过硬件或者软件模块根据可用服务清单分发请求，并通过心跳方式更新服务清单。
+	客户端负载均衡：客户端从注册中心获取所使用的服务清单，也通过心跳从注册中心更新该清单。Eureka、Consul都整合了Ribbon相关功能，可以和
+客户端Ribbon配合提供服务清单。服务提供者不需要关心具体的负载均衡方式，只需要提供可用服务实例，服务消费者只需要引入Ribbon依赖，使用
+@LoadBalanced修饰的RestTemplate来调用服务。
+	RestTemplate使用：
+	GET请求：
+		  <T> ResponseEntity<T> getForEntity(String url, Class<T> responseType, ...urlVirable)	//ResponseEntity封装了请求响应，如 
+HttpStatus 等，其父类是 HttpEntity，T getBody()方法将根据第二个参数T.class返回给定类型数据(对象)。
+重载方法：<T> ResponseEntity<T> getForEntity(String url, Class<T> responseType, Map<String, ?> urlVariables)
+		  <T> ResponseEntity<T> getForEntity(URI url, Class<T> responseType)
+使用:     ResponseEntity<String> result = restTemplate.getForEntity("http://HELLO-SERVICE/hello2?name={1}",String.class,"hello");
+		  String hello = result.getBody();
 	
+		  <T> T getForObject(String url, Class<T> responseType, Object... urlVariables)   //相当于直接返回getForEntity返回值ResponseEntity 的body部分
+重载方法：<T> T getForObject(String url, Class<T> responseType, Map<String, ?> urlVariables)
+		  <T> T getForObject(URI url, Class<T> responseType)
+	
+	POST请求：
+		  <T> ResponseEntity<T> postForEntity(String url, Object request, Class<T> responseType, Object... uriVariables)
+重载方法：<T> ResponseEntity<T> postForEntity(String url, Object request, Class<T> responseType, Map<String, ?> uriVariables)
+		  <T> ResponseEntity<T> postForEntity(URI url, Object request, Class<T> responseType)
+		  
+		  <T> T postForObject(String url, Object request, Class<T> responseType, Object... uriVariables)
+重载方法：<T> T postForObject(String url, Object request, Class<T> responseType, Map<String, ?> uriVariables)
+		  <T> T postForObject(URI url, Object request, Class<T> responseType)
+		
+	PUT请求：
+		  void put(String url, Object request, Object... urlVariables)
+重载方法：void put(String url, Object request, Map<String, ?> urlVariables)
+		  put(URI url, Object request)
+		  
+	DELETE请求：
+		void delete(String url, Object... urlVariables)
+		void delete(String url, Map<String, ?> urlVariables)
+		void delete(URI url)
 	
 	

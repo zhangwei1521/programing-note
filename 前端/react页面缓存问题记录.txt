@@ -1,0 +1,50 @@
+										react页面缓存问题记录
+问题说明：切换菜单后，react页面会被重新加载，导致页面数据丢失，如已输入的查询条件、查询结果等。
+需求说明：切换菜单，保留原页面数据，关闭页面后清除页面数据缓存。
+备选方案：1、页面更新后，使用localStorage保存页面数据，切换菜单加载页面时从localStorage获取数据恢复页面。
+		  2、考虑调整路由方式，切换菜单时不卸载原页面，关闭页面时再卸载页面
+选择方案：方案1需要改动所有页面，实际可行性几乎为零。所以选择方案2。
+
+	项目中使用 react-route.v4 的 react-route-dom 作为路由方案，使用<Switch>、<Route>路由组件实现动态路由，但是<Switch>组件
+每次只渲染匹配当前路径的路由组件，因此切换菜单改变页面路径后<Swtich> 会卸载上一个页面。
+	经过查找相关资源，找到开源项目 react-router-cache-route，经过本地测试，可以很好地解决当前问题。项目中使用该工程提供的
+<CacheSwitch>、<CacheRoute>替代<Switch>、<Route>，使用 dropByCacheKey API在关闭页面后手动清除页面缓存。
+
+npm依赖："react-router-cache-route": "^1.3.1",
+页面使用：
+import CacheRoute, { CacheSwitch, dropByCacheKey} from 'react-router-cache-route'
+
+<CacheSwitch location={location} key={location.pathname.split('/')[1]}>
+	{this.state.urlList.map((item, index) => {
+			let Component = this.state.rightMenus[item.url];
+			return <CacheRoute when={"always"} cacheKey={item.url} key={item.url} location={location} path={`/${this.state.moduleName}/${item.url}`}
+						  render={() => <Component location={location} code={this.state.code} typeFlag={item.url}/>}/>
+	})}
+</CacheSwitch>
+
+//关闭tab
+delTab = (tab) => {
+	...
+	this.setState({oldItem: tab,...},()=>{
+		...
+		this.props.dispatch(setCode(code));
+        setTimeout(this.clearCatch,1000);
+	})
+	...
+}
+
+//清除页面缓存
+clearCatch=()=>{
+	let url = this.state.oldItem != null ? this.state.oldItem.url : null;
+	if(!url){
+		return;
+	}
+	dropByCacheKey(this.state.oldItem.url);
+}
+
+	使用<CacheRoute>组件时，添加属性 when={"always"} 指定始终使用页面缓存，属性 cacheKey={item.url} 标记页面，关闭页面清除缓存时使用cacheKey
+确定页面。
+	关闭页面和清除缓存不能同步执行，this.props.dispatch(setCode(code))调用不会立即切换当前显示的页面，所有这里使用定时器异步清除页面缓存。
+	经过本地测试，暂时没有发现新的问题，为了以后方便回溯，故记录此文。
+	附react-router-cache-route项目地址：https://github.com/CJY0208/react-router-cache-route/blob/master/README_CN.md
+
