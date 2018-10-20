@@ -1,0 +1,413 @@
+												Spring核心技术
+													第一章
+	spring的诞生：替换重量级的EJB，spring提供了更加轻量级和简单的编程模型。增强了POJO的能力，使其能完成以前只有EJB的bean
+才能完成的任务。
+	spring简化开发的关键策略：
+1、使用POJO作为bean，坚持最小侵入性原则（尽量不要求应用组件依赖spring的接口和组件）
+2、通过依赖注入和面向接口编程实现松耦合
+3、基于切面和惯例进行声明式编程
+4、通过切面和模板减少样板式代码
+	依赖注入（DI）：系统中负责协调各对象的第三方组件（IOC容器）创建各对象，并根据配置的规则设置对象间的依赖关系。
+	装配方式：spring支持以多种方式定义各对象间的依赖关系，包括xml配置文件，java-config等。现在的spring通过应用上下文
+(Application Context)读取装配配置，然后创建所有bean对象并组装对象。
+	面向切面编程技术：分离软件系统中的关注点。业务组件不应该包含日志、事务等非核心逻辑，通常应用中这些非核心逻辑是
+相同的，应该被单独分离出来，称为横切关注点。
+	spring提供了一系列模板工具类，可以直接使用这些API来进行JDBC等操作，使用时只需要关注自己应用中的业务逻辑，而不必
+关注那些样板式的代码。
+	spring管理bean对象（创建、装配、配置等）的核心组件称为spring容器，spring容器可以分为两种类型：bean工厂(BeanFactory
+接口定义)和应用上下文(ApplicationContext接口定义)。现在的spring基本上都是应用上下文作为容器。几种应用上下文：
+		AnnotationConfigApplicationContext：从java配置类中加载配置信息以创建spring应用上下文
+		AnnotationConfigWebApplicationContext：从java配置类中加载配置信息以创建spring web应用上下文
+		ClasspathXmlApplicationContext：从类路径下的xml文件加载配置信息以创建spring应用上下文
+		FileSystemXmlApplicationContext：从文件系统指定位置的xml文件加载配置信息以创建spring应用上下文
+		XmlWebApplicationContext：从web应用下的xml文件加载配置信息以创建spring web应用上下文。
+	bean的生命周期：
+	实例化 --> 注入依赖 --> [setBeanName方法调用] --> [setBeanFactory方法调用] --> [setApplicationContext方法调用]-->
+					   (bean实现BeanNameAware接口)   (bean实现BeanFactoryAware接口) (bean实现ApplicationContextAware接口)   
+--> [postProcessBeforeInitialization方法调用] --> [afterProperties、init-method等方法调用] -->[postProcessAfterInitialization方法调用]-->		
+	  (bean实现BeanPostProcessor接口) 				(bean实现InitializingBean接口)			   (bean实现BeanPostProcessor接口)
+--> bean准备就绪，可以使用了 --> [destroy、destroy-method方法调用](bean实现DisposableBean接口)
+	spring-framework-4.0.x共有20个模块，可以划分为6个大的功能模块：spring核心容器、面向切面编程、Insrumentation、数据库与
+集成、web和远程调用、测试
+													第二章
+	装配的概念：创建应用对象之间的协作关系。
+	spring提供3种主要的装配机制：Ⅰ在XML中显式配置；Ⅱ在java中进行显式配置；Ⅲ 隐式的bean发现机制和自动装配
+	选择哪一种装配方式主要取决于自己的习惯，也可以混合使用三种方式。
+	自动装配：spring通过两个步骤实现自动化装配：组件扫描、自动装配
+	组件扫描：使用@Component 注解标记组件类，开启spring的自动扫描功能后，spring可以发现需要实例化的组件类。
+		@Component
+		public class Axe{
+		...
+		}
+		开启自动扫描-基于java配置：
+		@Configuration
+		@ComponentScan
+		public class AppConfig{
+		}
+		开启自动扫描-基于XML配置：
+		<context:component-scan base-package="package1"/>
+	测试：
+		@RunWith(SpringJUnit4ClassRunner.class)
+		@ContextConfiguration(classes=AppConfig.class)
+		public class MyAppTest{
+			@Autowired
+			private Axe axe;
+			
+			@Test
+			public void test01(){
+				asertNotNull(axe);
+			}
+		}
+	使用@Component标记的bean的id默认为类名的小写形式，为bean指定id可以使用：@Component("xxx")；也可以使用java依赖注入规范
+提供的注解：@Named("xxx")，大多数情况下@Named可以替换@Component使用
+	使用@ComponentScan配置的默认扫描包是配置类所在的包和该包的子包，指定扫描的基础包可以这样：
+@ComponentScan("package1")；也可以使用：@ComponentScan(basePackages="package1")；指定多个包作为扫描基础包：
+@ComponentScan(basePackages={"package1","package2"})
+	通过配置指定类的class对象来讲类所在的包作为扫描基础包：
+@ComponentScan(basePackageClasses={Axe.class,Woodcutter.class})  //将Axe和Woodcutter所在的包作为扫描基础包
+这里实际可以使用一个标记接口来代替具体的应用组件类
+	自动装配：使用@Autowired注解声明组件的依赖对象，通常是将@Autowired注解应用在构造器上或setter方法上，实际上可以应用到
+任何可以设置依赖对象的方法上(使用组件扫描的方式中完全可以直接将@Autowired放在依赖对象上，不定义setter方法也可以，)。
+可以使用java依赖注入规范的@Inject注解替换@Autowired。
+使用了@Autowired声明依赖某个对象，但是容器没有创建该类对象，spring创建上下文时会抛出异常，使用@Autowired(required=false)
+可以避免这种异常抛出，但是需要在程序中判断引用的对象是否为null。如果有多个依赖类（接口）类型，创建上下文也会抛出异常。
+	
+	使用JaveConfig进行显示配置bean：
+		@Configuration
+		public class MyAppConfig {
+			@Bean
+			public Axe axe(){
+				return new AxeB();
+			}
+		}
+	采用JavaConfig配置bean之间的关系时，@Autowired声明的依赖对象必须使用某种方式注入，构造器参数注入或setter方法注入：
+		@Autowired
+		public WoodcutterB(Axe axe){
+			this.axe = axe;
+		}
+		///
+		@Bean
+		public Woodcutter woodcutter(){
+			return new WoodcutterB(axe());
+		}
+	这里axe()会被容器拦截，所以其实每次返回的都是同一个bean
+	也可以使用另外一种方式：
+		@Bean
+		public Woodcutter woodcutter(Axe axe){
+			return new WoodcutterB(axe);
+		}
+	这种方式不关心传入的axe是如何创建的，可以是通过@Bean配置，也可以是通过XML配置，也可以是自动扫描方式
+	
+	历史上，早期的spring是采用XML来配置bean已经bean之间的关系的，现在不推荐使用这种方式，因为这不是一种方便的做法。
+		<?xml version="1.0" encoding="UTF-8"?>
+		<beans xmlns="http://www.springframework.org/schema/beans"
+			   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+			   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+			<bean id="axe" class="package1.impl.AxeC"/>
+		</beans>
+	XML配置文件存在的两个问题是：一是容器只能根据bean的默认构造方法来创建对象，而JavaConfig中则可以使用多种方式自定义
+对象创建的方式，二是全类名是以字符串的方式提供的，正确性无法得到保障，往往需要使用IDE来进行校验。
+	XML中配置使用构造器注入依赖有两种方式：使用<constructor-arg>和spring3引入的c-命名空间
+		<bean id="woodcutter" class="package1.impl.WoodcutterC">
+			<constructor-arg ref="axe"/>
+		</bean>
+	c-命名空间：
+		xmlns:c="http://www.springframework.org/schema/c"
+		<bean id="woodcutter" class="package1.impl.WoodcutterC" c:axe-ref="axe"/> //这里axe-ref引用了构造器的参数名
+		也可以这样用：
+		<bean id="woodcutter" class="package1.impl.WoodcutterC" c:_0-ref="axe"/>  //这里_0-ref引用构造器参数下标
+	构造器注入字面量：
+		<constructor-arg value="red axe"/>
+		<bean id="axe" class="package1.impl.AxeC" c:_0="orange axe"/>
+	构造器注入集合：
+		<constructor-arg>
+			<list>
+				<value>hello</value>
+				...
+			</list>
+		</constructor-arg>
+	这里使用list，也可以使用<set>二者没有区别，都可以用于构造器参数类型是List\Set\数组的参数注入；<list>内部使用<value>
+注入字面量，也可以使用<ref>axe</ref>注入bean引用
+	使用setter方法注入属性：
+		<bean id="axe" class="package1.impl.AxeC">
+			<constructor-arg value="red axe"/>
+			<property name="price" value="50"/>
+		</bean>
+	<property>内部也可以使用<list>注入集合
+	使用p命名空间：
+		xmlns:p="http://www.springframework.org/schema/p"
+		<bean id="axe2" class="package1.impl.AxeC" c:_0="orange axe" p:price="20"/>
+		<bean id="woodcutter2" class="package1.impl.WoodcutterC" p:axe-ref="axe"/>
+	使用util命名空间：
+		xmlns:util="http://www.springframework.org/schema/util"
+		<bean>外部定义集合：
+		<util:list id="list1">
+			<value>xxx</value>
+			...
+		</util:list>
+		使用p命名空间前缀引用util:list
+		<bean id="xx" class="..." p:tracks-ref="list1"/>
+	混合使用几种配置方式：
+	基于JavaConfig为主的配置的典型用法是：使用一个顶层java配置文件，在该java类中引用其它java配置文件和xml配置文件：
+		@Configuration
+		@Import({MyAppConfig.class})
+		@ImportResource("classpath:applicationContext.xml")
+		public class TopLevelConfig {
+		}
+	基于XML为主的配置的典型用法是：使用一个顶层XML配置文件，在该XML文件中引用其它java配置文件和xml配置文件：
+		<bean class="config.MyAppConfig"/>
+		<import resource="applicationContext.xml"/>
+	
+													第三章
+	不同的应用运行环境往往意味着应用需要做出一些调整，如果开发环境的应用运行良好，在迁移到生产环境时，我们希望最好
+不要变动太大。数据库配置等和环境关联密切的配置又确实需要调整，spring为此提供了一些解决方案。
+	spring可以在运行时根据环境来创建的和环境相关的bean，而不需要重新构建应用。
+	基于JavaConfig的配置：
+	在配置类上使用@Profile("env")注解声明当前配置类对应的环境，只有对应的profile被激活，才会使用此类中的bean声明。
+spring3.2开始也可以在方法上使用这个注解：
+		@Configuration
+		public class MyAppConfig {
+			@Bean
+			@Profile("dev")
+			public Axe axe(){
+				return new AxeB();
+			}
+			
+			@Bean
+			@Profile("proc")
+			public Axe axe(){
+				return new AxeC();
+			}
+		}
+	基于XML文件的配置：
+	在<beans>元素上使用属性 profile="env"声明当前配置文件对应的环境，也可以在<beans>里面嵌套<beans>:
+	<beans ...>
+		<beans profile="dev">
+			<bean id="axe" class="package1.impl.AxeB"/>
+			...
+		</beans>
+		<beans profile="proc">
+			<bean id="axe" class="package1.impl.AxeC"/>
+			...
+		</beans>
+	</beans>
+	激活profile:
+	spring应用上下文使用spring.profiles.active 和 spring.profiles.default属性确定激活哪个profile配置，优先使用前者。
+没有使用profile修饰的bean总是会被创建，不指定激活的profile则不会创建任何使用profile修饰的bean。
+	可以在以下位置配置spring.profiles.active 和 spring.profiles.default的值：
+		web应用中DispatcherServlet的初始化参数；
+		web应用的上下文参数；
+		JNDI条目；
+		环境变量；
+		JVM系统参数；
+		测试类上使用@ActiveProfiles({"dev"})注解声明
+	spring4的条件化配置：
+	spring4新增了注解：@Conditional，用在使用@Bean修饰的方法上，当条件为true就创建这个bean，否则不创建这个bean：
+		@Bean
+		@Conditional(MyCondition.class)
+		public Axe axe(){
+			return new AxeB();
+		}
+	这里MyCondition 需要实现spring 的Condition接口，该接口中声明了一个方法：
+boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata); ConditionContext接口的实例可以获取环境信息：
+Environment、bean工厂、资源加载器等，AnnotatedTypeMetadata接口实例可以或该@Conditional注解修饰的方法上的所有注解的信息。
+		public class MyCondition implements Condition{
+			public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata){
+				Environment env = context.getEnvironment();
+				return env.containsProperty("proc");
+			}
+		}
+	spring4开始，@Profile注解使用了@Conditional改写。
+	前面提到过，自动装配中如果存在多个同类型的bean，在注入时spring会抛出异常，这就是自动装配的歧义性问题。spring
+有两种方式处理这个问题：一种是标示首选的bean，另一种是使用限定符。
+	基于JavaConfig的配置中可以用 @Primary注解和 @Component或 @Bean配合使用标示首选bean：
+		@Configuration
+		public class MyAppConfig {
+			@Bean
+			public Axe axe(){
+				return new AxeB();
+			}
+			
+			@Bean
+			@Primary
+			public Axe axe2(){
+				return new AxeC();
+			}
+		}
+	基于XML文件的配置中可以使用：<bean ... primary="true"/>
+	标示首选bean的方式只能解决部分问题，因为可以同时标示多个同类型的bean为首选bean，这样就还是存在歧义性。
+	spring提供@Qualifier("xxx") 注解声明bean的限定符，@Qualifier("xxx")既用在声明bean的地方，比如和
+@Component或 @Bean配合使用定义bean的限定符，也用在声明bean的依赖处：和@Autowired配合使用。还可以使用
+@Qualifier注解定义自己的限定符注解：
+		@Target(ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.METHOD, ElementType.TYPE)
+		@Retention(RetentionPolicy.RUNTIME)
+		@Qualifier
+		public @interface Golden{}
+	使用：
+		@Configuration
+		public class MyAppConfig {
+			@Bean
+			@Golden
+			public Axe axe(){
+				return new AxeB();
+			}
+			
+			@Bean			
+			public Axe axe2(){
+				return new AxeC();
+			}
+		}
+		///
+		@Autowired
+		@Golden
+		private Axe axe;
+	bean的作用域问题：默认构造的bean都是单例，也就是说如果有多个bean依赖某类型的bean，其实依赖的都是同一个bean，如果
+希望把某个bean声明为非单例，可以使用注解：@Scope或者是scope属性：
+		@Bean
+		@Scope(ConfigurableBeanFactory.SCOPE_PROROTYPE)
+		public Axe axe(){
+			return new AxeB();
+		}
+		或
+		<bean id="axe" class="..." scope="prototype"/>
+	web应用中声明bean为会话作用域：
+		@Scope(value=WebApplicationContext.SCOPE_SESSION, proxyMode=ScopeProxyMode.INTERFACE)
+	这里的proxyMode用于将这个bean注入单例的bean中时，使用一个代理对象代替当前bean，因为在初始化容器时当前会话域的bean
+还没有被创建。实际调用会话作用域bean的方法时该代理对象会委托实际的会话bean处理。proxyMode=ScopeProxyMode.INTERFACE是基于
+接口的代理，如果是类，需要使用CGLig代理：proxyMode=ScopeProxyMode.TARGET_CLASS
+	基于XML的配置中使用:
+		<bean id="xxx" class="..." scope="session">
+			<aop:scoped-proxy/>
+		</bean>
+	scoped-proxy默认基于CGLib的类代理，可以使用属性proxy-target-class=false设置使用接口代理
+	注入外部值：为了避免某些硬编码，spring支持从外部文件中读取配置的值并注入到bean中
+		@Configuration
+		@PropertyResource("classpath:app.properties")
+		public class ExpressiveConfig{
+			@Autowired
+			Environment env;
+			
+			@Bean
+			public Axe axe(){
+				return new AxeD(env.getProperty("axed.name","stone axe"),env.getProperty("axed.price", Integer.class, 50));
+			}
+		}
+	Environment提供了很多方法用来获取外部信息以及环境信息。
+	使用占位符：${xxx}
+	构造函数中使用：
+		@Autowired
+		public AxeD(@Value("${axed.name}") String name, @Value("${axed.price}") int price){
+			this.name = name;
+			this.price = price;
+		}
+	需要声明PropertySourcesPlaceholderConfigurer类型的bean：
+		@PropertySource("classpath:/resources/app.properties")
+		@Bean
+		public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer(){
+			PropertySourcesPlaceholderConfigurer config = new PropertySourcesPlaceholderConfigurer();
+			return config;
+		}
+	XML文件中使用：
+		<context:property-placeholder file-encoding="UTF-8" location="classpath:/resources/app.properties" ignore-resource-not-found="true" />
+		<bean id="axed" class="package1.impl.AxeD" 
+			c:_name="${axed.name}
+			c:_price="${axed.price} "
+		/>
+	可以在构造器和属性注入中使用spEL表达式，spEL具有很强的能力，包括：使用bean的id引用bean、访问bean的属性和方法、
+进行算术运算逻辑运算、进行正则表达式匹配、操作集合等
+	读取系统属性：
+		@Autowired
+		public AxeD(@Value("#{systemProperties[axed.name]}") String name, @Value("{systemProperties[axed.price]}") int price){
+			this.name = name;
+			this.price = price;
+		}
+	引用bean的属性：
+		<property name="price" value="#{axe2.price}"/>
+	链式调用bean的方法：
+		<property name="name" value="#{axe2.getName().toUpperCase()}"/>
+	T表达式和运算符：
+		#{2*T(java.lang.Math).PI*circle.radius}
+	三元运算符：
+		#{axe.name ?: "golden axe"}
+	匹配正则表达式：
+		#{email.address matches '[a-zA-Z0-9]+@[a-zA-Z0-9]+\\.com'}
+	操作集合：
+		#{peter.teles[2]}
+		#{peter.teles.?[nums matches '159[0-9]+']}
+		
+		
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		

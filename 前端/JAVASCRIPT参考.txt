@@ -1949,6 +1949,167 @@ HTMLCollection是一个节点对象的集合，只能包含元素节点（elemen
 HTMLCollection实例都是动态集合，节点的变化会实时反映在集合中。
 可以直接使用原生的id或name属性获取元素：var lik = document.links.lnkBlogLogo //<a id="lnkBlogLogo" href="https://www.cnblogs.com/penghongwei/">aaa</a>
 也可以使用namedItem(idName)方法通过id或name获取子元素，item(i)方法和[]用法相同。
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ParentNode接口 和 ChildNode接口
+如果当前节点是父节点，就会继承ParentNode接口。
+只有元素节点（element）、文档节点（document）和文档片段节点（documentFragment）拥有子节点，会继承ParentNode接口。
+属性：
+	children 返回一个HTMLCollection实例，成员是当前节点的所有元素子节点，如果没有元素类型的子节点，返回值HTMLCollection实例的length属性为0。
+	firstElementChild 返回当前节点的第一个元素子节点。如果没有任何元素子节点，则返回null。document.firstElementChild.nodeName // "HTML"
+	lastElementChild  返回当前节点的最后一个元素子节点，如果不存在任何元素子节点，则返回null。
+	childElementCount  返回一个整数，表示当前节点的所有元素子节点的数目。如果不包含任何元素子节点，则返回0。
+方法：
+	append() 当前节点追加一个或多个子节点，位置是最后一个元素子节点的后面，没有返回值。
+	prepend() 为当前节点追加一个或多个子节点，位置是第一个元素子节点的前面，也是没有返回值。
+
+如果一个节点有父节点，那么该节点就继承了ChildNode接口。
+方法：
+	remove() 从父节点移除当前节点。
+	before() 在当前节点的前面，插入一个或多个同级节点。两者拥有相同的父节点。
+	after() 在当前节点的后面，插入一个或多个同级节点，两者拥有相同的父节点
+	replaceWith() 使用参数节点，替换当前节点。参数可以是元素节点，也可以是文本节点。
+========================================================================================================================================================
+document对象
+document节点对象代表整个文档，继承了EventTarget接口、Node接口、ParentNode接口。
+document对象有不同的办法可以获取：
+	正常的网页，直接使用document或window.document。
+	iframe框架里面的网页，使用iframe节点的contentDocument属性。
+	Ajax 操作返回的文档，使用XMLHttpRequest对象的responseXML属性。
+	内部节点的ownerDocument属性。
+属性：
+	defaultView 返回document对象所属的window对象。如果当前文档不属于window对象，该属性返回null。
+	doctype 对于HTML文档来说，document对象一般有两个子节点。第一个子节点是document.doctype，指向<DOCTYPE>节点，
+即文档类型（Document Type Declaration，简写DTD）节点。HTML 的文档类型节点，一般写成<!DOCTYPE html>。
+如果网页没有声明 DTD，该属性返回null。
+	documentElement 返回当前文档的根元素节点（root）。它通常是document节点的第二个子节点，
+紧跟在document.doctype节点后面。HTML网页的该属性，一般是<html>节点。
+	document.body属性指向<body>节点，document.head属性指向<head>节点。这两个属性总是存在的，
+如果网页源码里面省略了<head>或<body>，浏览器会自动创建。另外，这两个属性是可写的
+	scrollingElement 返回文档的滚动元素，标准模式下，这个属性返回的文档的根元素document.documentElement（即<html>）。
+兼容（quirk）模式下，返回的是<body>元素，如果该元素不存在，返回null。
+	activeElement 返回获得当前焦点（focus）的 DOM 元素。
+通常，这个属性返回的是<input>、<textarea>、<select>等表单元素，如果当前没有焦点元素，返回<body>元素或null。
+	fullscreenElement 返回当前以全屏状态展示的 DOM 元素。如果不是全屏状态，该属性返回null。chrome没有提供
+节点集合属性：
+	links 返回当前文档所有设定了href属性的<a>及<area>节点。
+	forms 返回所有<form>表单节点。如果页面没有form表单元素，返回的HTMLCollection实例length为0.
+除了使用位置序号，id属性和name属性也可以用来引用表单。document.forms[0] === document.forms.foo
+	images 返回页面所有<img>图片节点。
+	document.embeds属性和document.plugins属性，都返回所有<embed>节点。
+	scripts属性返回所有<script>节点。
+	styleSheets属性返回文档内嵌或引入的样式表集合
+	除了document.styleSheets，以上的集合属性返回的都是HTMLCollection实例。
+文档静态信息属性：
+	document.documentURI属性和document.URL属性都返回一个字符串，表示当前文档的网址。不同之处是它们继承自不同的接口，
+documentURI继承自Document接口，可用于所有文档；URL继承自HTMLDocument接口，只能用于 HTML 文档。
+	domain属性返回当前文档的域名，不包含协议和端口。
+	document.location 返回浏览器提供的原生对象Location
+	lastModified属性返回一个字符串，表示当前文档最后修改的时间。如果页面上有 JavaScript 生成的内容，
+document.lastModified属性返回的总是当前时间。
+	title属性返回当前文档的标题。默认情况下，返回<title>节点的值。但是该属性是可写的，一旦被修改，就返回修改后的值。
+	characterSet属性返回当前文档的编码，比如UTF-8、ISO-8859-1等等。
+	referrer属性返回一个字符串，表示当前文档的访问者来自哪里。上一步所在的位置（超链接源位置），
+如果无法获取来源，或者用户直接键入网址而不是从其他网页点击进入，document.referrer返回一个空字符串。
+	dir返回一个字符串，表示文字方向。它只有两个可能的值：rtl表示文字从右到左，阿拉伯文是这种方式；
+ltr表示文字从左到右，包括英语和汉语在内的大多数文字采用这种方式。chrome直接返回空字符串
+	compatMode属性返回浏览器处理文档的模式，可能的值为BackCompat（向后兼容模式）和CSS1Compat（严格模式）。
+一般来说，如果网页代码的第一行设置了明确的DOCTYPE（比如<!doctype html>），document.compatMode的值都为CSS1Compat。
+文档状态属性：
+	hidden属性返回一个布尔值，表示当前页面是否可见。如果窗口最小化、浏览器切换了 Tab，都会导致导致页面不可见，
+使得document.hidden返回true。
+	visibilityState返回文档的可见状态："visible"--页面可见 "hidden"--页面不可见 "prerender"==页面处于正在渲染状态，
+对于用于来说，该页面不可见 "unloaded"--页面从内存里面卸载了。
+	readyState属性返回当前文档的状态: "loading"--加载 HTML 代码阶段（尚未完成解析） "interactive"--加载外部资源阶段
+"complete"--加载完成 浏览器解析文档元素完成后readyState属性从loading变为interactive，当图片、样式表等外部资源加载完成
+readyState属性从interactive变为complete
+	cookie属性用来操作浏览器 Cookie
+	designMode属性控制当前文档是否可编辑。该属性只有两个值on和off，默认值为off。一旦设为on，用户就可以编辑整个文档的内容。
+	implementation属性返回一个DOMImplementation对象。该对象有三个方法，主要用于创建独立于当前文档的新的 Document 对象。
+createDocument()：创建一个 XML 文档。createHTMLDocument()：创建一个 HTML 文档。createDocumentType()：创建一个 DocumentType 对象。
+方法：
+	open()清除当前文档所有内容，使得文档处于可写状态，供document.write方法写入内容。
+	close()关闭document.open()打开的文档。
+	write()用于向当前文档写入内容。首次渲染时没有执行document.close()前，document.write写入的内容就会追加在已有
+内容的后面。
+	document.write会当作 HTML 代码解析，不会转义。document.write('<p>hello world</p>');<p>当作 HTML 标签解释。
+如果页面已经解析完成（DOMContentLoaded事件发生之后），再调用write方法，它会先调用open方法，擦除当前文档所有内容，然后再写入。
+如果在页面渲染过程中调用write方法，并不会自动调用open方法。可以看出是此时页面已经open，但没有close，所以可以直接write
+write是 JavaScript 语言标准化之前就存在的方法，现在通常不再使用，而是使用innerHTML属性或其他方法代替
+	writeln方法与write方法完全一致，除了会在输出内容的尾部添加换行符。writeln方法添加的是 ASCII 码的换行符，
+渲染成 HTML 网页时不起作用，即在网页上显示不出换行。网页上的换行，必须显式写入<br>。
+	querySelector()接受一个 CSS 选择器作为参数，返回匹配该选择器的元素节点。如果有多个节点满足匹配条件，
+则返回第一个匹配的节点。如果没有发现匹配的节点，则返回null。
+	querySelectorAll() 用法和querySelector()类似，区别是返回一个NodeList对象，包含所有匹配给定选择器的节点。
+	这两个方法的参数，可以是逗号分隔的多个 CSS 选择器，返回匹配其中一个选择器的元素节点，这与 CSS 选择器的规则是一致的。
+	它们不支持 CSS 伪元素的选择器（比如:first-line和:first-letter）和伪类的选择器（比如:link和:visited），即无法选中伪元素和伪类。
+	querySelectorAll方法的参数是字符串*，则会返回文档中的所有元素节点。
+另外，querySelectorAll的返回结果不是动态集合，不会实时反映元素节点的变化。
+	这两个方法除了定义在document对象上，还定义在元素节点上，即在元素节点上也可以调用。
+	getElementsByTagName()搜索 HTML 标签名，返回符合条件的元素。它的返回值是一个HTMLCollection实例，
+可以实时反映 HTML 文档的变化。如果没有任何匹配的元素，就返回一个空集。getElementsByTagName方法也是大小写不敏感的
+如果传入*，就可以返回文档中所有 HTML 元素。元素节点本身也定义了getElementsByTagName方法，返回该元素的后代元素中符合条件的元素。
+	getElementsByClassName()返回一个HTMLCollection实例,包括了所有class名字符合指定条件的元素，元素的变化实时反映在返回结果中。
+参数是多个class时，它们之间使用空格分隔，表示同时含有这些class属性。正常模式下，CSS 的class是大小写敏感的。
+任何元素节点都具有getElementsByClassName方法。
+	getElementsByName()用于选择拥有name属性的 HTML 元素（比如<form>、<radio>、<img>、<frame>、<embed>和<object>等），
+返回一个NodeList实例
+	getElementById()返回匹配指定id属性的元素节点。如果没有发现匹配的节点，则返回null。参数是大小写敏感的
+document.getElementById('myElement') //元素id
+document.querySelector('#myElement') //CSS语法
+document.getElementById()比document.querySelector()效率高得多。
+	elementFromPoint()返回位于页面指定位置最上层的元素节点
+	elementsFromPoint()返回一个数组，成员是位于指定坐标（相对于视口）的所有元素。
+	document.caretPositionFromPoint() 返回一个 CaretPosition 对象（光标插入点），该对象具有属性offsetNode，表示
+该位置的节点对象，offset属性表示该位置在offsetNode对象内部，与起始位置相距的字符数。chrome未提供
+	createElement() 用来生成元素节点，并返回该节点。参数为元素的标签名，参数里面不能包含尖括号（即<和>），
+参数可以是自定义的标签名。
+var newDiv = document.createElement('div');//OK
+document.createElement('<div>'); //ERROR
+document.createElement('foo');
+	createTextNode()生成文本节点（Text实例），并返回该节点。它的参数是文本节点的内容。这个方法可以确保返回的节点，
+被浏览器当作文本渲染，而不是当作 HTML 代码渲染。因此，可以用来展示用户的输入，避免 XSS 攻击。
+该方法不对单引号和双引号转义，所以不能用来对 HTML 属性赋值
+	createAttribute()生成一个新的属性节点（Attr实例），并返回它。
+var node = document.getElementById('div1');
+var a = document.createAttribute('my_attrib');
+a.value = 'newVal';
+node.setAttributeNode(a);
+// 或者
+node.setAttribute('my_attrib', 'newVal');
+	createComment() 生成一个新的注释节点，并返回该节点。参数是一个字符串，会成为注释节点的内容
+	createDocumentFragment()生成一个空的文档片段对象（DocumentFragment实例）。
+DocumentFragment是一个存在于内存的 DOM 片段，不属于当前文档，常常用来生成一段较复杂的 DOM 结构，然后再插入当前文档。
+这样做的好处在于，因为DocumentFragment不属于当前文档，对它的任何改动，都不会引发网页的重新渲染，比直接修改当前文档
+的 DOM 有更好的性能表现。
+	createEvent()生成一个事件对象（Event实例），该对象可以被element.dispatchEvent方法使用，触发指定事件。
+参数是事件类型，比如UIEvents、MouseEvents、MutationEvents、HTMLEvents。
+	addEventListener()，removeEventListener()，dispatchEvent() 继承自EventTarget接口
+	hasFocus()返回一个布尔值，表示当前文档之中是否有元素被激活或获得焦点。
+有焦点的文档必定被激活（active），反之不成立，激活的文档未必有焦点
+	adoptNode()将某个节点及其子节点，从原来所在的文档（iframe中的document）或DocumentFragment里面移除，归属当前
+document对象，返回插入后的新节点。插入的节点对象的ownerDocument属性，会变成当前的document对象，而parentNode属性
+是null。此方法只是改变了节点的归属（ownerDocument属性指针），并没有将这个节点插入新的文档树。所以，还要再用
+appendChild方法或insertBefore方法，将新节点插入当前文档树。
+	importNode()从原来所在的文档或DocumentFragment里面，拷贝某个节点及其子节点，让它们归属当前document对象。
+拷贝的节点对象的ownerDocument属性，会变成当前的document对象，而parentNode属性是null。
+第一个参数是外部节点，第二个参数是一个布尔值，表示对外部节点是深拷贝还是浅拷贝，默认是浅拷贝（false）。
+虽然第二个参数是可选的，但是建议总是保留这个参数，并设为true。此方法只是拷贝外部节点，这时该节点的父节点是null。
+下一步还必须将这个节点插入当前文档树。
+	createNodeIterator()返回一个子节点遍历器（NodeIterator实例）。第一个参数为所要遍历的根节点，第二个参数为所要
+遍历的节点类型（使用NodeFilter中的常量：NodeFilter.SHOW_ALL --所有节点、NodeFilter.SHOW_ELEMENT--元素节点、
+NodeFilter.SHOW_TEXT--文本节点、NodeFilter.SHOW_COMMENT--评论节点）
+返回的遍历器具有nextNode()方法和previousNode()方法，nextNode方法先返回遍历器的内部指针所在的节点，然后会将指针
+移向下一个节点。所有成员遍历完成后，返回null。previousNode方法则是先将指针移向上一个节点，然后返回该节点。
+currentNode表示遍历器指向的节点document返回的遍历器返回的第一个节点总是根节点：body
+	createTreeWalker() 返回一个 DOM 的子树遍历器（TreeWalker实例），该遍历器返回的第一个节点不是根节点。
+	getSelection()指向window.getSelection()
+	execCommand()当document.designMode属性设为on或元素的contenteditable属性设为true时，调用此方法可以改变内容的样式，
+比如document.execCommand('bold')会使得字体加粗。
+document.execCommand(command, showDefaultUI, input) 第一个参数command：字符串，表示所要实施的样式，第二个参数
+showDefaultUI：布尔值，表示是否要使用默认的用户界面，建议总是设为false。第三个参数input：字符串，表示该样式的辅助内容，
+比如生成超级链接时，这个参数就是所要链接的网址。
+	queryCommandEnabled()方法返回一个布尔值，表示浏览器是否允许使用这个方法。
+	queryCommandSupported()方法返回一个布尔值，表示当前是否可用某种样式改变。
 
 
 
