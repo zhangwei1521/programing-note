@@ -1,0 +1,69 @@
+												使用Maven
+												  第一章
+	构建的概念：包括编译、进行单元测试、生成文档、打包和部署的一套流程。这一过程是繁琐的，我们希望能使用某种工具能自动
+完成这样的工作。
+	Maven抽象了一个完整的构建生命周期模型，我们只需要根据它的模型来配置我们的项目就可以使用它所提供的成熟的插件，这样
+可以极大地减少错误，同时也统一了不同项目的构建方式，降低了学习成本。
+	Maven还是一个依赖管理工具，以及项目信息管理工具。它使用坐标定义中央仓库中的开源组件，可以精确地定位每一个构件。同时
+maven统一管理着项目中很多琐碎的信息，方便了查找这些信息。
+	Ant和Maven的区别：Ant是过程式的，需要自己指定每一个目标，以及每个目标中的任务，这意味着对于每一个项目，都需要重新
+编写配置文件。Maven是声明式的，构建的各个阶段都由插件完成，大部分插件式Maven提供的，我们只需要声明一些基本元素就可以
+执行构建。
+	安装Maven
+	检查JDK：echo %JAVA_HOME%
+			 java -version
+	Maven依赖java，所以必须配置JAVA_HOME。
+	解压maven包：jar xvf "D:\xxx\apache-maven-3.x bin.zip"
+	添加M2_HOME环境变量为上面解压后的文件夹路径。将“%M2_HOME%\bin;”添加到path环境变量中。升级maven时只需要修改M2_HOME就
+可以了。
+	运行mvn -v查看。
+	bin目录下的mvn.cmd脚本对应了执行maven命令时的第一个mvn命令，它其实是执行脚本中的java命令，用来准备java环境和项目数据
+	关于MAVEN_OPTS环境变量：java默认内存可能不能满足maven构建需要，使用这个变量更改java内存，典型配置值为：-Xms128m -Xmx512m
+													第二章
+	maven使用pom.xml文件定义项目的基本信息，声明项目依赖，描述项目如何构建。POM(Project Object Model)
+	maven项目结构：源码路径：src/main/java/ 资源文件路径：src/main/resources/
+			   测试代码路径：src/test/java/ 测试资源文件：src/test/resources/
+	编译输出路径： target/classes/
+	指定maven的compiler插件使用的java版本：
+		<build>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<configuration>
+						<source>1.5</source>
+						<target>1.5</target>
+					</configuration>
+				</plugin>
+			</plugins>
+		</build>
+	maven命令：mvn clean compile 编译
+			   mvn clean test 测试
+			   mvn clean package 打包
+			   mvn clean install 安装到本地仓库
+	打包时指定主类：配置插件shade:
+		<plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>1.2.1</version>
+          <executions>
+            <execution>
+              <phase>package</phase>
+              <goals>
+                <goal>shade</goal>
+              </goals>
+              <configuration>
+                <transformers>
+                  <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                    <mainClass>com.zhangwei.mavendemo1.HelloWorld</mainClass>
+                  </transformer>
+                </transformers>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+	使用archetype快速创建项目结构：mvn archetype:generate 选择7号（默认）quickstart项目结构
+	
+	
+	
+	
