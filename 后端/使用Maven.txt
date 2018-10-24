@@ -63,7 +63,37 @@ maven统一管理着项目中很多琐碎的信息，方便了查找这些信息
           </executions>
         </plugin>
 	使用archetype快速创建项目结构：mvn archetype:generate 选择7号（默认）quickstart项目结构
-	
-	
+													第三章
+	依赖的范围：用来表述依赖的jar包和程序编译、测试、运行时的classpath的关系，默认为compile，将在三个阶段的classpath
+中都可以引用依赖的jar包，test指明只在测试时可以引用依赖的jar，provided指明编译、测试期间可以引用依赖的jar，runtime表明
+可以在测试、运行期间引用依赖的jar。还可以使用system，这种需要使用systemPath元素指明依赖jar包的本地路径，不是从maven
+仓库解析依赖，只能在编译和测试期间使用该类依赖。
+	传递性依赖：maven解析依赖时，会将依赖包自己所有的依赖递归解析，这样就不用自己去手动维护各个依赖包的依赖了。
+	依赖调度：当项目同时依赖多个不同版本的同一依赖时，maven只会选择一个版本的依赖包，调度第一原则是：路径最近者优先。
+如果路径长度相同就使用调度第二原则：首先声明者优先。这里的路径意思是：A->B->C(1.0),C的路径为2，A->D->E->C(2.0),这里C
+路径为3.
+	可选依赖：项目中实现了互斥的功能，不会同时依赖两个外部依赖，比如mysql驱动和oracle驱动，使用<optional>true</optional>
+声明，对于当前项目会同时下载两个依赖包，但是对于依赖当前项目的其他项目，这种依赖不会传递，所以不会下载这两个包中任意一个。
+实际情况下不推荐使用这种可选依赖。
+	排除依赖：有时候希望不使用传递性依赖，而是自己指定那个依赖，使用<exclusion>从直接依赖包中排除该传递性依赖：
+		<dependency>
+			...
+			<exclusions>
+				<exclusion>
+					<groupId>xxx</groupId>
+					<artifactId>yyy</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+	使用maven属性统一设置某类依赖的某些信息，如版本：
+		<properties>
+			<springframework.version>4.0.9</springframework.version>
+		</properties>
+		///
+		<version>${springframework.version}</version>
+	使用 mvn dependency:list查看解析的依赖，包括传递性依赖
+	使用 mvn dependency:tree查看依赖树，可以查看传递性依赖是由那个直接依赖引入的
+	使用 mvn dependency:analyze查看依赖使用情况，可以查看哪些依赖没有使用（这些依赖不一定是真的不需要），
+哪些项目中使用了其api但其实是间接引入的依赖
 	
 	

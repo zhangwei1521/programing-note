@@ -270,8 +270,8 @@
 容易触发自我保护，实际环境通常是网络不稳定触发自我保护。注册中心使用属性
 		eureka.server.enable-self-preservation=false
 关闭自我保护机制。
-	设置Region属性：eureka.client.region=?
-	设置zone属性：  eureka.client.availability-zones=?,?
+	设置Region属性：eureka.client.region=? #定义发现哪个region的服务
+	设置zone属性：  eureka.client.availability-zones=?,?  #定义发现哪些zone的服务
 	Region默认值为default，Zone默认值为defaultZone
 	@EnableDiscoveryClient注解用于开启DiscoveryClient的实例，使用eureka客户端就是创建DiscoveryClient的实现类EurekaDiscoveryClient
 的实例对象，该对象使用netflix的DiscoveryClient对象完成服务注册和发现。
@@ -283,6 +283,7 @@
 	...
 	服务实例配置：eureka.intance作为前缀
 	实例名配置：  eureka.intance.instanceId = ${spring.application.name}:${random.int}
+	实例所属zone：eureka.intance.metadataMap.zone=guangzhou
 	通常微服务实例需要使用spring-boot-starter-actuator提供应用运行状态数据，eureka注册中心默认使用/info端点作为服务实例状态页接口，
 当开启了healthCheck后使用/health端点作为作为健康检查接口。如果应用设置了context-path，则actuator端点会添加一个前缀，需要修改/info
 端点和/health端点配置：
@@ -335,5 +336,74 @@ HttpStatus 等，其父类是 HttpEntity，T getBody()方法将根据第二个�
 		void delete(String url, Object... urlVariables)
 		void delete(String url, Map<String, ?> urlVariables)
 		void delete(URI url)
+	自动化配置：Ribbon使用一系列接口来定义客户端负载均衡的配置，这些接口具有多种不同的实现，但引入Ribbon后可以直接使用
+它的自动默认配置。
+	IClientConfig接口：客户端配置；IRule接口：负载均衡策略配置；IPing接口：实例检查策略；ILoadBalancer：负载均衡器
+	自定义配置的方式：一种方式是配置上面这些接口的实现bean，另一种是Camden版本开始可以使用的在配置文件中指定接口的实现类。
+配置bean：
+		@SpringBootApplication
+		@RibbonClient(name = "my-provider", configuration = MyRibbonConfig.class)
+		//MyRibbonConfig类不能放在可被默认包扫描策略扫描到的地方，如果要放在一个被扫描到的位置，需要使用@ComponentScan的
+		//excludeFilters 排除：@ExcudeAnnotation是自定义标记空注解
+		//@ComponentScan(excludeFilters = {@ComponentScan.Filter(type = FilterType.ANNOTATION, value = {ExcudeAnnotation.class})})
+		public class HelloSeviceApplication {
+			@Bean
+			@LoadBalanced
+			public RestTemplate restTemplate() {
+				return new RestTemplate();
+			}
+			...
+		}
+		
+		@Configuration
+		@ExcudeAnnotation
+		public class MyRibbonConfig {
+			@Bean
+			public IRule ribbonRule() {
+				return new RandomRule();
+			}
+		}
+配置文件配置接口实现类：
+		#全局配置:
+		ribbon.ConnectTimeout=250
+		#指定服务名:
+		my-provider.ribbon.NFLoadBalancerRuleClassName: com.netflix.loadbalancer.WeightedResponseTimeRule
+		#不适应eureka维护ribbon的服务实例：
+		ribbon.eureka.enabled=false
+		my-provider.ribbon.listOfServers=localhost:8001,localhost:8002
+	跨区域容错配置：可以将实际位于A区的服务配置为B区的服务，这是因为Ribbon默认是使用区域亲和策略的，如果B区实际部署的
+服务都不可用，仍然可以使用那些不在B区但是配置zone为B区的服务：
+		eureka.intance.metadataMap.zone=guangzhou
+	服务治理的CAP原理：C——一致性	A——可用性	P——可靠性
+	eureka强调AP，而zookeeper强调CP。由于eureka强调AP特性，可能导致ribbon获得的服务实例是不可用的，比如触发eureka对某个
+服务的保护机制。spring cloud从Camden版本开始整合了Retry功能，可以配置ribbon的重试特性：
+		#开启重试机制
+		spring.cloud.loadbalancer.retry.enabled=true
+		hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds=10000
+		#请求连接的超时时间
+		my-provider.ribbon.ConnectTimeout=250
+		#请求处理的超时时间
+		my-provider.ribbon.ReadTimeout=1000
+		#对所有请求都进行重试
+		my-provider.ribbon.okToRetryAllOperations=true
+		#切换实例的次数（不包含当前实例）
+		my-provider.ribbon.maxAutoRetriesNextServers=2
+		#对当前实例的重试次数（不包含第一次）
+		my-provider.ribbon.maxAutoRetries=1
 	
+		
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	
