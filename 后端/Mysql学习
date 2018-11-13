@@ -1,0 +1,85 @@
+										Mysql学习
+触发器
+	准备：
+	create table goods(
+		gid int,
+		name varchar(),
+		num int
+	);
+
+	create table orders(
+		oid int,
+		gid int,
+		much int	
+	);
+
+	insert into goods values 
+	(1,'cat',55),
+	(2,'dog',45),
+	(3,'pig',50);
+
+# tg1 -- insert插入orders表后同步修改goods表库存
+
+delimiter $
+create trigger tg1
+after
+insert 
+on 
+orders
+for each row
+begin
+update goods set num=num-new.much where gid=new.gid;
+end$
+delimiter ;
+
+# tg2 -- update修改orders表前修改goods表库存
+
+delimiter $
+create trigger tg2 
+before 
+update 
+on 
+orders
+for each row
+begin 
+update goods set num=num+old.much-new.much where gid=old.gid;
+end$
+delimiter ;
+
+# tg3 -- delete删除orders表后修改goods表库存
+
+delimiter $
+create trigger tg3
+after 
+delete 
+on orders 
+for each row
+begin
+update goods set num=num+old.much where gid=old.gid;
+end$
+delimiter ;
+
+# tg4 -- insert插入orders表前判断much是否大于goods表的num值，如果大于就修改much为goods表的num值
+
+delimiter $
+create trigger tg4 
+before 
+insert 
+on 
+orders 
+for each row
+begin
+declare snum int;
+select num into snum from goods where gid=new.gid;
+if new.much>snum then
+	set new.much=snum;
+end if;
+update goods set num=num-new.much where gid=new.gid;
+end$
+delimiter ;
+
+# for each row 说明
+表示操作影响每一行都会执行一次触发器中的sql
+mysql、oracle都支持
+oracle还可以不写这一条语句，表示一条影响多行的语句只会触发一次触发器中的sql语句
+mysql5.5及之前的版本都必须要写这一条语句

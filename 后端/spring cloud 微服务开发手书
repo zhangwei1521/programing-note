@@ -214,7 +214,7 @@
 				<artifactId>spring-boot-starter-web</artifactId>
 			</dependency>
 			<dependency>
-				<groupId>org.springframework.boot</groupId>
+				<groupId>org.springframework.cloud</groupId>
 				<artifactId>spring-cloud-starter-ribbon</artifactId>
 				<scope>test</scope>
 			</dependency>
@@ -390,8 +390,22 @@ HttpStatus 等，其父类是 HttpEntity，T getBody()方法将根据第二个�
 		my-provider.ribbon.maxAutoRetriesNextServers=2
 		#对当前实例的重试次数（不包含第一次）
 		my-provider.ribbon.maxAutoRetries=1
+													第四章 Hystrix
+	基本用法：
+	服务端调用方添加依赖：
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-hystrix</artifactId>
+		</dependency>	
+	启动类添加注解：
+		@EnableCircuitBreaker
+	调用其它服务的方法添加注解：
+		@HystrixCommand(fallbackMethod = "callFallBack")
+	回调方法：
+		public String callFallBack(){
+			return "service error";
+		}
 	
-		
 
 
 

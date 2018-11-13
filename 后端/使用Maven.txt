@@ -95,5 +95,154 @@ maven统一管理着项目中很多琐碎的信息，方便了查找这些信息
 	使用 mvn dependency:tree查看依赖树，可以查看传递性依赖是由那个直接依赖引入的
 	使用 mvn dependency:analyze查看依赖使用情况，可以查看哪些依赖没有使用（这些依赖不一定是真的不需要），
 哪些项目中使用了其api但其实是间接引入的依赖
+												第四章
+	如果一条物理机上部署了多个java项目，每个项目都依赖了许多相同的组件，那么为每个项目都保存自己的依赖文件将会导致大量的
+重复存储和磁盘浪费。maven通过坐标定位构件，并且使用仓库（本地仓库）统一存储构件，这样各个项目不再需要保存自己的依赖文件，
+而只需要声明自己的依赖就可以在使用时通过maven坐标在仓库中找到依赖。
+	在发布或安装构件到仓库中时，maven读取pom文件构造Artifact对象，通过该对象获取构件的信息并决定构件在仓库中的位置：
+groupId/...(groupId分级路径)/artifactId/version/artifactId-version-classifier.packaging
+	修改本地仓库地址：
+		编辑用户settings.xml文件（如果不使用用户文件，直接编辑全局settings.xml文件）：
+		<settings>
+			...
+			<localRepository>D:\softwareData\</localRepository>
+		</settings>
+	maven默认从中央仓库（地址在超级pom中定义）下载依赖构件，如果依赖不在中央仓库而是在其他公共库中，项目中需要配置这些
+库的地址：
+		<repositories>
+			<repository>
+				<id>jboss</id>
+				<name>JBoss Repository</name>
+				<url>http://repository.jboss.com/maven2/</url>
+				<releases>
+					<enabled>true</enabled>
+				<releases>
+				<snapshots>
+					<enabled>true/false</enabled>
+					<updatePolicy>daily</updatePolicy><!-- 这条和下一条配置都只在前面enabled为true时配置，这条配置表示更新策略 -->
+					<checksumPolicy>ignore</checksumPolicy><!-- 检测文件校验和策略-->
+				<snapshots>
+				<layout>default</layout>
+			</repository>
+		</repositories>
+	配置远程仓库认证(仓库地址使用上面的配置方式在项目pom文件中配置，这里的认证配置在settings.xml中配置)，主要还是用于公司内部搭建的仓库的认证：
+		<servers>
+			<server>
+				<id>my-repo-release</id>
+				<username>zhangwei</username>
+				<password>12345</password>
+			</server>
+		</servers>
+	部署到远程仓库：
+		项目pom文件中配置：
+			<distributionManagement>
+				<repository>
+					<id>my-repo-release</id>
+					<name>server for release</name>
+					<url>http://192.168.1.101/content/repositories/my-repo-release/</url>
+				</repository>
+				<snapshotRepository>
+					<id>my-repo-snapshot</id>
+					<name>server for snapshot</name>
+					<url>http://192.168.1.101/content/repositories/my-repo-snapshot/</url>
+				</snapshotRepository>
+			</distributionManagement>
+		认证配置同上
+		部署命令：mvn clean deploy
+	使用snapshot版本：内部开发通过声明依赖snapshot版本，可以在配置仓库时设置更新策略，如：
+		<updatePolicy>daily</updatePolicy>（默认值就是daily）
+表示每天都会检查依赖的snapshot的最新版本，也可以在命令中指定检查新版本：mvn clean compile-U
+	本地仓库使用maven-metadata-local.xml文件存储构件的元信息，远程仓库使用maven-metadata.xml存储构件元信息。
+	国内访问maven中央仓库会受到GFW的影响导致网速太慢，可以配置阿里云提供的镜像仓库：
+		<settings>
+			...
+			<mirrors>
+				<mirror>
+					<id>nexus-aliyun</id>
+					<mirrorOf>central</mirrorOf>
+					<name>Nexus aliyun</name>
+					<url>http://maven.aliyun.com/nexus/content/groups/public</url>
+				</mirror>
+			</mirrors>
+		</settings>
+	<mirrorOf>中可以使用*表示所有仓库都使用配置的仓库作为镜像，也可以用这些:
+		<mirrorOf>external:*</mirrorOf> 	--所有远程仓库使用镜像，localhost和file://协议的除外
+		<mirrorOf>repo,repo2</mirrorOf>		--repo1、repo2使用镜像
+		<mirrorOf>*,!repo1</mirrorOf>		--除了repo1的所有仓库使用镜像
+	在中央仓库中搜索组件：
+		https://mvnrepository.com/ 提供几乎所有公共仓库搜索服务
+		https://repository.sonatype.org/
 	
+													第五章
+	项目构建的生命周期：清理、编译、测试、部署
+	maven抽象了上述过程，定义了一系列实用的软件构建生命周期，最后通过插件实现生命周期中定义的目标。
+	maven提供三套独立的生命周期：clean、default、site。每套生命周期都由多个阶段组成，如default生命周期包括了从校验
+编译、测试到安装部署的各个阶段，maven命令通过组合生命周期中的阶段实现目标。
+	maven插件在需要使用的时候才会被下载，每个插件都有自己的一些目标，对应的是一些功能（可以看成是入口方法），如dependency插件目标：
+dependency:tree 用于列出依赖树
+	maven根据命令选择对应的生命周期阶段组合，调用插件的目标完成任务。maven默认已经将一些声明周期阶段和特定的插件目标
+绑定，如clean生命周期的clean阶段绑定了clean插件的clean目标（pre-clean阶段没有绑定插件目标，所以不会有什么行为）。
+	手动设置生命周期阶段绑定插件目标：设置default生命周期的verify阶段绑定maven-source-plugin的jar-no-fork目标：
+		<build>
+			<plugins>        
+				<plugin>
+				  <groupId>org.apache.maven.plugins</groupId>
+				  <artifactId>maven-source-plugin</artifactId>
+				  <version>2.1.1</version>
+				  <executions>
+					<exclusion>
+						<id>xxxx<id>
+						<phase>verify</phase>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+				  </exclusions>
+				</plugin>
+			</plugins>
+		</build>
+	可以为同一个生命周期阶段绑定多个插件目标，这些插件目标将按配置的顺序执行。
+	命令行中可以带参数给插件的目标使用，-D参数键=参数值 -D其实是设置java的系统属性（java自带），
+		mvn install -Dmaven.test.skip可以跳过test插件的test目标。
+	在POM中可以为插件配置全局的参数：
+		...
+		<plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+            <source>1.8</source>
+            <target>1.8</target>
+          </configuration>
+        </plugin>
+		..
+	为插件目标配置参数：maven-antrun-plugin插件的run目标可以调用ant的任务：
+		<plugin>
+		  <groupId>org.apache.maven.plugins</groupId>
+		  <artifactId>maven-antrun-plugin</artifactId>
+		  <version>1.3</version>
+		  <executions>
+			<exclusion>
+				<id>xxxx<id>
+				<phase>validate</phase>
+				<goals>
+					<goal>run</goal>
+				</goals>
+				<configuration>
+					<tasks>
+						<echo>hello world</echo>
+					</tasks>
+		  </exclusions>
+		</plugin>
+		使用maven-help-plugin插件查看插件的信息：
+		mvn help:describe-Dplugin=groupid:artifactId:version或者：
+		mvn help:describe-Dplugin=插件目标名 -Ddetail可以查看详情
+	使用目标前缀直接调用插件目标：
+		mvn help:describe...	help是maven-help-plugin 的目标前缀
+	配置插件仓库：
+		<pluginRepositories>
+			<pluginRepository>
+				...和依赖仓库相同
+			</pluginRepository>
+		</pluginRepositories>
+	配置插件时虽然可以不写版本号，核心插件会使用maven官方设定的版本号，而其他插件会解析插件仓库中最新的release版本，
+所以最好还是手动配置需要的版本号
 	
