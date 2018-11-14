@@ -39,5 +39,12 @@ rw init=/sysroot/bin/bash，然后Ctrl+x进入emergency模式，使用chroot切�
 保存退出后进入光驱启动模式，使用下键选择Troubleshooting，回车后选择Rescue a CentOS...连续回车到输出提示，输入1继续，
 然后chroot /mnt/sysimage进入初试系统，使用passwd改密码。Ctrl+D退出Rescue模式，reboot重启。
 
+	远程登录
+	linux系统通过sshd服务提供远程登录功能，默认使用22号端口，通常安装完系统就默认安装并开启了该服务，所以不需要进行额外
+的配置。sshd服务的配置文件是：/etc/ssh/sshd_config
+	修改主机名：hostname asuser 永久修改：vi /etc/hostname
+	centos默认使用openssh-clients作为远程登录客户端，使用ssh -V查看软件版本，安装该工具：yum install -y openssh-clients
+	使用init 0 也可以关机
+	openssh-clients登陆远程主机：ssh root@192.168.1.103
 	
 	
