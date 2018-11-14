@@ -210,7 +210,7 @@ spring3.2开始也可以在方法上使用这个注解：
 		}
 	这里MyCondition 需要实现spring 的Condition接口，该接口中声明了一个方法：
 boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata); ConditionContext接口的实例可以获取环境信息：
-Environment、bean工厂、资源加载器等，AnnotatedTypeMetadata接口实例可以或该@Conditional注解修饰的方法上的所有注解的信息。
+Environment、bean工厂、资源加载器等，AnnotatedTypeMetadata接口实例可以获取该@Conditional注解修饰的方法上的所有注解的信息。
 		public class MyCondition implements Condition{
 			public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata){
 				Environment env = context.getEnvironment();
