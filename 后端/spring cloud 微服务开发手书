@@ -299,7 +299,8 @@
 	eureka.client.healthcheck = true
 	eureka.instance.appname = hello #默认使用spring.application.name
 	配置随机端口号：server.port = 0 或 server.port = ${random.int[10000,19999]}
-															第三章 Ribbon
+
+第四章 Ribbon
 	Spring Cloud Ribbon是一个工具类框架，由于微服务间的调用和网关转发请求几乎都会使用Ribbon，因此Ribbon几乎存在于所有微服务和基础构件中。
 	服务端负载均衡：通过硬件或者软件模块根据可用服务清单分发请求，并通过心跳方式更新服务清单。
 	客户端负载均衡：客户端从注册中心获取所使用的服务清单，也通过心跳从注册中心更新该清单。Eureka、Consul都整合了Ribbon相关功能，可以和
@@ -390,7 +391,8 @@ HttpStatus 等，其父类是 HttpEntity，T getBody()方法将根据第二个�
 		my-provider.ribbon.maxAutoRetriesNextServers=2
 		#对当前实例的重试次数（不包含第一次）
 		my-provider.ribbon.maxAutoRetries=1
-													第四章 Hystrix
+
+第五章 Hystrix
 	基本用法：
 	服务端调用方添加依赖：
 		<dependency>

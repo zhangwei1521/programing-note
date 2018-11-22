@@ -180,7 +180,7 @@ groupId/...(groupId分级路径)/artifactId/version/artifactId-version-classifie
 编译、测试到安装部署的各个阶段，maven命令通过组合生命周期中的阶段实现目标。
 	maven插件在需要使用的时候才会被下载，每个插件都有自己的一些目标，对应的是一些功能（可以看成是入口方法），如dependency插件目标：
 dependency:tree 用于列出依赖树
-	maven根据命令选择对应的生命周期阶段组合，调用插件的目标完成任务。maven默认已经将一些声明周期阶段和特定的插件目标
+	maven根据命令选择对应的生命周期阶段组合，调用插件的目标完成任务。maven默认已经将一些生命周期阶段和特定的插件目标
 绑定，如clean生命周期的clean阶段绑定了clean插件的clean目标（pre-clean阶段没有绑定插件目标，所以不会有什么行为）。
 	手动设置生命周期阶段绑定插件目标：设置default生命周期的verify阶段绑定maven-source-plugin的jar-no-fork目标：
 		<build>
