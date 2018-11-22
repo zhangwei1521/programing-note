@@ -1,0 +1,2 @@
+Windows命令：
+	查看占用指定端口的进程：netstat -aon|findstr 本地端口

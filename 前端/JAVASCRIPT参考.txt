@@ -2018,7 +2018,7 @@ ltr表示文字从左到右，包括英语和汉语在内的大多数文字采�
 	hidden属性返回一个布尔值，表示当前页面是否可见。如果窗口最小化、浏览器切换了 Tab，都会导致导致页面不可见，
 使得document.hidden返回true。
 	visibilityState返回文档的可见状态："visible"--页面可见 "hidden"--页面不可见 "prerender"==页面处于正在渲染状态，
-对于用于来说，该页面不可见 "unloaded"--页面从内存里面卸载了。
+对于用户来说，该页面不可见 "unloaded"--页面从内存里面卸载了。
 	readyState属性返回当前文档的状态: "loading"--加载 HTML 代码阶段（尚未完成解析） "interactive"--加载外部资源阶段
 "complete"--加载完成 浏览器解析文档元素完成后readyState属性从loading变为interactive，当图片、样式表等外部资源加载完成
 readyState属性从interactive变为complete
@@ -2110,9 +2110,375 @@ showDefaultUI：布尔值，表示是否要使用默认的用户界面，建议�
 比如生成超级链接时，这个参数就是所要链接的网址。
 	queryCommandEnabled()方法返回一个布尔值，表示浏览器是否允许使用这个方法。
 	queryCommandSupported()方法返回一个布尔值，表示当前是否可用某种样式改变。
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+Element节点
+所有的HTML元素都是Element节点对象。nodeType属性值为1.
+Element节点实际上不是一种对象，而是一组对象，不同的HTML元素对象都继承了Element的属性和方法，也有各自构造函数的属性和方法。
+实例属性
+	Element.id 返回指定元素的id属性，可读写。id属性的值是大小写敏感。
+	Element.tagName 返回指定元素的大写标签名，与nodeName属性的值相等。
+	Element.dir 用于读写当前元素的文字方向，可能是从左到右（"ltr"），也可能是从右到左（"rtl"）。汉语返回空字符串。
+	Element.accessKey 用于读写分配给当前元素的快捷键。
+		document.querySelector("[type=submit]").accessKey="h"	//设置快捷键后，使用Alt+h就可以使用了
+	Element.draggable返回一个布尔值，表示当前元素是否可拖动。该属性可读写。
+	Element.lang 返回当前元素的语言设置。该属性可读写。
+	Element.title 用来读写当前元素的 HTML 属性title。该属性通常用来指定，鼠标悬浮时弹出的文字提示框。
+	Element.tabIndex 返回一个整数，表示当前元素在 Tab 键遍历时的顺序。该属性可读写。通常是-1，表示Tab 键不会遍历到该元素。
+	状态相关属性：
+	Element.hidden 读写当前元素的hidden属性，返回一个布尔值。CSS 的设置高于Element.hidden。这个属性只在 CSS 没有明确设定当前元素的可见性时才有效。
+	Element.contentEditable 返回元素是否可写，改属性可以修改，但是修改该属性的值不会改变元素的可写性，元素的可写性是通过添加或去除该属性实现的
+	Element.isContentEditable 返回元素是否可写，此属性不可修改。
+	Element.attributes 返回一个类似数组的对象，成员是当前元素节点的所有属性节点
+	Element.className 用来读写当前元素节点的class属性。它的值是一个字符串，每个class之间用空格分割。
+	Element.classList 指向一个类似数组的对象，该对象的length属性（只读）返回当前元素的class数量。classList对象有下列方法：add();remove();contains();toggle();item();toString()
+	Element.dataset 返回一个对象，可以从这个对象读写data-属性。网页元素可以自定义data-属性，用来添加数据。<div data-timestamp="1522907809292"></div>,data-timestamp为自定义属性
+	Element.innerHTML 返回一个字符串，等同于该元素包含的所有 HTML 代码。该属性可读写，常用来设置某个节点的内容。它能改写所有元素节点的内容，包括<HTML>和<body>元素。
+如果将innerHTML属性设为空，等于删除所有它包含的所有节点。var name = "<script>alert('haha')</script>";el.innerHTML = name;插入的字符串含有标签会被解析成DOM元素，但是不会执行里面
+的脚本。var name = "<img src=x onerror=alert(1)>"; el.innerHTML = name; 这里会执行，所以如果插入的是文本，最好用textContent属性代替innerHTML。
+	Element.outerHTML 返回一个字符串，表示当前元素节点的所有 HTML 代码，包括该元素本身和所有子元素。对它进行赋值，等于替换掉当前元素。该元素被替换掉后不会消失，仍然保留在内存中
+如果一个节点没有父节点，设置outerHTML属性会报错。
+	Element.clientHeight 返回一个整数值，表示元素节点的 CSS 高度（单位像素），只对块级元素生效，对于行内元素返回0。如果块级元素没有设置 CSS 高度，则返回实际高度。
+	Element.clientWidth 返回元素节点的 CSS 宽度，同样只对块级元素有效，也是只包括元素本身的宽度和padding，如果有垂直滚动条，还要减去垂直滚动条的宽度。
+	Element.clientLeft 等于元素节点左边框（left border）的整数宽度（单位像素），不包括左侧的padding和margin。如果没有设置左边框，或者是行内元素（display: inline），该属性返回0。
+	Element.clientTop属性等于网页元素顶部边框的宽度（单位像素）
+	Element.scrollHeight属性返回一个整数值（小数会四舍五入），表示当前元素的总高度（单位像素），包括溢出容器、当前不可见的部分。它包括padding，但是不包括border、margin以及水平
+滚动条的高度（如果有水平滚动条的话），还包括伪元素（::before或::after）的高度。
+	Element.scrollWidth属性表示当前元素的总宽度（单位像素），其他地方都与scrollHeight属性类似。这两个属性只读。
+	Element.scrollLeft属性表示当前元素的水平滚动条向右侧滚动的像素数量。
+	Element.scrollTop属性表示当前元素的垂直滚动条向下滚动的像素数量。对于那些没有滚动条的网页元素，这两个属性总是等于0。
+	Element.offsetParent属性返回最靠近当前元素的、并且 CSS 的position属性不等于static的上层元素。如果该元素是不可见的（display属性为none），或者位置是固定的（position属性为fixed），
+则offsetParent属性返回null。
+	Element.offsetHeight属性返回一个整数，表示元素的 CSS 垂直高度（单位像素），包括元素本身的高度、padding 和 border，以及水平滚动条的高度（如果存在滚动条）。
+	Element.offsetWidth属性表示元素的 CSS 水平宽度（单位像素），其他都与Element.offsetHeight一致。如果元素的 CSS 设为不可见（比如display: none;），则返回0。
+	Element.offsetLeft返回当前元素左上角相对于Element.offsetParent节点的水平位移，Element.offsetTop返回垂直位移，单位为像素。通常，这两个值是指相对于父节点的位移。
+		function getElementPosition(e) {
+		  var x = 0;
+		  var y = 0;
+		  while (e !== null)  {
+			x += e.offsetLeft;
+			y += e.offsetTop;
+			e = e.offsetParent;
+		  }
+		  return {x: x, y: y};
+		}
+	这一段代码可以算出元素左上角相对于整张网页的坐标。
+	Element.style 用来读写该元素的行内样式信息
+	Element.children 返回一个类似数组的对象（HTMLCollection实例），包括当前元素节点的所有子元素。如果当前元素没有子元素，则返回的对象包含零个成员。
+这个属性与Node.childNodes属性的区别是，它只包括元素类型的子节点，不包括其他类型的子节点。
+	Element.childElementCount 返回当前元素节点包含的子元素节点的个数，与Element.children.length的值相同。
+	Element.firstElementChild 返回当前元素的第一个元素子节点，Element.lastElementChild 返回最后一个元素子节点。如果没有元素子节点，这两个属性返回null。
+	Element.nextElementSibling 返回当前元素节点的后一个同级元素节点，如果没有则返回null。
+	Element.previousElementSibling 返回当前元素节点的前一个同级元素节点，如果没有则返回null。
+实例方法
+	Element.querySelector 接受 CSS 选择器作为参数，返回父元素的第一个匹配的子元素。如果没有找到匹配的子元素，就返回null。方法可以接受任何复杂的 CSS 选择器。
+	Element.querySelectorAll方法接受 CSS 选择器作为参数，返回一个NodeList实例，包含所有匹配的子元素。
+	Element.getElementsByClassName方法返回一个HTMLCollection实例，成员是当前元素节点的所有具有指定 class 的子元素节点。
+	Element.getElementsByTagName方法返回一个HTMLCollection实例，成员是当前节点的所有匹配指定标签名的子元素节点。
+	Element.closest方法接受一个 CSS 选择器作为参数，返回匹配该选择器的、最接近当前节点的一个祖先节点（包括当前节点本身）。如果没有任何节点匹配 CSS 选择器，则返回null。
+	Element.matches方法返回一个布尔值，表示当前元素是否匹配给定的 CSS 选择器。
+	Element.scrollIntoView方法滚动当前元素，进入浏览器的可见区域，类似于设置window.location.hash的效果。该方法可以接受一个布尔值作为参数。
+如果为true，表示元素的顶部与当前区域的可见部分的顶部对齐（前提是当前区域可滚动）；如果为false，表示元素的底部与当前区域的可见部分的尾部对齐
+（前提是当前区域可滚动）。如果没有提供该参数，默认为true。
+	Element.getBoundingClientRect方法返回一个对象，提供当前元素节点的大小、位置等信息，基本上就是 CSS 盒状模型的所有信息。
+	Element.getClientRects方法返回一个类似数组的对象，里面是当前元素在页面上形成的所有矩形。对于盒状元素（比如<div>和<p>），该方法返回的对象中只有该元素一个成员。
+对于行内元素（比如<span>、<a>、<em>），该方法返回的对象有多少个成员，取决于该元素在页面上占据多少行。
+	Element.insertAdjacentElement方法在相对于当前元素的指定位置，插入一个新的节点。该方法返回被插入的节点，如果插入失败，返回null。
+该方法接受两个参数，第一个参数是一个字符串，表示插入的位置，第二个参数是将要插入的节点。第一个参数只可以取如下的值：
+beforebegin：当前元素之前	afterbegin：当前元素内部的第一个子节点前面	beforeend：当前元素内部的最后一个子节点后面	afterend：当前元素之后
+	Element.insertAdjacentHTML方法用于将一个 HTML 字符串，解析生成 DOM 结构，插入相对于当前节点的指定位置。
+该方法接受两个参数，第一个是一个表示指定位置的字符串，第二个是待解析的 HTML 字符串。第一个参数只能设置四个值(同insertAdjacentElement的参数)之一。
+	Element.insertAdjacentText方法在相对于当前节点的指定位置，插入一个文本节点，用法与Element.insertAdjacentHTML方法完全一致。
+	Element.remove方法继承自 ChildNode 接口，用于将当前元素节点从它的父节点移除。
+	Element.focus方法用于将当前页面的焦点，转移到指定元素上。该方法可以接受一个对象作为参数。参数对象的preventScroll属性是一个布尔值，指定是否将当前元素停留在原始位置，而不是滚动到可见区域。
+	Element.blur方法用于将焦点从当前元素移除。
+	Element.click方法用于在当前元素上模拟一次鼠标点击，相当于触发了click事件。
+	属性相关方法
+	getAttribute()：读取某个属性的值
+	getAttributeNames()：返回当前元素的所有属性名
+	setAttribute()：写入属性值
+	hasAttribute()：某个属性是否存在
+	hasAttributes()：当前元素是否有属性
+	removeAttribute()：删除属性
+	事件相关方法：
+	Element.addEventListener()：添加事件的回调函数
+	Element.removeEventListener()：移除事件监听函数
+	Element.dispatchEvent()：触发事件
+【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【【
+元素的属性
+	HTML 元素包括标签名和若干个键值对，这个键值对就称为“属性”（attribute）
+	属性本身是一个对象（Attr对象），但是实际上，这个对象极少使用。一般都是通过元素节点对象（HTMlElement对象）来操作属性。
+	元素对象有一个attributes属性，返回一个类似数组的动态对象，成员是该元素标签的所有属性节点对象，属性的实时变化都会反映在这个节点对象上。
+	单个属性可以通过序号引用，也可以通过属性名引用。返回的都是属性节点对象，而不是属性值。document.body.attributes[0]
+	返回的属性节点对象有name和value属性，等同于nodeName属性和nodeValue属性。
+	HTML 元素的标准属性（即在标准中定义的属性），会自动成为元素节点对象的属性。并且是可写的。但是无法删除属性，delete运算符在这里不会生效。
+		var img = document.getElementById('myImage');
+		img.src = 'http://www.example.com/image.jpg';
+	HTML 元素的属性名是大小写不敏感的，但是 JavaScript 对象的属性名是大小写敏感的。转换规则是，转为 JavaScript 属性名时，一律采用小写。多个单词，则采用骆驼拼写法
+	保留字改名：for属性改为htmlFor、class属性改为className
+	HTML 属性值一般都是字符串，但是 JavaScript 属性会自动转换类型。将字符串true转为布尔值，将onClick的值转为一个函数
+	元素节点操作属性的六个方法：
+	getAttribute() 只返回字符串，不会返回其他类型的值。
+	getAttributeNames()	返回一个数组
+	setAttribute() 如果同名属性已存在，则相当于编辑已存在的属性。该方法没有返回值。属性值总是字符串，其他类型的值会自动转成字符串 b.setAttribute('disabled', true);
+					对于button元素disabled不需要属性值，所以true可能被改成任意字符串
+	hasAttribute()
+	hasAttributes()
+	removeAttribute()
+	这六个方法对所有属性（包括用户自定义的属性）都适用。
+	这些方法只接受属性的标准名称，不用改写保留字，比如for和class都可以直接使用。另外，这些方法对于属性名是大小写不敏感的。
+		image.setAttribute('class', 'myImage');
+	标准提供data-*属性，可以用来为元素添加自定义属性，元素可以使用dataset.*来获取该属性。<div id="mydiv" data-foo="bar">  document.getElementById('mydiv').dataset.foo = 'baz'
+	删除data-*属性：delete document.getElementById('myDiv').dataset.foo;
+	data-后面的属性名有限制，只能包含字母、数字、连词线（-）、点（.）、冒号（:）和下划线（_)。而且，属性名不应该使用A到Z的大写字母
+	转成dataset的键名时，连词线后面如果跟着一个小写字母，那么连词线会被移除，该小写字母转为大写字母，其他字符不变。反过来，dataset的键名转成属性名时，
+所有大写字母都会被转成连词线+该字母的小写形式，其他字符不变。比如，dataset.helloWorld会转成data-hello-world。
+
+】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】】
+Text 节点
+	父节点的firstChild、nextSibling等属性可以获取文本节点
+	Document节点的createTextNode方法可以创造一个文本节点。
+	文本节点除了继承Node接口，还继承了CharacterData接口。
+	文本节点的data属性等同于nodeValue属性，用来设置或读取文本节点的内容。wholeText属性将当前文本节点与毗邻的文本节点，作为一个整体返回。
+	length属性返回当前文本节点的文本长度。
+	nextElementSibling属性返回紧跟在当前文本节点后面的那个同级元素节点。如果取不到元素节点，则返回null。
+	previousElementSibling属性返回当前文本节点前面最近的同级元素节点。如果取不到元素节点，则返回null：。
+方法：
+	appendData()：在Text节点尾部追加字符串。
+	deleteData()：删除Text节点内部的子字符串，第一个参数为子字符串开始位置，第二个参数为子字符串长度。
+	insertData()：在Text节点插入字符串，第一个参数为插入位置，第二个参数为插入的子字符串。
+	replaceData()：用于替换文本，第一个参数为替换开始位置，第二个参数为需要被替换掉的长度，第三个参数为新加入的字符串。
+	subStringData()：用于获取子字符串，第一个参数为子字符串在Text节点中的开始位置，第二个参数为子字符串长度。
+	remove方法用于移除当前Text节点。
+	splitText方法将Text节点一分为二，变成两个毗邻的Text节点。它的参数就是分割位置（从零开始），分割到该位置的字符前结束。如果分割位置不存在，将报错。
+分割后，该方法返回分割位置后方的字符串，而原Text节点变成只包含分割位置前方的字符串。
+	父元素节点的normalize方法可以将毗邻的两个Text节点合并。
+、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、、
+DocumentFragment 节点 
+	DocumentFragment节点代表一个文档的片段，本身就是一个完整的 DOM 树形结构。它没有父节点，parentNode返回null，但是可以插入任意数量的子节点。
+它不属于当前文档，操作DocumentFragment节点，要比直接操作 DOM 树快得多。
+	它一般用于构建一个 DOM 结构，然后插入当前文档。document.createDocumentFragment方法，以及浏览器原生的DocumentFragment构造函数，
+可以创建一个空的DocumentFragment节点。然后再使用其他 DOM 方法，向其添加子节点。
+	DocumentFragment节点本身不能被插入当前文档。当它作为appendChild()、insertBefore()、replaceChild()等方法的参数时，是它的所有子节点插入当前文档，
+而不是它自身。一旦DocumentFragment节点被添加进当前文档，它自身就变成了空节点（textContent属性为空字符串），可以被再次使用。
+如果想要保存DocumentFragment节点的内容，可以使用cloneNode方法。
+	document.queryselector('ul').appendChild(docFrag.cloneNode(true));
+	DocumentFragment节点对象没有自己的属性和方法，全部继承自Node节点和ParentNode接口
+[[[[[[[[]]]]]]]]]]][[[[[[[[]]]]]]]]]]][[[[[[[[]]]]]]]]]]][[[[[[[[]]]]]]]]]]][[[[[[[[]]]]]]]]]]][[[[[[[[]]]]]]]]]]][[[[[[[[]]]]]]]]]]][[[[[[[[]]]]]]]]]]]
+
+操作CSS
+	操作 CSS 样式最简单的方法，就是使用网页元素节点的getAttribute方法、setAttribute方法和removeAttribute方法，直接读写或删除网页元素的style属性。
+	div.setAttribute('style', 'background-color:red;' + 'border:1px solid black;');
+	元素的style属性本身是一个对象，部署了 CSSStyleDeclaration 接口，可以直接读写style属性，读写style中的CSS属性时使用驼峰名称
+	document.querySelector('div').style.fontSize='10em'
+	如果 CSS 属性名是 JavaScript 保留字，则规则名之前需要加上字符串css，比如float写成cssFloat。
+	Element.style返回的只是行内样式，并不是该元素的全部样式。通过样式表设置的样式，或者从父元素继承的样式，无法通过这个属性得到。
+	元素的全部样式要通过window.getComputedStyle()得到。
+	style对象的属性一部分与CSS规则相对应，只是采用驼峰名称，另一部分属性来自 CSSStyleDeclaration 接口。
+CSSStyleDeclaration 实例属性 
+	CSSStyleDeclaration.cssText 用来读写当前规则的所有样式声明文本。	document.querySelector('div').style.cssText='background-color:red;border:1px solid black;';
+	CSSStyleDeclaration.length 返回一个整数值，表示当前规则包含多少条样式声明。
+	CSSStyleDeclaration.parentRule 返回当前规则所属的那个样式块（CSSRule 实例）。如果不存在所属的样式块，该属性返回null。该属性只读，且只在使用 CSSRule 接口时有意义。
+		var declaration = document.styleSheets[0].rules[0].style;
+		declaration.parentRule === document.styleSheets[0].rules[0]
+		// true
+CSSStyleDeclaration 实例方法
+	CSSStyleDeclaration.getPropertyPriority方法接受 CSS 样式的属性名作为参数，返回一个字符串，表示有没有设置important优先级。如果有就返回important，否则返回空字符串。
+	CSSStyleDeclaration.getPropertyValue方法接受 CSS 样式属性名作为参数，返回一个字符串，表示该属性的属性值。
+	CSSStyleDeclaration.item方法接受一个整数值作为参数，返回该位置的 CSS 属性名。
+	CSSStyleDeclaration.removeProperty方法接受一个属性名作为参数，在 CSS 规则里面移除这个属性，返回这个属性原来的值。
+	CSSStyleDeclaration.setProperty方法用来设置新的 CSS 属性。该方法没有返回值.该方法可以接受三个参数。
+		第一个参数：属性名，该参数是必需的。
+		第二个参数：属性值，该参数可选。如果省略，则参数值默认为空字符串。
+		第三个参数：优先级，该参数可选。如果设置，唯一的合法值是important，表示 CSS 规则里面的!important。
+测试CSS属性是否存在：
+	判断元素的style对象的某个属性值是否为字符串：
+	typeof element.style.animationName === 'string';
+	document.body.style['maxWidth'] // ""
+	document.body.style['maximumWidth'] // undefined
+	这两种写法都可以：
+	document.body.style['backgroundColor'] // ""
+	document.body.style['background-color'] // ""
+CSS对象
+	浏览器原生提供 CSS 对象，为 JavaScript 操作 CSS 提供一些工具方法。这个对象目前有两个静态方法。
+	<div id="foo#bar"> 查询该元素不能直接写成document.querySelector('#foo#bar')，只能写成document.querySelector('#foo\\#bar')。
+	使用CSS.escape转义：
+		CSS.escape('foo#bar') //"foo\#bar"
+	CSS.supports方法返回一个布尔值，表示当前环境是否支持某一句 CSS 规则。
+	它的参数有两种写法，一种是第一个参数是属性名，第二个参数是属性值；另一种是整个参数就是一行完整的 CSS 语句。
+		// 第一种写法
+		CSS.supports('transform-origin', '5px') // true
+
+		// 第二种写法
+		CSS.supports('display: table-cell') // true
+	window.getComputedStyle方法，返回浏览器计算后得到的最终规则。接受一个节点对象作为参数，返回一个 CSSStyleDeclaration 实例，包含了指定节点的最终样式信息。
+这个实例是只读的。
+		var div = document.querySelector('div');
+		var styleObj = window.getComputedStyle(div);
+		styleObj.backgroundColor
+	getComputedStyle方法还可以接受第二个参数，表示当前元素的伪元素（比如:before、:after、:first-line、:first-letter等）。
+	CSSStyleDeclaration 实例返回的 CSS 值都是绝对单位。比如，长度都是像素单位（返回值包括px后缀），颜色是rgb(#, #, #)或rgba(#, #, #, #)格式。
+	CSSStyleDeclaration 实例使用CSS 规则的简写形式无效。比如，想读取margin属性的值，不能直接读，只能读marginLeft、marginTop等属性；再比如，font属性也是不能直接读的，只能读font-size等单个属性。
+	CSSStyleDeclaration 实例读取 CSS 原始的属性名，要用方括号运算符，比如styleObj['z-index']；如果读取骆驼拼写法的 CSS 属性名，可以直接读取styleObj.zIndex。
+	该方法返回的 CSSStyleDeclaration 实例的cssText属性无效，返回undefined。
+CSS伪元素：
+	CSS 伪元素是通过 CSS 向 DOM 添加的元素，主要是通过:before和:after选择器生成，然后用content属性指定伪元素的内容。
+	<div id="test">Test content</div>
+	#test:before {
+	  content: 'Before ';
+	  color: green;
+	}
+	产生结果：
+	<div id="test">
+		::before 
+		Test content
+	</div>
+	节点元素的style对象无法读写伪元素的样式，这时就要用到window.getComputedStyle():
+	var test = document.querySelector('#test');
+	var result = window.getComputedStyle(test, ':before').content;	//读取伪元素内容
+	var color = window.getComputedStyle(test, ':before').color;     //读取伪元素样式中的颜色
+	也可以使用getPropertyValue方法从伪元素获取其属性
+StyleSheet 接口
+	StyleSheet接口代表网页的一张样式表，包括<link>元素加载的样式表和<style>元素内嵌的样式表。
+	document对象的styleSheets属性，可以返回当前页面的所有StyleSheet实例（即所有样式表）。它是一个类似数组的对象。
+	如果是<style>元素嵌入的样式表，还有另一种获取StyleSheet实例的方法，就是这个节点元素的sheet属性。
+	<style id="myStyle"></style>
+	var myStyleSheet = document.getElementById('myStyle').sheet;
+	myStyleSheet instanceof StyleSheet // true
+	StyleSheet接口不仅包括网页样式表，还包括 XML 文档的样式表。所以，它有一个子类CSSStyleSheet表示网页的 CSS 样式表。这个子接口继承了StyleSheet的所有属性和方法，并且定义了几个自己的属性
+StyleSheet实例属性：
+	StyleSheet.disabled返回一个布尔值，表示该样式表是否处于禁用状态。手动设置disabled属性为true，等同于在<link>元素里面，将这张样式表设为alternate stylesheet，即该样式表将不会生效。
+注意，disabled属性只能在 JavaScript 脚本中设置，不能在 HTML 语句中设置。
+	Stylesheet.href返回样式表的网址。对于内嵌样式表，该属性返回null。该属性只读。
+	StyleSheet.media属性返回一个类似数组的对象（MediaList实例），成员是表示适用媒介的字符串。
+	MediaList实例的appendMedium方法，用于增加媒介；deleteMedium方法用于删除媒介。
+	StyleSheet.title属性返回样式表的title属性。
+	StyleSheet.type属性返回样式表的type属性，通常是text/css。
+	CSS 的@import命令允许在样式表中加载其他样式表。StyleSheet.parentStyleSheet属性返回包含了当前样式表的那张样式表。如果当前样式表是顶层样式表，则该属性返回null。
+	StyleSheet.ownerNode属性返回StyleSheet对象所在的 DOM 节点，通常是<link>或<style>。对于那些由其他样式表引用的样式表，该属性为null。
+	CSSStyleSheet.cssRules属性指向一个类似数组的对象（CSSRuleList实例），里面每一个成员就是当前样式表的一条 CSS 规则。使用该规则的cssText属性，可以得到 CSS 规则对应的字符串。
+	document.querySelector('#styleElement').sheet.cssRules[0].cssText  // "body { background-color: red; margin: 20px; }"
+	每条 CSS 规则还有一个style属性，指向一个对象，用来读写具体的 CSS 命令。  cssStyleSheet.cssRules[0].style.color = 'red';
+	有些样式表是通过@import规则输入的，它的ownerRule属性会返回一个CSSRule实例，代表那行@import规则。如果当前样式表不是通过@import引入的，ownerRule属性返回null。
+实例方法
+	CSSStyleSheet.insertRule方法用于在当前样式表的插入一个新的 CSS 规则。该方法可以接受两个参数，第一个参数是表示 CSS 规则的字符串，这里只能有一条规则，否则会报错。
+第二个参数是该规则在样式表的插入位置（从0开始），该参数可选，默认为0（即默认插在样式表的头部）。注意，如果插入位置大于现有规则的数目，会报错。
+	浏览器对脚本在样式表里面插入规则有很多限制。所以，这个方法最好放在try...catch里使用。
+	CSSStyleSheet.deleteRule方法用来在样式表里面移除一条规则，它的参数是该条规则在cssRules对象中的位置。该方法没有返回值。document.styleSheets[0].deleteRule(1);
+网页添加样式表有两种方式。一种是添加一张内置样式表，即在文档中添加一个<style>节点。另一种是添加外部样式表，即在文档中添加一个<link>节点，然后将href属性指向外部样式表的 URL。
+		var style = document.createElement('style');
+		style.setAttribute('media', 'screen');
+		style.innerHTML = 'body{color:red}';
+		document.head.appendChild(style);
+	CSSRuleList 接口是一个类似数组的对象，表示一组 CSS 规则，成员都是 CSSRule 实例。
+	CSSRuleList 实例里面，每一条规则（CSSRule 实例）可以通过rules.item(index)或者rules[index]拿到。CSS 规则的条数通过rules.length拿到。
+	添加规则和删除规则不能在 CSSRuleList 实例操作，而要在它的父元素 StyleSheet 实例上，通过StyleSheet.insertRule()和StyleSheet.deleteRule()操作。
+
+CSSRule 接口
+	一条 CSS 规则包括两个部分：CSS 选择器和样式声明（CSS命令）。
+	实例属性：
+	CSSRule.cssText属性返回当前规则的文本
+	CSSRule.parentStyleSheet属性返回当前规则所在的样式表对象（StyleSheet 实例）
+	CSSRule.parentRule属性返回包含当前规则的父规则，如果不存在父规则（即当前规则是顶层规则），则返回null。
+	CSSRule.type属性返回一个整数值，表示当前规则的类型。1：普通样式规则（CSSStyleRule 实例）	3：@import规则
+	一条 CSS 规则是普通的样式规则（不含特殊的 CSS 命令）还部署了 CSSStyleRule 接口，具有两个属性：
+	CSSStyleRule.selectorText属性返回当前规则的选择器。这个属性是可写的。
+	CSSStyleRule.style属性返回一个对象（CSSStyleDeclaration 实例），代表当前规则的样式声明，也就是选择器后面的大括号里面的部分。
+	CSSStyleDeclaration 实例的cssText属性，可以返回所有样式声明，格式为字符串。
+window.matchMedia()
+	用来将 CSS 的MediaQuery条件语句，转换成一个 MediaQueryList 实例。
+	如果参数不是有效的MediaQuery条件语句，window.matchMedia不会报错，依然返回的一个 MediaQueryList 实例。
+	MediaQueryList.media属性返回一个字符串，表示对应的 MediaQuery 条件语句。
+	MediaQueryList.matches属性返回一个布尔值，表示当前页面是否符合指定的 MediaQuery 条件语句。
+	MediaQueryList.onchange属性用来指定change事件的监听函数。该函数的参数是change事件对象（MediaQueryListEvent 实例），
+该对象与 MediaQueryList 实例类似，也有media和matches属性。change事件会在window参数被调整后触发，从而可以实现适配式样式设置。
+		var mql = window.matchMedia('(max-width: 600px)');
+
+		mql.onchange = function(e) {
+		  if (e.matches) {
+			/* 视口不超过 600 像素 */
+		  } else {
+			/* 视口超过 600 像素 */
+		  }
+		}
+	MediaQueryList 实例有两个方法MediaQueryList.addListener()和MediaQueryList.removeListener()，用来为change事件添加或撤销监听函数。
+	
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+Mutation Observer API
+	Mutation Observer API 用来监视 DOM 变动。DOM 的任何变动，比如节点的增减、属性的变动、文本内容的变动，这个 API 都可以得到通知。
+	概念上，它很接近事件，可以理解为 DOM 发生变动就会触发 Mutation Observer 事件。但是，它与事件有一个本质不同：事件是同步触发，
+也就是说，DOM 的变动立刻会触发相应的事件；Mutation Observer 则是异步触发，DOM 的变动并不会马上触发，而是要等到当前所有 DOM 操作都结束才触发。
+	Mutation Observer 有以下特点。
+		它等待所有脚本任务完成后，才会运行（即异步触发方式）。
+		它把 DOM 变动记录封装成一个数组进行处理，而不是一条条个别处理 DOM 变动。
+		它既可以观察 DOM 的所有类型变动，也可以指定只观察某一类变动。
+	使用MutationObserver构造函数：
+	var observer = new MutationObserver(callback);
+	参数是一个回调函数，会在每次 DOM 变动后调用。该回调函数接受两个参数，第一个是变动数组，第二个是观察器实例
+实例方法：
+	observe方法用来启动监听，它接受两个参数。
+		第一个参数：所要观察的 DOM 节点
+		第二个参数：一个配置对象，指定所要观察的特定变动	
+	var article = document.querySelector('article');
+
+	var  options = {
+	  'childList': true,
+	  'attributes':true
+	} ;
+
+	observer.observe(article, options);
+	观察器所能观察的 DOM 变动类型（即上面代码的options对象），有以下几种。
+		childList：子节点的变动（指新增，删除或者更改）。
+		attributes：属性的变动。
+		characterData：节点内容或节点文本的变动。
+	想要观察哪一种变动类型，就在option对象中指定它的值为true
+	options对象还可以设定以下属性：
+		subtree：布尔值，表示是否将该观察器应用于该节点的所有后代节点。
+		attributeOldValue：布尔值，表示观察attributes变动时，是否需要记录变动前的属性值。
+		characterDataOldValue：布尔值，表示观察characterData变动时，是否需要记录变动前的值。
+		attributeFilter：数组，表示需要观察的特定属性（比如['class','src']）。
+	disconnect方法用来停止观察。调用该方法后，DOM 再发生变动，也不会触发观察器。
+	takeRecords方法用来清除变动记录，即不再处理未处理的变动。该方法返回变动记录的数组。
+	DOM 每次发生变化，就会生成一条变动记录（MutationRecord 实例）
+	MutationRecord对象包含了DOM的相关信息，有如下属性：
+		type：观察的变动类型（attribute、characterData或者childList）。
+		target：发生变动的DOM节点。
+		addedNodes：新增的DOM节点。
+		removedNodes：删除的DOM节点。
+		previousSibling：前一个同级节点，如果没有则返回null。
+		nextSibling：下一个同级节点，如果没有则返回null。
+		attributeName：发生变动的属性。如果设置了attributeFilter，则只返回预先指定的属性。
+		oldValue：变动前的值。这个属性只对attribute和characterData变动有效，如果发生childList变动，则返回null。
 
 
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+	
