@@ -1,0 +1,95 @@
+									使用log4j
+	log4j的maven坐标：
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>1.2.17</version>
+		</dependency>
+	配置文件放在log4j.properties放在src/main/resources/下。
+	log4j.properties内容：
+		#log4j.rootLogger=LEVEL,appenderName1,appenderName2...
+		log4j.rootLogger=INFO,console								#全局日志记录器
+		
+		#log4j.appender.appenderName=className
+		log4j.appender.console=org.apache.log4j.ConsoleAppender		#控制台日志输出器
+		log4j.appender.console.Threshold=INFO						#日志最低输出级别，不能比前面设置的日志级别LEVEL高
+		log4j.appender.console.ImmediateFlush=true					#立即输出日志
+		log4j.appender.console.Target=System.out					#使用的输出流，默认就是System.out
+		log4j.appender.console.layout=org.apache.log4j.PatternLayout						#输出日志格式化类
+		log4j.appender.console.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss} [%p] %m%n	#输出日志格式
+		
+		#自定义日志记录器，使用文件记录，文件路径中不用用中文，使用：final Logger logger = Logger.getLogger("mylogger");
+		log4j.logger.mylogger=DEBUG,file
+		log4j.additivity.mylogger=false								#不继承父级日志输出器，这里配置后就不会输出日志到控制台（全局日志记录器配置）
+		log4j.appender.file=org.apache.log4j.FileAppender
+		log4j.appender.file.Threshold=DEBUG
+		log4j.appender.file.ImmediateFlush=true
+		log4j.appender.file.Append=true								#true表示追加到已有文件的末尾，false表示将覆盖原文件
+		log4j.appender.file.File=d:/zhangwei/loggings.log
+		log4j.appender.file.layout=org.apache.log4j.PatternLayout
+		log4j.appender.file.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss} [%p] %l %m%n
+		
+		#为指定包配置局部日志记录器
+		log4j.logger.com.zhangwei.package1=DEBUG,test
+		...
+	
+	log4j提供五种appender:
+		org.apache.log4j.ConsoleAppender（控制台）
+		org.apache.log4j.FileAppender（文件）
+		org.apache.log4j.DailyRollingFileAppender（每天产生一个日志文件）
+		org.apache.log4j.RollingFileAppender（文件大小到达指定尺寸的时候产生一个新的文件）
+		org.apache.log4j.WriterAppender（将日志信息以流格式发送到任意指定的地方）
+	
+	DailyRollingFileAppender配置创建新日志文件的时间：
+		log4j.logger.dateFile=DEBUG,dateFile
+		log4j.appender.dateFile=org.apache.log4j.DailyRollingFileAppender
+		#log4j.appender.dateFile.DatePattern='.'yyyy-MM			#每个月新增一个日志文件，当前月文件名为指定的文件名，
+		#前一个月文件名为：logging.log4j.yyyy-MM，文件名应该是自动修改的
+		log4j.appender.dateFile.DatePattern='.'yyyy-MM-dd		#每天新增一个日志文件，文件名也会调整
+	
+	RollingFileAppender配置创建新日志文件的文件大小：
+	MaxFileSize=100KB：			#后缀可以是KB,MB或者GB。在日志文件到达该大小时，将会自动滚动，即将原来的内容移到logging.log4j.1文件
+	MaxBackupIndex=2：			#指定可以产生的滚动文件的最大数，例如，设为2则可以产生logging.log4j.1，logging.log4j.2两个滚动文件和一个logging.log4j文件
+	
+	log4j提供4中layout：
+		org.apache.log4j.HTMLLayout（以HTML表格形式布局）
+		org.apache.log4j.PatternLayout（可以灵活地指定布局模式）
+		org.apache.log4j.SimpleLayout（包含日志信息的级别和信息字符串）
+		org.apache.log4j.TTCCLayout（包含日志产生的时间、线程、类别等信息）
+	
+	PatternLayout格式说明：
+		%p：输出日志信息的优先级，即DEBUG，INFO，WARN，ERROR，FATAL
+		%d：输出日志时间点的日期或时间，默认格式为ISO8601，可以指定格式如：%d{yyyy/MM/dd HH:mm:ss,SSS}
+		%r：输出自应用程序启动到输出该log信息耗费的毫秒数
+		%t：输出产生该日志事件的线程名
+		%l：输出日志事件的发生位置，相当于%c.%M(%F:%L)的组合，包括类全名、方法、文件名以及在代码中的行数
+		%c：输出日志信息所属的类目，通常就是类全名
+		%M：输出产生日志信息的方法名
+		%F：输出日志消息产生时所在的文件名
+		%L：输出代码中的行号
+		%m：输出代码中指定的具体日志信息
+		%n：输出一个回车换行符，Windows平台为"rn"，Unix平台为"n"
+		%x：输出和当前线程相关联的NDC(嵌套诊断环境)
+		%%：输出一个"%"字符
+	
+	SLF4J：简单日志门面（Simple Logging Facade for Java），不是具体的日志解决方案，它只服务于各种各样的日志系统。
+	slf4j定义了一组日志接口，使用slf4j时还需要引入其他具体的实现了slf4j接口的日志框架：logback、log4j等
+	slf4j的maven坐标：
+	 <dependency>
+		<groupId>org.slf4j</groupId>
+		<artifactId>slf4j-api</artifactId>
+		<version>1.7.21</version>
+	</dependency>
+	slf4j和log4j的桥接jar包：
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>1.7.21</version>
+		</dependency>
+	因为这个jar包已经依赖了slf4j和log4j，所以只引入这个jar包的maven依赖就可以不用再手动声明slf4j和log4j的maven依赖
+	修改原来的代码：
+		Logger log = LoggerFactory.getLogger(Demo1.class);
+	这里 Logger 和 LoggerFactory 都是slf4j提供的API
+	不需要修改log4j的配置文件。
+	
+	
