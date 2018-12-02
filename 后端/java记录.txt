@@ -488,7 +488,28 @@ Object引用所有类型对象，这样的方式并不安全，比如手动类�
 	Gen<Integer> gens = new Gen<Integer>[10];  //wrong
 	可以使用通配符：
 	Gen<?> gens = new Gen<?>[10];  //OK
-
+	
+	补充：java的SPI
+	SPI 全称为 (Service Provider Interface) ,是JDK内置的一种服务提供发现机制。它是一种动态替换的机制。
+	使用方法：在JAR包的"src/META-INF/services/"目录下建立一个文件，文件名是接口的全限定名，文件的内容可以有多行，每行都是该接口对应的具体实现类的全限定名。
+	src
+		main
+			java
+				com.zhangwei
+					inteface.LogWriter
+					impl.ErrorLogWriter
+			resources
+				META-INF
+					services
+						com.zhangwei.inteface.LogWriter(文件名就是接口的全限定名，没有扩展名)
+	com.zhangwei.inteface.LogWriter文件内容：
+		com.zhangwei.impl.ErrorLogWriter
+	测试：
+		ServiceLoader<LogWriter> logWriterList = ServiceLoader.load(LogWriter.class);
+        for(LogWriter logWriter : logWriterList){
+            logWriter.log("lllllll");
+        }
+						
 
 
 

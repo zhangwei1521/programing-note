@@ -2448,7 +2448,23 @@ Mutation Observer API
 		nextSibling：下一个同级节点，如果没有则返回null。
 		attributeName：发生变动的属性。如果设置了attributeFilter，则只返回预先指定的属性。
 		oldValue：变动前的值。这个属性只对attribute和characterData变动有效，如果发生childList变动，则返回null。
+	function mycallback(mutations){
+		mutations.forEach(function(mutation){
+			console.log(mutation.oldValue)
+		})
+	}
 
+	observer = new MutationObserver(mycallback);
+
+	let options = {
+		'oldValue':true,
+		'target':true,
+		'characterData':true
+	};
+
+	let teacherTxt = document.getElementById('teacher-intro'); 
+
+	observer.observe(teacherTxt,options)
 
 
 
