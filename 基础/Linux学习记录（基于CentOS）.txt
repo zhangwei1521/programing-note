@@ -47,4 +47,17 @@ rw init=/sysroot/bin/bash，然后Ctrl+x进入emergency模式，使用chroot切�
 	使用init 0 也可以关机
 	openssh-clients登陆远程主机：ssh root@192.168.1.103
 	
+	基础命令
+	ls -ld /tmp		-d通常和-l一起使用，写出-ld。-d用于查看参数目录的信息而不是参数目录的下级内容的信息
+	cd 不加参数会直接进入用户主目录
+	mkdir -p /tmp/test/01	-p用于逐级创建目录，如果目录已存在也不会报错，也不会做其他事情
+	rmdir /tmp/test 只能删除空目录 -p可以从里到外逐级删除空目录
+	rm -r用于删除目录，-f用于取消提示 删除目录通常使用rm -rf /tmp/test 不用用/做参数，非常危险
+	which rmdir 用于查找某个命令的绝对路径
+	查看PATH环境变量：echo $PATH	输出：/usr/bin:/root/bin:...
+	将/root加入PATH变量：PATH=$PATH:/root
+	mv /tmp/test/test.txt /root/ 移动文件或目录
+	cp aaa bbb 复制文件 -r用于复制目录 CentOS中cp实际是cp -i
+	echo 'abc' > aaa 将'aaa'重定向写入aaa文件
+	
 	
