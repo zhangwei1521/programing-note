@@ -72,4 +72,30 @@
 			new ExtractTextPlugin("style.css")
 		],
 	
+	webpack打包报错：CALL_AND_RETRY_LAST Allocation failed - JavaScript heap out of memory
+	原因
+	在Node中通过JavaScript使用内存时只能使用部分内存（64位系统：1.4 GB，32位系统：0.7 GB），这个时候，如果前端项目非常的庞大，
+Webpack编译时就会占用很多的系统资源，如果超出了V8引擎对Node默认的内存限制大小时，就会产生内存泄露(JavaScript heap out of memory)的错误。
+	解决方案
+	可以放宽内存大小的使用限制，可以在Node启动的时候，传递--max-old-space-size或--max-new-space-size来调整内存大小的使用限制。
+	使用插件：increase-memory-limit修改node内存限制大小
+	全局安装
+		npm install -g increase-memory-limit
+		运行
+		increase-memory-limit
+	项目中使用：
+		"scripts": {
+			"fix-memory-limit": "cross-env LIMIT=2048 increase-memory-limit"
+		  },
+		  "devDependencies": {
+			"increase-memory-limit": "^1.0.3",
+			"cross-env": "^5.0.5"
+		  }
+		执行一次npm run fix-memory-limit
 	
+
+
+
+
+
+
