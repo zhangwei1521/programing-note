@@ -7,7 +7,7 @@
 	安装到项目目录	npm install --save-dev webpack
 	终端中使用：webpack {entry file} {destination for bundled file} //全局安装
 				node_modules/.bin/webpack {entry file} {destination for bundled file} //项目中安装
-	配置文件：webpa.config.js:
+	配置文件：webpack.config.js:
 	module.exports = {
 	  entry:  __dirname + "/app/main.js",//已多次提及的唯一入口文件
 	  output: {

@@ -1,2 +1,5 @@
 Windows命令：
 	查看占用指定端口的进程：netstat -aon|findstr 本地端口
+	临时修改环境变量path：path d:\bin;%path%
+	查看path说明：path /?
+	
