@@ -369,7 +369,7 @@ HttpStatus 等，其父类是 HttpEntity，T getBody()方法将根据第二个�
 		ribbon.ConnectTimeout=250
 		#指定服务名:
 		my-provider.ribbon.NFLoadBalancerRuleClassName: com.netflix.loadbalancer.WeightedResponseTimeRule
-		#不适应eureka维护ribbon的服务实例：
+		#不使用eureka维护ribbon的服务实例：
 		ribbon.eureka.enabled=false
 		my-provider.ribbon.listOfServers=localhost:8001,localhost:8002
 	跨区域容错配置：可以将实际位于A区的服务配置为B区的服务，这是因为Ribbon默认是使用区域亲和策略的，如果B区实际部署的
@@ -391,7 +391,20 @@ HttpStatus 等，其父类是 HttpEntity，T getBody()方法将根据第二个�
 		my-provider.ribbon.maxAutoRetriesNextServers=2
 		#对当前实例的重试次数（不包含第一次）
 		my-provider.ribbon.maxAutoRetries=1
-
+	
+	Ribbon依赖：
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-ribbon</artifactId>
+		</dependency>
+	其实 spring-cloud-starter-eureka 已经包含了ribbon依赖，所以不需要再单独引入ribbon
+	使用 LoadBalancerClient 获取服务实例：
+		loadbalancerClient.choose("virtual-host-name");
+	这里的虚拟主机名默认和服务名是一致的，但是可以通过以下配置修改：
+		eureka.instance.virtual-host-name 或 eureka.instance.secure-virtual-host-name
+	配置了loadbalenced的restTemplate.getForEntity 方法不能和loadbalancerClient.choose
+在同一个方法中调用，二者会发生冲突
+	
 第五章 Hystrix
 	基本用法：
 	服务端调用方添加依赖：
@@ -408,10 +421,95 @@ HttpStatus 等，其父类是 HttpEntity，T getBody()方法将根据第二个�
 			return "service error";
 		}
 	
-
-
-
-
+第六章 Feign
+	Feign是netflix开源的HTTP客户端，具有声明式、模板化的特点。使用Feign可以实现方便、优雅地调用服务。
+	Spring Cloud 对原生的Feign进行了增强，添加了对Spring MVC注解的支持，同时整合了Eureak和Ribbon。
+	Feign依赖：
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-feign</artifactId>
+		</dependency>	
+	客户端Feign接口：
+		@FeignClient(name="hello-service")
+		public interface HelloFeignClient {
+			@RequestMapping("/hello")
+			public String callHello();
+		}
+	@FeignClient注解的name属性值是一个服务名，用来创建ribbon负载均衡器。还可以再添加一个属性url，直接
+指定服务的地址。
+	启动类添加注解：@EnableFeignClients
+	调用类中注入feign客户端：
+		@Autowired
+		private HelloFeignClient helloFeignClient;
+	feign使用默认配置创建客户端接口的实现，可以通过自定义配置修改feign客户端的行为：
+	自定义feign配置类：
+		@Configuration
+		public class HelloFeignConfig {
+			@Bean
+			public BasicAuthRequestInterceptor basicAuthRequestInterceptor(){	
+				//如果服务调用需要BasicAuth认证，就在这里配置用户名和密码
+				return new BasicAuthRequestInterceptor("user","password");
+			}
+			
+			@Bean
+			public Contract feignContract(){	
+				//配置实用feign原生注解
+				return new feign.Contract.Default();
+			}
+		}
+	这里的feign配置类HelloFeignConfig不能放在@ComponentScan扫描到的地方，否则会被应用到所有的feign客户端
+	Feign还支持使用Feign Builder API来手动创建Feign客户端，这种方式可以灵活地控制feign客户端的行为：
+	将启动类上的@EnableFeignClients注解去掉，然后去掉feign客户端接口的@FeignClient注解，
+	在服务调用者控制器上添加注解：@Import(FeignClientsConfiguration.class)	//引入feign默认配置类
+	将服务调用者控制器中的feign客户端接口注入改为构造方法注入：
+		@Autowired
+		public FeignConsumerController(Decoder decoder, Encoder encoder, Client client, Contract contract){
+			this.helloFeignClient = Feign.builder().client(client).encoder(encoder).decoder(decoder).
+					contract(contract).requestInterceptor(new BasicAuthRequestInterceptor("user","password")).
+					target(HelloFeignClient.class,"http://hello-service/");
+		}
+	Decoder等是feign包下的API
+	Feign使用继承：
+	服务提供者定义接口：
+		public interface UserService{
+			@RequestMapping(value="/user/{id}",Method=RequestMethod.GET)
+			User getUser(@PathVariable("id") long id);
+		}
+	服务提供者实现接口：
+		@RestController
+		public class UserServiceImpl implements UserService{
+			...
+		}
+	服务调用这的feign客户端继承接口：
+		@FeignClient("user-service")
+		public interface UserFeignClient extends UserService{}
+	这种方式的好处是简化开发，问题在于造成了服务消费者依赖了服务提供者，即代码的耦合。是否使用这种
+方式，需要结合具体场景来考虑。
+	feign对压缩的支持：
+	#压缩请求：
+	feign.compression.request.enabled=true
+	#指定支持的媒体类型
+	feign.compression.request.mime-types=text/xml,application/xml,application/json
+	#指定开启请求压缩的最小值
+	feign.compression.request.min-request-size=2048
+	让feign打印日志：
+	在feign配置类：HelloFeignConfig 中新增一个bean：
+		@Bean
+		Logger.Level feignLoggerLevel(){
+			return Logger.Level.FULL;
+		}
+	配置文件添加日志级别：
+		logging.level.com.zhangwei.feignconsumer.service.HelloFeignClient=DEBUG
+	这里日志级别可选的值有：NONE(不记录日志)、BASIC(记录请求响应简单说明)、HEADERS(记录请求响应头)、FULL(全记录)
+	Feign客户端传递多参数：
+	如果是 GET 方法调用，多参数需要都写出来或使用map：
+		@RequestMapping(value="/user",method=RequestMethod.GET)
+		public User getUser(@RequestParam("name") String name, @RequestParam("age") int age);
+		或
+		@RequestMapping(value="/user",method=RequestMethod.GET)
+		public User getUser(@RequestParam Map<String,Object> param);
+	POST请求可以直接使用@RequestBody传递对象
+	
 
 
 
