@@ -406,6 +406,20 @@ HttpStatus 等，其父类是 HttpEntity，T getBody()方法将根据第二个�
 在同一个方法中调用，二者会发生冲突
 	
 第五章 Hystrix
+	高负载的问题：如果服务提供者响应的时间太久，消费者就会一直等待直到响应或超时，每一次
+服务调用通常对应着一个线程或进程，也就是占用着一部分系统资源，一直等待使得系统资源得不到
+释放，如果有更多的请求到来就会导致资源耗尽，服务变得不可用。这种由于服务提供者故障导致服
+务消费者也变得不可用的现象称为“雪崩效应”
+	要防止雪崩效应，服务调用就需要具有容错能力，表现为两个方面：一是为网络请求设置超时时间，
+二是提高断路支持（断路器）。
+	设置超时可以让发送请求占用的资源及时得到释放，断路器可以实现快速失败，从而不再浪费CPU
+时间去等待不可用的服务调用。断路器还需要提供自动恢复功能，在调用的服务恢复后关闭断路器。
+	断路器的状态转换：
+	断路器关闭（依赖服务正常）-->断路器打开（失败率达到阈值）-->半开状态（允许一个请求去调用
+依赖服务进行测试，如果成功就关闭断路器，否则打开断路器）==>关闭断路器/打开断路器
+	Hystrix提供的功能包括：包裹请求（HystrixCommand命令包裹服务调用逻辑，在独立线程中执行）、
+跳闸机制（断路）、资源隔离（每个依赖提供一个线程池，当线程池满后后来的服务调用请求就直接失败）、
+监控、回退、自我修复。
 	基本用法：
 	服务端调用方添加依赖：
 		<dependency>
@@ -420,7 +434,96 @@ HttpStatus 等，其父类是 HttpEntity，T getBody()方法将根据第二个�
 		public String callFallBack(){
 			return "service error";
 		}
+	@HystrixCommand的配置：
+	@HystrixCommand(fallbackMethod = "callFallBack",commandProperties={
+		//单次服务调用超时时间
+		@HystrixProperty(name="execution.isolation.thread.timeoutInMilliseconds",value="5000"),
+		//设置统计的滚动窗口的时间段大小（统计窗口刷新时间间隔）
+		@HystrixProperty(name="metric.rollingStats.timeoutInMilliseconds",value="10000"),//
+	},threadPoolProperties={
+		//线程池大小
+		@HystrixProperty(name="coreSize",value="10"),
+		//排队等待发起请求的队列大小
+		@HystrixProperty(name="maxQueueSize",value="10")
+	})
+	单次请求失败、超时、被拒绝在断路器打开时也是会调用回退方法的。
+	Hystrix默认阈值是50秒20请求失败。
+	结合springboot的actuator可以在health端点查看hystrix的状态。
+	Hystrix的隔离策略：THREAD(新开一个线程来使用HystrixCommand进行服务调用，并发量受线程池大小限制)、
+SEMAPHORE(信号量，在原服务请求线程上进行服务调用)，默认使用THREAD
+	Spring Cloud默认为feign集成了Hystrix，只有Hystrix在项目的classpath下，feign默认就会启用
+HystrixCommand.
+	为feign客户端添加回退方法：
+		@FeignClient(name="hello-service",fallback=FeignClientFallback.class)
+		public interface HelloFeignClient {
+			@RequestMapping("/hello")
+			public String callHello();
+		}
+		
+		@Component
+		class FeignClientFallback implements HelloFeignClient{
+			public String callHello(){
+				return "feign fallback";
+			}
+		}
+	使用@FeignClient的fallbackFactory属性查看回退原因:
+	@FeignClient(name="hello-service",fallback=FeignClientFallbackFactory.class)
 	
+	class FeignClientFallbackFactory implements FallbackFactory<HelloFeignClient>{
+		@Override
+		public HelloFeignClient create(Throwable cause){
+			return new HelloFeignClient(){
+				@Override
+				public String callHello(){
+					System.out.println("reason of fallback: "+cause);
+					return cause.toString;
+				}
+			}
+		}
+	}
+	为feign禁用hystrix:feign配置类配置feignBuilder的bean：
+		@Configuration
+		public class HelloFeignConfig {
+			@Bean
+			@Scope("prototype")
+			public Feign.Builder feignBuilder(){
+				return Feign.builder();
+			}
+		}
+	全局禁用hystrix:
+		feign.hystrix.enabled=false
+	
+	HystrixCommand在执行时会记录执行结果和运行指标，如每秒请求数、请求成功数等，这些数据可用于分析
+系统状态。Hystrix模块hystrix-metrix-event-stream可以以text/event-stream的格式暴露上述信息。通过
+actuator的hystrix.stream端点可以获取这些信息。
+	使用Hystrix Dashboard显示hystrix统计信息：
+	Hystrix Dashboard依赖：
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-hystrix-dashboard</artifactId>
+		</dependency>
+	启动类上添加注解：@EnableHystrixDashboard
+	指定启动端口：server.port=8030
+	访问：localhost:9030/hystrix 就可以看到hystrix dashboard
+	在 hystrix-dashboard主页输入服务调用方的hystrix端点路径：localhost:9001/hystrix.stream,设置
+title为任意值，点击monitor stream查看端点提供的hystrix信息
+	使用turbine监控多个微服务：
+	turbine工程依赖：
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-turbine</artifactId>
+		</dependency>
+	启动类上添加注解：@EnableTurbine
+	配置文件：
+		server.port=8031
+		eureka.client.serviceUrl.defaultZone=http://localhost:1111/eureka/
+		turbine.appConfig=feign-consumer,ribbon-consumer
+		turbine.clusterNameExpression="'default'"
+	在hystrix-dashboard主页输入turbine的路径：http://localhost:8031/turbine.stream
+	除了这种直接通过配置服务名的方式收集监控信息外，还可以引入消息中间件，让hystrix将收集的信息作为
+消息发送给消息中间件，turbine再从消息中间件获取这些信息。
+	
+		
 第六章 Feign
 	Feign是netflix开源的HTTP客户端，具有声明式、模板化的特点。使用Feign可以实现方便、优雅地调用服务。
 	Spring Cloud 对原生的Feign进行了增强，添加了对Spring MVC注解的支持，同时整合了Eureak和Ribbon。
@@ -453,9 +556,15 @@ HttpStatus 等，其父类是 HttpEntity，T getBody()方法将根据第二个�
 			
 			@Bean
 			public Contract feignContract(){	
-				//配置实用feign原生注解
+				//配置使用feign原生注解
 				return new feign.Contract.Default();
 			}
+		}
+	在feign客户端接口中引入配置类：
+		@FeignClient(name="hello-service",configuration = HelloFeignConfig.class)
+		public interface HelloFeignClient {
+			@RequestMapping("/hello")
+			public String callHello();
 		}
 	这里的feign配置类HelloFeignConfig不能放在@ComponentScan扫描到的地方，否则会被应用到所有的feign客户端
 	Feign还支持使用Feign Builder API来手动创建Feign客户端，这种方式可以灵活地控制feign客户端的行为：
@@ -480,7 +589,7 @@ HttpStatus 等，其父类是 HttpEntity，T getBody()方法将根据第二个�
 		public class UserServiceImpl implements UserService{
 			...
 		}
-	服务调用这的feign客户端继承接口：
+	服务调用者的feign客户端继承接口：
 		@FeignClient("user-service")
 		public interface UserFeignClient extends UserService{}
 	这种方式的好处是简化开发，问题在于造成了服务消费者依赖了服务提供者，即代码的耦合。是否使用这种
