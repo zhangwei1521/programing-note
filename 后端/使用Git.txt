@@ -124,7 +124,9 @@ git diff --staged，效果是相同的）
 	如果要得到同时满足上面两个选项搜索条件的提交，就必须用 --all-match 选项。
 	选项 -S "key word" 仅显示添加或移除了某个关键字的提交
 	git log -- path/fileName	指定文件路径（名）
-	
+	查询指定时间后含有指定关键字的提交：
+		git log --grep=报到注册 --since=2018-11-20 -p
+		
 	使用 git commit --amend 追加提交，这个命令会将暂存区中的文件提交。如果自上次提交以来未做任何
 修改，这个命令就是进行重新编辑提交信息。
 	使用 git reset HEAD <file>... 来取消暂存
