@@ -100,7 +100,7 @@
 				<artifactId>spring-cloud-starter-eureka-server</artifactId>
 			</dependency>
 		</dependencies>
-		</dependencyManagement>
+		<dependencyManagement>
 			<dependencies>
 				<dependency>
 					<groupId>org.springframework.cloud</groupId>
@@ -252,7 +252,9 @@
 集群内与之相连的其他注册中心，从而实现服务注册中心间服务清单的同步。
 	服务续约：注册服务后，服务提供者会维护一个心跳向注册中心持续地报告自身状态。注册中心使用两个属性来确定客户端发送
 心跳的间隔时间和服务失效时间：
+		#Eureka客户端向服务端发送心跳的时间间隔，单位为秒（客户端告诉服务端自己会按照该规则）
 		eureka.instance.lease-renewal-interval-in-seconds=30
+		#Eureka服务端在收到最后一次心跳之后等待的时间上限，单位为秒，超过则剔除（客户端告诉服务端按照此规则等待自己）
 		eureka.instance.lease-expiration-duration-in-seconds=90
 	服务消费者：服务消费者启动的时候会向注册中心发送一个请求以获取注册中心注册的服务清单，注册中心（Eureka Server）会
 维护一份只读的服务清单返回给客户端，并且30秒更新一次该清单。要从注册中心获取服务清单必须确保:
@@ -270,8 +272,8 @@
 容易触发自我保护，实际环境通常是网络不稳定触发自我保护。注册中心使用属性
 		eureka.server.enable-self-preservation=false
 关闭自我保护机制。
-	设置Region属性：eureka.client.region=? #定义发现哪个region的服务
-	设置zone属性：  eureka.client.availability-zones=?,?  #定义发现哪些zone的服务
+	//设置Region属性：eureka.client.region=? #定义发现哪个region的服务
+	//设置zone属性：  eureka.client.availability-zones=?,?  #定义发现哪些zone的服务
 	Region默认值为default，Zone默认值为defaultZone
 	@EnableDiscoveryClient注解用于开启DiscoveryClient的实例，使用eureka客户端就是创建DiscoveryClient的实现类EurekaDiscoveryClient
 的实例对象，该对象使用netflix的DiscoveryClient对象完成服务注册和发现。
@@ -346,7 +348,7 @@ HttpStatus 等，其父类是 HttpEntity，T getBody()方法将根据第二个�
 		@RibbonClient(name = "my-provider", configuration = MyRibbonConfig.class)
 		//MyRibbonConfig类不能放在可被默认包扫描策略扫描到的地方，如果要放在一个被扫描到的位置，需要使用@ComponentScan的
 		//excludeFilters 排除：@ExcudeAnnotation是自定义标记空注解
-		//@ComponentScan(excludeFilters = {@ComponentScan.Filter(type = FilterType.ANNOTATION, value = {ExcudeAnnotation.class})})
+		//@ComponentScan(excludeFilters = {@ComponentScan.Filter(type = FilterType.ANNOTATION, value = {ExcludeAnnotation.class})})
 		public class HelloSeviceApplication {
 			@Bean
 			@LoadBalanced
@@ -357,7 +359,7 @@ HttpStatus 等，其父类是 HttpEntity，T getBody()方法将根据第二个�
 		}
 		
 		@Configuration
-		@ExcudeAnnotation
+		@ExcludeAnnotation
 		public class MyRibbonConfig {
 			@Bean
 			public IRule ribbonRule() {
@@ -411,7 +413,7 @@ HttpStatus 等，其父类是 HttpEntity，T getBody()方法将根据第二个�
 释放，如果有更多的请求到来就会导致资源耗尽，服务变得不可用。这种由于服务提供者故障导致服
 务消费者也变得不可用的现象称为“雪崩效应”
 	要防止雪崩效应，服务调用就需要具有容错能力，表现为两个方面：一是为网络请求设置超时时间，
-二是提高断路支持（断路器）。
+二是提供断路支持（断路器）。
 	设置超时可以让发送请求占用的资源及时得到释放，断路器可以实现快速失败，从而不再浪费CPU
 时间去等待不可用的服务调用。断路器还需要提供自动恢复功能，在调用的服务恢复后关闭断路器。
 	断路器的状态转换：
@@ -447,7 +449,7 @@ HttpStatus 等，其父类是 HttpEntity，T getBody()方法将根据第二个�
 		@HystrixProperty(name="maxQueueSize",value="10")
 	})
 	单次请求失败、超时、被拒绝在断路器打开时也是会调用回退方法的。
-	Hystrix默认阈值是50秒20请求失败。
+	Hystrix默认阈值是50秒20次请求失败。
 	结合springboot的actuator可以在health端点查看hystrix的状态。
 	Hystrix的隔离策略：THREAD(新开一个线程来使用HystrixCommand进行服务调用，并发量受线程池大小限制)、
 SEMAPHORE(信号量，在原服务请求线程上进行服务调用)，默认使用THREAD
@@ -492,6 +494,11 @@ HystrixCommand.
 		}
 	全局禁用hystrix:
 		feign.hystrix.enabled=false
+	#开启超时熔断
+	hystrix.command.default.execution.timeout.enabled=true
+	#配置熔断时间，默认为1000
+	hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds=5000
+	上面的default表示全局配置，可以替换为单个服务名
 	
 	HystrixCommand在执行时会记录执行结果和运行指标，如每秒请求数、请求成功数等，这些数据可用于分析
 系统状态。Hystrix模块hystrix-metrix-event-stream可以以text/event-stream的格式暴露上述信息。通过
@@ -504,9 +511,12 @@ actuator的hystrix.stream端点可以获取这些信息。
 		</dependency>
 	启动类上添加注解：@EnableHystrixDashboard
 	指定启动端口：server.port=8030
-	访问：localhost:9030/hystrix 就可以看到hystrix dashboard
+	访问：localhost:8030/hystrix 就可以看到hystrix dashboard
 	在 hystrix-dashboard主页输入服务调用方的hystrix端点路径：localhost:9001/hystrix.stream,设置
 title为任意值，点击monitor stream查看端点提供的hystrix信息
+	feign已经引入了hystrix，但是要使用hystrix的监控功能，还是需要声明引入hystrix依赖，同时需要在
+启动类上添加注解：@EnableCircuitBreaker
+	
 	使用turbine监控多个微服务：
 	turbine工程依赖：
 		<dependency>
