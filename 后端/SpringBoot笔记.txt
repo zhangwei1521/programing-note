@@ -251,14 +251,38 @@ public HttpMessageConverters fastJsonConverter() {
 
 
 了解微服务
-springboot是一个基于java开发的服务于java应用开发的微框架，特别适合用于微服务的构建。
-微服务是服务化路线的一种最佳实践方向。
-早期的服务化实现和实施是将很多功能打包成一个大的服务单元（部署到一个大的服务单元），而微服务则是强调服务单元功能单一，实现小型化、微型化
-大服务单元的实践适合复杂度不高的系统，如果系统复杂度提高，就会遇到并行开发难以开展、“火车头”交付效率低下的问题。
-微服务就是为了应对这类问题而生，即解放并行开发，实现服务独立开发、独立部署、独立交付
-微服务带来的另外两个好处：一是系统可扩展性的提升，二是更好的隔离性。扩展功能对于硬件性能的要求不会累加。
+	springboot是一个基于java开发的服务于java应用开发的微框架，特别适合用于微服务的构建。
+	微服务是服务化路线的一种最佳实践方向。
+	早期的服务化实现和实施是将很多功能打包成一个大的服务单元（部署到一个大的服务单元），而微服务
+则是强调服务单元功能单一，实现小型化、微型化
+	大服务单元的实践适合复杂度不高的系统，如果系统复杂度提高，就会遇到并行开发难以开展、“火车头”
+交付效率低下的问题。
+	微服务就是为了应对这类问题而生，即解放并行开发，实现服务独立开发、独立部署、独立交付
+	微服务带来的另外两个好处：一是系统可扩展性的提升，二是更好的隔离性。扩展功能对于硬件性能的要
+求不会累加。
 
-
+SpringBoot的本质
+	SpringBoot框架出现的目的是为了简化基于spring的应用的开发。
+	Spring的IOC，即控制反转，指的是对象的创建和获取方式的反转，由调用者的主动操作转换为调用者被动
+接收依赖的对象。这包括两种方式，一种是DI，即依赖注入，另一种是DL，意为依赖发现，是指通过容器手动获
+取依赖对象：context.getBean("xxx")。spring的依赖注入包括两个方面：首先是bean的收集，可以通过xml、
+java配置或扫描发现的方式完成；然后是分析bean之间的依赖关系并完成注入。
+	springboot广泛使用java类来配置spring，一些常用的注解如下：
+	@Configuration	//标记将被作为spring配置的类
+	@Bean			//标记返回bean的方法，方法名就是bean的id
+	@ComponentScan	//配置扫描的包，默认为使用此注解的类所在包及子包下，使用basePackages={...}属性
+指定要扫描的包
+	@PropertySource	//用于指定properties文件，指定的文件内容将被解析到IOC容器中，可以用来填充占位符
+	@PropertySources	//jdk1.8之前使用此注解指定多个资源文件，1.8之后可以同时使用多个@PropertySource
+	@Import			//用来在一个java配置类中引入另一个java配置类
+	@ImportResource	//用来在java配置类中引入xml配置文件
+	
+	@SpringBootApplication的真相：
+	这个注解实际上是一个复合注解，即@Configuration、@EnableAutoConfiguration和@ComponentScan的组合
+	@EnableAutoConfiguration这个注解将被springboot使用来启用SpringFactoryLoader，spring使用SpringFactoryLoader
+来从META-INF/spring.factories文件（这是一个标准properties文件）读取java配置类，这些配置类中使用了
+条件化配置bean，只有满足条件才会创建bean的实例。
+	
 
 
 
