@@ -63,7 +63,7 @@
 	使用@ComponentScan配置的默认扫描包是配置类所在的包和该包的子包，指定扫描的基础包可以这样：
 @ComponentScan("package1")；也可以使用：@ComponentScan(basePackages="package1")；指定多个包作为扫描基础包：
 @ComponentScan(basePackages={"package1","package2"})
-	通过配置指定类的class对象来讲类所在的包作为扫描基础包：
+	通过配置指定类的class对象来将类所在的包作为扫描基础包：
 @ComponentScan(basePackageClasses={Axe.class,Woodcutter.class})  //将Axe和Woodcutter所在的包作为扫描基础包
 这里实际可以使用一个标记接口来代替具体的应用组件类
 	自动装配：使用@Autowired注解声明组件的依赖对象，通常是将@Autowired注解应用在构造器上或setter方法上，实际上可以应用到
@@ -161,7 +161,7 @@
 													第三章
 	不同的应用运行环境往往意味着应用需要做出一些调整，如果开发环境的应用运行良好，在迁移到生产环境时，我们希望最好
 不要变动太大。数据库配置等和环境关联密切的配置又确实需要调整，spring为此提供了一些解决方案。
-	spring可以在运行时根据环境来创建的和环境相关的bean，而不需要重新构建应用。
+	spring可以在运行时根据环境来创建和环境相关的bean，而不需要重新构建应用。
 	基于JavaConfig的配置：
 	在配置类上使用@Profile("env")注解声明当前配置类对应的环境，只有对应的profile被激活，才会使用此类中的bean声明。
 spring3.2开始也可以在方法上使用这个注解：
