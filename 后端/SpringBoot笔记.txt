@@ -1,256 +1,5 @@
-spring boot的maven构建文件要点：
-	parent元素配置：
-	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>{springBootVersion}</version>
-		<relativePath/>
-	</parent>
-	插件支持：
-	<plugin>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-maven-plugin</artifactId>
-	</plugin>
-	该插件提供maven构建目标：spring-boot:run支持
-----------------------------------------------------------------------------------------------------
-参考pom:
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>com.zhangwei</groupId>
-  <artifactId>springboot-demo1</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
-  
-  <parent>
-  	<groupId>org.springframework.boot</groupId>
-  	<artifactId>spring-boot-starter-parent</artifactId>
-  	<version>1.5.14.RELEASE</version>
-  </parent>
-  
-  <dependencies>
-  	<dependency>
-  		<groupId>org.springframework.boot</groupId>
-  		<artifactId>spring-boot-starter-web</artifactId>
-  	</dependency>
-	<!-- 开发者模式 -->
-  	<dependency>
-  		<groupId>org.springframework</groupId>
-  		<artifactId>springloaded</artifactId>
-  	</dependency>
-  	<dependency>
-  		<groupId>org.springframework.boot</groupId>
-  		<artifactId>spring-boot-devtools</artifactId>
-  	</dependency>
-  </dependencies>
-  
-  <build>
-  	<plugins>
-  		<plugin>
-  			<groupId>org.apache.maven.plugins</groupId>
-  			<artifactId>maven-compiler-plugin</artifactId>
-  			<configuration>
-  				<source>1.8</source>
-  				<target>1.8</target>
-  			</configuration>
-  		</plugin>
-  	</plugins>
-  </build>
-</project>
------------------------------------------------------------------------------------------------
-
-父级工程pom:
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>com.zhangwei</groupId>
-  <artifactId>springboot-parent</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
-  <packaging>pom</packaging>
-  
-  <dependencyManagement>
-  	<dependencies>
-  		<dependency>
-  			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-dependencies</artifactId>
-			<version>1.5.14.RELEASE</version>
-			<type>pom</type>
-			<scope>import</scope>
-  		</dependency>
-  	</dependencies>
-  </dependencyManagement>
-  <build>
-  	<plugins>
-  		<plugin>
-  			<groupId>org.apache.maven.plugins</groupId>
-  			<artifactId>maven-compiler-plugin</artifactId>
-  			<configuration>
-  				<source>1.8</source>
-  				<target>1.8</target>
-  			</configuration>
-  		</plugin>
-  	</plugins>
-  </build>
-  <modules>
-  	<module>springboot-child1</module>
-  	<module>springboot-child2</module>
-  </modules>
-</project>
--------------------------------------------------------------------------------------
-子工程pom:
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>com.zhangwei</groupId>
-    <artifactId>springboot-parent</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-  </parent>
-  <artifactId>springboot-child1</artifactId>
-  <dependencies>
-  	<dependency>
-  		<groupId>org.springframework.boot</groupId>
-  		<artifactId>spring-boot-starter-web</artifactId>
-  	</dependency>
-  	<dependency>
-  		<groupId>org.springframework.boot</groupId>
-  		<artifactId>spring-boot-starter-test</artifactId>
-  	</dependency>
-  	<dependency>
-  		<groupId>junit</groupId>
-  		<artifactId>junit</artifactId>
-  		<scope>test</scope>
-  	</dependency>
-  </dependencies>
-</project>
-------------------------------------------------------------------------------------------------
-
-配置文件：application.properties/application.yml
-server.port=8088
-server.context-path=/ww
-#激活环境
-spring.profiles.active=sit
-#自定义值
-book.author=James Kaite
-book.name=SpringBoot Introduce
-#多环境配置文件：application-sit.properties等
-#logback日志配置
-logging.level.root=WARN
-logging.level.org.springframework.web=DEBUG
-logging.file=springboot.log
-logging.patern.console=%d{yyyy/MM/dd-HH:mm:ss}[%thread] %-5level %logger- %msg%n
-logging.patern.file=%d{yyyy/MM/dd-HH:mm:ss}[%thread] %-5level %logger- %msg%n
-
-#springmvc前后缀
-spring.mvc.view.prefix=
-spring.mvc.view.suffix=
-#自定义静态资源位置
-spring.resources.static-locations=classpath:/static/
-#处理response响应中文乱码：
-spring.http.encoding.force=true
--------------------------------------------------------------------------------------------
-logback配置文件：logback.xml
-<?xml version="1.0" encoding="utf-8"?>
-<configuration scan="true" scanPeriod="60 seconds" debug="false">
-	<contextName>logback</contextName>
-	<property name="log.path" value="/logs/info.log"/>
-	<appender name="console" class="ch.qos.logback.core.ConsoleAppender">
-		<encoder>
-			<pattern>%d{HH:mm:ss.SSS} %contextName [%thread] %-5level %logger- %msg%n</pattern>
-		</encoder>
-	</appender>
-	<appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<file>${log.path}</file>
-		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<fileNamePattern>info.%d{yyyy-MM-dd}.log</fileNamePattern>
-		</rollingPolicy>
-		<encoder>
-			<pattern>%d{HH:mm:ss.SSS} %contextName [%thread] %-5level %logger- %msg%n</pattern>
-		</encoder>
-	</appender>
-	<root level="info">
-		<appender-ref ref="console"/>
-		<appender-ref ref="file"/>
-	</root>
-	<!-- <logger name="com.zhangwei.springboot.child1.controller.SpringController" level="DEBUG" additivity="false">
-		<appender-ref ref="console"/>
-	</logger> -->
-	
-	<springProfile name="test,dev">
-		<logger name="com.zhangwei.springboot.child1.controller"/>
-	</springProfile>
-	<springProfile name="prod">
-		<logger name="com.zhangwei.springboot.child1.controller" level="error" additivity="false">
-			<appender-ref ref="file"/>
-		</logger>
-	</springProfile>
-</configuration>
---------------------------------------------------------------------------------------------------
-日志使用：
-private Logger logger = LoggerFactory.getLogger(this.getClass());
-logger.debug("debug log.....");
---------------------------------------------------------------------------------------------------
-使用log4j替换logback:
-	<dependency>
-  		<groupId>org.springframework.boot</groupId>
-  		<artifactId>spring-boot-starter</artifactId>
-  		<exclusions>
-  			<exclusion>
-  				<groupId>org.springframework.boot</groupId>
-  				<artifactId>spring-boot-starter-logging</artifactId>
-  			</exclusion>
-  		</exclusions>
-  	</dependency>
-  	<dependency>
-  		<groupId>org.springframework.boot</groupId>
-  		<artifactId>spring-boot-starter-log4j</artifactId>
-  		<version>1.3.8.RELEASE</version>
-  	</dependency>
------------------------------------------------------------------------------------------
-log4j配置文件：log4j.properties:
-#debug->info->warn->error
-log4j.rootLogger=info, console, file
-
-log4j.appender.console=org.apache.log4j.ConsoleAppender
-log4j.appender.console.layout=org.apache.log4j.PatternLayout
-log4j.appender.console.layout.ConversionPattern=[%-5p] %d{yyyy-MM-dd HH:mm:ss.SSS} method:%l %m%n
-
-log4j.appender.file=org.apache.log4j.RollingFileAppender
-log4j.appender.file.File=/logs/debug.log
-log4j.appender.file.Append=true
-#only warn and error log will be write to file
-log4j.appender.file.Threshold=warn
-log4j.appender.file.layout=org.apache.log4j.PatternLayout
-log4j.appender.file.layout.ConversionPattern=[%-5p] %d{yyyy-MM-dd HH:mm:ss.SSS} method:%l %m%n
-
--------------------------------------------------------------------------------------------------
-
-访问静态资源：
-将静态文件放在resources下的public/static等文件夹下
-使用spring.resources.static-locations=classpath:/static/自定义静态资源位置
-
---------------------------------------------------------------------------
-处理response响应中文乱码：
-spring.http.encoding.force=true
---------------------------------------------------------------------------
-使用fastjson处理json转换：
-<dependency>
-  		<groupId>com.alibaba</groupId>
-  		<artifactId>fastjson</artifactId>
-  		<version>1.2.15</version>
-</dependency>
-
-@Bean
-public HttpMessageConverters fastJsonConverter() {
-	FastJsonHttpMessageConverter jsonConverter = new FastJsonHttpMessageConverter();
-	FastJsonConfig config = new FastJsonConfig();
-	config.setSerializerFeatures(SerializerFeature.PrettyFormat);
-	jsonConverter.setFastJsonConfig(config);
-	HttpMessageConverter<?> converter = jsonConverter;
-	return new HttpMessageConverters(converter);
-}
-
-@JSONField(format="yyyy-MM-dd")
-	private Date birthday;
-
-
-了解微服务
+								springboot笔记
+第一部分 了解微服务
 	springboot是一个基于java开发的服务于java应用开发的微框架，特别适合用于微服务的构建。
 	微服务是服务化路线的一种最佳实践方向。
 	早期的服务化实现和实施是将很多功能打包成一个大的服务单元（部署到一个大的服务单元），而微服务
@@ -261,7 +10,131 @@ public HttpMessageConverters fastJsonConverter() {
 	微服务带来的另外两个好处：一是系统可扩展性的提升，二是更好的隔离性。扩展功能对于硬件性能的要
 求不会累加。
 
-SpringBoot的本质
+springboot应用起步：
+	spring boot的maven构建文件要点：
+		parent元素配置：
+		<parent>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-parent</artifactId>
+			<version>{springBootVersion}</version>
+			<relativePath/>
+		</parent>
+		插件支持：
+		<plugin>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-maven-plugin</artifactId>
+		</plugin>
+		该插件提供maven构建目标：spring-boot:run支持
+	----------------------------------------------------------------------------------------------------
+	参考pom:
+	<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	  <modelVersion>4.0.0</modelVersion>
+	  <groupId>com.zhangwei</groupId>
+	  <artifactId>springboot-demo1</artifactId>
+	  <version>0.0.1-SNAPSHOT</version>
+	  
+	  <parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>1.5.14.RELEASE</version>
+	  </parent>
+	  
+	  <dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<!-- 开发者模式 -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>springloaded</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+		</dependency>
+	  </dependencies>
+	  
+	  <build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	  </build>
+	</project>
+	-----------------------------------------------------------------------------------------------
+
+	父级工程pom:
+	<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	  <modelVersion>4.0.0</modelVersion>
+	  <groupId>com.zhangwei</groupId>
+	  <artifactId>springboot-parent</artifactId>
+	  <version>0.0.1-SNAPSHOT</version>
+	  <packaging>pom</packaging>
+	  
+	  <dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-dependencies</artifactId>
+				<version>1.5.14.RELEASE</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	  </dependencyManagement>
+	  <build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	  </build>
+	  <modules>
+		<module>springboot-child1</module>
+		<module>springboot-child2</module>
+	  </modules>
+	</project>
+	-------------------------------------------------------------------------------------
+	子工程pom:
+	<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	  <modelVersion>4.0.0</modelVersion>
+	  <parent>
+		<groupId>com.zhangwei</groupId>
+		<artifactId>springboot-parent</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	  </parent>
+	  <artifactId>springboot-child1</artifactId>
+	  <dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+	  </dependencies>
+	</project>
+	------------------------------------------------------------------------------------------------
+
+第二部分 SpringBoot的本质
 	SpringBoot框架出现的目的是为了简化基于spring的应用的开发。
 	Spring的IOC，即控制反转，指的是对象的创建和获取方式的反转，由调用者的主动操作转换为调用者被动
 接收依赖的对象。这包括两种方式，一种是DI，即依赖注入，另一种是DL，意为依赖发现，是指通过容器手动获
@@ -282,6 +155,156 @@ java配置或扫描发现的方式完成；然后是分析bean之间的依赖关
 	@EnableAutoConfiguration这个注解将被springboot使用来启用SpringFactoryLoader，spring使用SpringFactoryLoader
 来从META-INF/spring.factories文件（这是一个标准properties文件）读取java配置类，这些配置类中使用了
 条件化配置bean，只有满足条件才会创建bean的实例。
+
+第三部分 SpringBoot应用启动流程：
+	如果是通过静态方法启动：SpringApplication.run(SpringbootDemo1Application.class, args);第一步是根据
+classpath下是否有某个特定ApplicationContext类推断需要创建的应用上下文ApplicationContext的类型（这一步不
+会创建应用上下文实例）；然后使用SpringFactoriesLoader在classpath下查找并加载所有的ApplicationContextInitializer；
+然后查找并加载所有的ApplicationListener。第二步是实例化SpringApplication，并调用实例run方法。
+	实例run方法里，首先查找并加载所有的SpringApplicationRunListener，并调用他们的started方法；然后创建
+配置Environment对象；然后调用所有SpringApplicationRunListener实例的environmentPrepared方法。下一步是打印
+banner。接下来根据前面的推断和读取设置正式创建ApplicationContext，并为其设置Environment等。下一步加载
+ApplicationContextInitializer并调用initialize方法继续处理ApplicationContext实例。然后调用所有
+SpringApplicationRunListener实例的contextPrepared方法。下一步是加载其他容器配置和bean实例到应用上下文中，
+然后调用所有SpringApplicationRunListener实例的contextLoaded方法。然后调用ApplicationContext实例的refresh方法，
+接下来查找注册的CommandLineRunner并执行。最后一步是执行所有SpringApplicationRunListener实例的finish方法，如果
+启动发生异常这一步执行finish方法会传入异常
+	一开始加载的ApplicationListener用于处理默认SpringApplicationRunListener各个方法发布的事件。
+	具备web功能的springboot应用启动过程先后发布的事件：ApplicationStartedEvent、ApplicationEnvironmentPreparedEvent、
+ApplicationPreparedEvent、ContextRefreshedEvent、EmbeddedServletContainerInitializedEvent
+	可以自己实现一个ApplicationListener用来监听特定的事件以完成在应用启动不同阶段进行不同的操作。
+	自己实现的SpringApplicationRunListener和ApplicationListener都需要在classpath下的META-INF/spring.factories中注册，
+如果是以手动构造SpringApplication实例调用run方法的方式还可以调用SpringApplication实例的addListener方法
+	CommandLineRunner实例的run方法基本上是在应用启动的最后一步执行，所以可以自己实现CommandLineRunner并注入到IOC容器中。
+	
+第四部分 springboot起步依赖模块
+	SpringBoot广泛应用了最佳实践”约定优先于配置“，提供了大量的默认配置，简单的springboot应用几乎可以实现零配置运行。
+springboot的自定义配置可以在以下位置：
+	命令行参数、系统环境变量、文件系统中的配置文件、classpath下的配置文件、代码中配置
+	优先级从前至后降低。	
+	典型配置文件：application.properties/application.yml
+	可以定义多环境配置文件：application-dev.properties、application-test.properties、application-pro.properties
+	在主配置文件application.properties使用spring.profiles.active=pro激活指定环境配置文件
+	配置文件中可以自定义一些值：
+		book.author=James Kaite
+		book.name=SpringBoot Introduce
+	
+	①日志模块起步依赖：(spring-boot-starter已经包含了spring-boot-starter-logging)
+	<dependency>
+  		<groupId>org.springframework.boot</groupId>
+  		<artifactId>spring-boot-starter-logging</artifactId>
+  	</dependency>
+	这里使用的日志框架是logback，springboot已经做了大量的默认配置，不需要再做其他配置就可以使用。
+	在application.properties中自定义logback日志配置：
+		#logback日志配置
+		logging.level.root=WARN
+		logging.level.org.springframework.web=DEBUG
+		logging.file=springboot.log
+		logging.patern.console=%d{yyyy/MM/dd-HH:mm:ss}[%thread] %-5level %logger- %msg%n
+		logging.patern.file=%d{yyyy/MM/dd-HH:mm:ss}[%thread] %-5level %logger- %msg%n
+也可以自己定义配置文件，配置文件可以放在classpath下，也可以放在文件系统中使用logging.config=/xxx/logback.xml
+	logback配置文件：logback.xml
+		<?xml version="1.0" encoding="utf-8"?>
+		<configuration scan="true" scanPeriod="60 seconds" debug="false">
+			<contextName>logback</contextName>
+			<property name="log.path" value="/logs/info.log"/>
+			<appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+				<encoder>
+					<pattern>%d{HH:mm:ss.SSS} %contextName [%thread] %-5level %logger- %msg%n</pattern>
+				</encoder>
+			</appender>
+			<appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+				<file>${log.path}</file>
+				<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+					<fileNamePattern>info.%d{yyyy-MM-dd}.log</fileNamePattern>
+				</rollingPolicy>
+				<encoder>
+					<pattern>%d{HH:mm:ss.SSS} %contextName [%thread] %-5level %logger- %msg%n</pattern>
+				</encoder>
+			</appender>
+			<root level="info">
+				<appender-ref ref="console"/>
+				<appender-ref ref="file"/>
+			</root>
+			<!-- <logger name="com.zhangwei.springboot.child1.controller.SpringController" level="DEBUG" additivity="false">
+				<appender-ref ref="console"/>
+			</logger> -->
+			
+			<springProfile name="test,dev">
+				<logger name="com.zhangwei.springboot.child1.controller"/>
+			</springProfile>
+			<springProfile name="prod">
+				<logger name="com.zhangwei.springboot.child1.controller" level="error" additivity="false">
+					<appender-ref ref="file"/>
+				</logger>
+			</springProfile>
+		</configuration>
+	日志使用：
+		private Logger logger = LoggerFactory.getLogger(this.getClass());
+		logger.debug("debug log.....");
+	使用lombok注解工具可以使用在类上加注解@Slf4j，然后在类里使用log记录日志
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.16.10</version>
+			<scope>provided</scope>
+		</dependency>
+
+	使用log4j替换logback:
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter-logging</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-log4j</artifactId>  		
+		</dependency>
+	
+	②web模块起步依赖：web模块提供了springmvc支持，还提供了一个嵌入式tomcat容器，启动应用后就会创建web应用上下文，
+静态资源默认放在resources/static下，模板文件默认放在resources/templates下，也可以在配置文件中自定义这些文件的位置：
+	#自定义静态资源位置
+		spring.resources.static-locations=classpath:/static/
+	web模块已经默认配置了springMVC需要的组件，如果需要使用自定义的mvc组件，只需要向容器中注入自定义的组件
+实例就可以了。下面是使用fastjson处理json转换：
+		<dependency>
+				<groupId>com.alibaba</groupId>
+				<artifactId>fastjson</artifactId>
+				<version>1.2.15</version>
+		</dependency>
+
+		@Bean
+		public HttpMessageConverters fastJsonConverter() {
+			FastJsonHttpMessageConverter jsonConverter = new FastJsonHttpMessageConverter();
+			FastJsonConfig config = new FastJsonConfig();
+			config.setSerializerFeatures(SerializerFeature.PrettyFormat);
+			jsonConverter.setFastJsonConfig(config);
+			HttpMessageConverter<?> converter = jsonConverter;
+			return new HttpMessageConverters(converter);
+		}
+
+		@JSONField(format="yyyy-MM-dd")
+		private Date birthday;
+
+	其他MVC配置：
+		#springmvc前后缀
+		spring.mvc.view.prefix=
+		spring.mvc.view.suffix=
+		
+		#处理response响应中文乱码：
+		spring.http.encoding.force=true
+		
+	tomcat容器配置调整：
+		server.port=8088
+		server.context-path=/ww
+	
+
+	
 	
 
 

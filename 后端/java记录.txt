@@ -28,6 +28,7 @@ Internet上的服务器的硬件设施和操作系统的多样性要求开发的
 
 	编译程序：javac Example.java
 	运行程序：java Example
+	打印classpath：System.out.println(System.getProperty("java.class.path"));
 
 										第三章 数据类型
 	强类型的语言有利于在代码编译时进行检测，因此可以避免很多不必要的问题，增强程序的安全性和健壮性。
