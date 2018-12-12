@@ -629,8 +629,118 @@ title为任意值，点击monitor stream查看端点提供的hystrix信息
 		public User getUser(@RequestParam Map<String,Object> param);
 	POST请求可以直接使用@RequestBody传递对象
 	
-
-
+第七章 zuul网关
+	如果客户端（或代理）要和多个微服务通信，这将面临以下问题：
+	第一，请求不同的微服务本身就会增加客户端的复杂性；
+	第二，认证变得复杂；
+	第三，客户端和服务端高耦合，微服务重构困难
+	为了处理这些问题，可以使用微服务网关充当客户端和微服务间的中间人。
+	Zuul是netflix开源的网关，通常和Ribbon、Eureka、Hystrix配合使用，它的核心是一系列过滤器，可以实现
+身份认证、路由、监控、负载分配等功能。Spring Cloud对Zuul进行了增强，默认使用HttpClient发起请求。
+	zuul依赖：
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-zuul</artifactId>
+		</dependency>	
+	为了从注册中心获取微服务实例，还需要引入eureka客户端：spring-cloud-starter-eureka
+	声明项目为zuul网关，在启动类上添加注解：@EnableZuulProxy（不需要再添加启用服务发现的注解和启用
+断路器的注解）
+	zuul代理使用Ribbon做负载分配，使用Hystrix做容错处理，默认zuul发出的请求都是在Bystrix命令中执行。
+	默认配置下通过zuul访问其它微服务：http://zuul-host:zuul-port/other-service-id/rest-path，zuul就会
+转发请求到other-service-id/rest-path。并且默认zuul会代理所有注册在注册中心的微服务。
+	spring-cloud-starter-zuul中已经包含了spring-boot-starter-actuator,所以可以直接暴露一些端点，
+/routes端点可以通过get方式和put方式访问，返回zuul的路由集合。put方式会刷新路由以返回最新的路由集合。
+	zuul路由配置：
+		#自定义指定微服务的访问路径：(zuul的/hello/**路径被转发给hello-service的/**路径)
+		zuul.routes.hello-service=/hello/**
+		#不代理指定微服务：
+		zuul.ignored-services=hello-service,consumer-service
+		#忽略所有微服务，只代理指定微服务：
+		zuul.ignored-services='*'
+		zuul.routes.hello-service=/hello/**
+		#另一种路由写法:(这里的hello-route只是一个随意的标识符)
+		zuul.routes.hello-route.service-id=hello-service
+		zuul.routes.hello-route.path=/hello/**
+		#直接指定url和path：(这种方式不会使用hystrix和ribbon处理请求)
+		zuul.routes.hello-route.url=http://locahost:8081/
+		zuul.routes.hello-route.path=/hello/**
+		#不使用eureka的服务实例
+		zuul.routes.hello-route.service-id=hello-service
+		zuul.routes.hello-route.path=/hello/**
+		ribbon.eureka.enabled=false
+		hello-service.ribbon.listOfServers=locahost:8081,locahost:8082
+		#路由前缀1:(访问zuul的/hello/xx将被转发到hello-server的/hello/xx)
+		zuul.routes.hello-service.path=/hello/**
+		zuul.routes.hello-service.strip-prefix=false
+		#路由前缀2：(访问zuul的/api/hello-service/xx将被转发到hello-service的/api/xx)
+		zuul.prefix=/api
+		zuul.strip-prefix=false
+		zuul.routes.hello-service=/hello/**
+		#忽略代理微服务中的某些路径：
+		zuul.ignorePatterns:/**/admin/**
+		zuul.routes.hello-service=/hello/*
+	使用bean：PatternServiceRouteMapper可是实现通过正则表达式路由映射：
+		new PatternServiceRouteMapper("(?<name>^.+)-(?<version>^.+$))","${version}/${name}");
+		//可以将hello-service-v1映射到zuul路径：/v1/hello-service/
+	
+		#为指定微服务标定敏感Header：
+		zuul.routes.hello-service.path=/hello/**
+		zuul.routes.hello-service.sensitive-headers=Cookie,Authorization,Set-Cookie
+		#设置全局敏感Header:
+		zuul.sensitive-headers=Cookie,Authorization,Set-Cookie
+		#忽略Header:(被标记的header不会被转发给微服务)
+		zuul.ignorerd-headers=Header1,Header2
+		#当引入了spring-security,ignored-headers会加入一些相关的值，如果需要转发给微服务，配置如下：
+		zuul.ignoreSecurity-Headers=false
+	配置上传文件时处理上传文件的微服务接收文件的大小：
+		spring,http.multipart.max-file-size=1000Mb
+		spring,http.multipart.max-request-size=1200Mb
+	如果通过zuul转发上传文件，小文件不需要额外处理，大文件需要为上传路径添加/zuul前缀，如果zuul使用
+了ribbon和hystrix，还需要修改超时时间：
+		hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds=60000
+		ribbon.ConnectTimeout=3000
+		ribbon.ReadTimeout=60000
+	zuul中定义了4中标准过滤器：PRE:路有前调用；ROUTING:构建请求并发送给微服务；POST:路由后调用；
+ERROR:发生错误时调用。
+	自定义STATIC过滤器，可以用来在需要的路由阶段完成需要的工作。自定义过滤器需继承ZuulFilter类，
+重写 filterType方法返回调用的路由阶段(return "pre"路由前调用)，重写filterOrder方法返回调用顺序
+(return 1)，重写shouldFilter方法返回是否启用过滤器(return true)，重写run方法实现具体的逻辑
+	自定义过滤器需要作为bean注册到容器中才能使用
+	spring cloud默认为zuul启用了一些过滤器，如DebugFilter等，可以使用下面的配置禁用这些过滤器：
+	zuul.<SimpleClassName>.<filterType>.disable=true
+	#zuul.DebugFilter.pre.disable=true
+	
+	可以为zuul添加回退逻辑，避免返回直接的报错信息给客户端。给zuul添加回退需要实现ZuulFallbackProvider
+接口，实现getRoute方法返回需要提供回退的微服务id；实现fallbackResponse方法返回一个ClientHttpResponse
+实现。
+	zuul的高可用：主要的使用zuul的方式还是从客户端访问，而客户端通常是不会注册到注册中心的，所以zuul
+的高可用通常是通过客户端代理(如nginx)配置zuul节点实现的。
+	结合sidecar、zuul、eureka实现非JVM微服务的注册时调用：
+	sidecar依赖：
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-netflix-sidecar</artifactId>
+		</dependency>	
+	启动类声明Sidecar:	@EnabelSidecar(已经包含开启断路器、服务发现、zuul网关代理)
+	配置：
+	#非JVM微服务运行端口（该微服务运行在和此sidecar同一个主机）
+	sidecar.port=9000
+	#这条配置用于报告非JVM微服务的状态，/health.json接口返回{"status":"UP"}
+	sidecar.health-uri=http://localhost:9000/health.json
+	由于结合sidecar和zuul，所以非JVM微服务可以通过zuul代理访问其他注册的微服务。由于sidecar配置了
+非JVM微服务的运行端口，所以其它微服务对sidecar的调用将被转发给非JVM微服务
+	sidecar端点（sidecar模块包含了actuator）：/ 测试页面，包含sidecar常用端点
+/hosts/serviceId 返回eureka上指定微服务的实例列表
+/ping 返回”OK"
+/{serviceId} 转发到指定微服务
+	如果非JVM微服务和sidecar没有部署在同一台主机上，sidecar使用如下配置：
+	eureka.instance.hostname=非JVM微服务部署主机名
+	#另一种配置：spring cloud netflix 1.3.0开始的版本
+	sidecar.hostname=非JVM微服务部署主机名
+	sidecar.ip-address=非JVM微服务部署主机IP
+	
+	
+	
 
 
 
