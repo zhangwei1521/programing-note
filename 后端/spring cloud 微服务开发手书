@@ -645,7 +645,7 @@ title为任意值，点击monitor stream查看端点提供的hystrix信息
 	为了从注册中心获取微服务实例，还需要引入eureka客户端：spring-cloud-starter-eureka
 	声明项目为zuul网关，在启动类上添加注解：@EnableZuulProxy（不需要再添加启用服务发现的注解和启用
 断路器的注解）
-	zuul代理使用Ribbon做负载分配，使用Hystrix做容错处理，默认zuul发出的请求都是在Bystrix命令中执行。
+	zuul代理使用Ribbon做负载分配，使用Hystrix做容错处理，默认zuul发出的请求都是在Hystrix命令中执行。
 	默认配置下通过zuul访问其它微服务：http://zuul-host:zuul-port/other-service-id/rest-path，zuul就会
 转发请求到other-service-id/rest-path。并且默认zuul会代理所有注册在注册中心的微服务。
 	spring-cloud-starter-zuul中已经包含了spring-boot-starter-actuator,所以可以直接暴露一些端点，
@@ -700,7 +700,7 @@ title为任意值，点击monitor stream查看端点提供的hystrix信息
 		hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds=60000
 		ribbon.ConnectTimeout=3000
 		ribbon.ReadTimeout=60000
-	zuul中定义了4中标准过滤器：PRE:路有前调用；ROUTING:构建请求并发送给微服务；POST:路由后调用；
+	zuul中定义了4种标准过滤器：PRE:路由前调用；ROUTING:构建请求并发送给微服务；POST:路由后调用；
 ERROR:发生错误时调用。
 	自定义STATIC过滤器，可以用来在需要的路由阶段完成需要的工作。自定义过滤器需继承ZuulFilter类，
 重写 filterType方法返回调用的路由阶段(return "pre"路由前调用)，重写filterOrder方法返回调用顺序
@@ -715,7 +715,7 @@ ERROR:发生错误时调用。
 实现。
 	zuul的高可用：主要的使用zuul的方式还是从客户端访问，而客户端通常是不会注册到注册中心的，所以zuul
 的高可用通常是通过客户端代理(如nginx)配置zuul节点实现的。
-	结合sidecar、zuul、eureka实现非JVM微服务的注册时调用：
+	结合sidecar、zuul、eureka实现非JVM微服务的注册和调用：
 	sidecar依赖：
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
