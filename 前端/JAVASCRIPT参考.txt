@@ -2587,7 +2587,7 @@ removeEventListener和dispatchEvent
 	Event对象本身就是一个构造函数，可以用来生成新的实例：event = new Event(type, options);
 	第一个参数type是字符串，表示事件的名称；第二个参数options是一个对象，表示事件对象的配置。该对象主要有下面两个属性：
 		bubbles：布尔值，可选，默认为false，表示事件对象是否冒泡。
-		cancelable：布尔值，可选，默认为false，表示事件是否可以被取消，即能否用
+		cancelable：布尔值，可选，默认为false，表示事件是否可以被取消
 	如果不是显式指定bubbles属性为true，生成的事件就只能在“捕获阶段”触发监听函数
 		// HTML 代码为
 		// <div><p>Hello</p></div>
@@ -2636,5 +2636,218 @@ removeEventListener和dispatchEvent
 	//   <p>Hello</p>
 	// </div>
 	p上的click事件的最底层节点是p，向上依次是div、body、html、document、Window。
+====================================================================================================================
+鼠标事件
+	鼠标事件指与鼠标相关的事件，继承了MouseEvent接口。
+	浏览器提供的主要鼠标事件有：click、dbclick、mousedown、mouseup、mouseover、mouseenter、mouseleave、mouseout、mousemove、wheel等
+	click事件实际上是在同一个位置先完成mousedown动作，再完成mouseup动作，最后完成click动作
+	dblclick事件则会在mousedown、mouseup、click之后触发。
+	鼠标进入一个节点时触发mouseenter事件和mouseover事件。在父节点内部进入子节点，不会触发mouseenter事件，但是会触发mouseover事件。
+	鼠标离开一个节点时触发mouseout事件和mouseleave事件。在父元素内部离开一个子元素时，mouseleave事件不会触发，而mouseout事件会触发。
+	MouseEvent接口代表了鼠标相关的事件，鼠标事件都是MouseEvent接口的实例
+	MouseEvent接口继承了Event接口，所以拥有Event的所有属性和方法。
+	浏览器原生提供一个MouseEvent构造函数，用于新建一个MouseEvent实例。var event = new MouseEvent(type, options);
+	第一个参数是字符串，表示事件名称；第二个参数是一个事件配置对象，该参数可选，属性可以是Event接口的实例配置属性和鼠标事件相关属性：
+screenX、clientX、ctrlKey、button、relatedTarget等
+	MouseEvent实例对象可以使用这些属性：
+		altKey等返回事件触发时是否按下相应的键；
+		button返回事件发生时按下了鼠标的哪个键；
+		clientX等返回触发事件时鼠标的位置信息；
+		relatedTarget返回事件的相关节点（mouseover事件的target属性返回将要进入的节点，relatedTarget属性返回将要离开的节点）
+	实例方法：getModifierState方法返回一个布尔值，表示有没有按下特定的功能键。它的参数是一个表示功能键的字符串。
+		e.getModifierState('CapsLock');	//是否按下大写键
+	WheelEvent 接口继承了 MouseEvent 实例，代表鼠标滚轮事件的实例对象。目前，鼠标滚轮相关的事件只有一个wheel事件，
+用户滚动鼠标的滚轮，就生成这个事件的实例。
+	浏览器原生提供WheelEvent()构造函数：var wheelEvent = new WheelEvent(type, options);
+	type目前只能是字符串"wheel"
+	options课配置属性除了MouseEvent的属性配置对象属性外，还可以是以下属性：
+		deltaX：表示滚轮的水平滚动量，默认值是 0.0。
+		deltaY：表示滚轮的垂直滚动量，默认值是 0.0。
+		deltaZ：表示滚轮的 Z 轴滚动量，默认值是 0.0。
+		deltaMode：表示相关的滚动事件的单位，适用于上面三个属性。0表示滚动单位为像素，1表示单位为行，2表示单位为页，默认为0。
+	实例属性：deltaX等
+====================================
+键盘事件
+	主要有keydown、keypress、keyup三个事件，它们都继承了KeyboardEvent接口。
+	keypress事件在按下有值的键时触发，即按下 Ctrl、Alt、Shift、Meta 这样无值的键，这个事件不会触发。对于有值的键，按下时先触发keydown事件，
+再触发这个事件。
+	如果用户一直按键不松开，就会连续触发键盘事件：
+		keydown
+		keypress
+		keydown
+		keypress
+		...（重复以上过程）
+		keyup
+	KeyboardEvent接口：继承了Event接口，用来描述用户与键盘的互动
+	浏览器原生提供KeyboardEvent构造函数：new KeyboardEvent(type, options)
+	第二个参数除了Event构造参数的配置参数属性外，还可以使用以下属性：
+		key：字符串，当前按下的键，默认为空字符串。
+		code：字符串，表示当前按下的键的字符串形式，默认为空字符串。
+		ctrlKey：布尔值，是否按下 Ctrl 键，默认为false。
+		repeat：布尔值，是否重复按键，默认为false。
+	KeyboardEvent实例属性：
+		altKey：是否按下 Alt 键
+		code：返回一个字符串，表示当前按下的键的字符串形式：数字键0 - 9：返回digital0 - digital9；字母键A - z：返回KeyA - KeyZ
+		key：返回一个字符串，表示按下的键名。该属性只读。如果按下的键代表可打印字符，则返回这个字符，比如数字、字母。
+	不可打印的特殊字符，则返回预定义的键值：Backspace、Tab等
+		location属性返回一个整数，表示按下的键处在键盘的哪一个区域。0：处在键盘的主区域，或者无法判断处于哪一个区域
+	1：处在键盘的左侧。3：处在数字小键盘。
+		repeat返回一个布尔值，代表该键是否被按着不放
+		实例方法：getModifierState()方法返回一个布尔值，表示是否按下或激活指定的功能键。它的常用参数如下：
+			Alt：Alt 键
+			CapsLock：大写锁定键
+		event.getModifierState('Control')
+==============================================
+进度事件
+	进度事件用来描述资源加载的进度，主要由 AJAX 请求、<img>、<audio>、<video>、<style>、<link>等外部资源的加载触发，继承了ProgressEvent接口。
+	类型：
+		abort：外部资源中止加载时（比如用户取消）触发。如果发生错误导致中止，不会触发该事件。
+		error：由于错误导致外部资源无法加载时触发。
+		load：外部资源加载成功时触发。
+		loadstart：外部资源开始加载时触发。
+		loadend：外部资源停止加载时触发，发生顺序排在error、abort、load等事件的后面。
+		progress：外部资源加载过程中不断触发。
+		timeout：加载超时时触发。
+	除了资源下载，文件上传也存在这些事件。
+		image.addEventListener('load', function (event) {
+		  image.classList.add('finished');
+		});
+	资源加载可能会在脚本运行之前就完成，这样load和error事件的监听函数就不会执行。所以最后使用complete属性先判断一下是否加载完成。
+		if (image.complete) {
+		  loaded();
+		} else {
+		  image.addEventListener('load', loaded);
+		}
+	loadend事件的监听函数，可以用来取代abort事件、load事件、error事件的监听函数，因为它总是在这些事件之后发生。
+	error事件有一个特殊的性质，就是不会冒泡。所以，子元素的error事件，不会触发父元素的error事件监听函数。
+	ProgressEvent 接口：用来描述外部资源加载的进度，进度相关的事件都继承了这个接口。
+	浏览器原生提供了ProgressEvent()构造函数：new ProgressEvent(type, options)
+	第二个参数是一个配置对象，表示事件的属性，该参数可选。配置对象除了可以使用Event接口的配置属性，还可以使用下面的属性：
+		lengthComputable：布尔值，表示加载的总量是否可以计算，默认是false。
+		loaded：整数，表示已经加载的量，默认是0。
+		total：整数，表示需要加载的总量，默认是0。
+	这些配置属性也是ProgressEvent实例对象上的属性。
+	如果ProgressEvent.lengthComputable为false，ProgressEvent.total实际上是没有意义的。
+		var p = new ProgressEvent('load', {
+		  lengthComputable: true,
+		  loaded: 30,
+		  total: 100,
+		});
+
+		document.body.addEventListener('load', function (e) {
+		  console.log('已经加载：' + (e.loaded / e.total) * 100 + '%');
+		});
+
+		document.body.dispatchEvent(p);
+		// 已经加载：30%
+==============================================
+表单事件：
+	input事件当<input>、<select>、<textarea>的值发生变化时触发。对于复选框（<input type=checkbox>）或单选框（<input type=radio>），
+用户改变选项时，也会触发这个事件。另外，对于打开contenteditable属性的元素，只要值发生变化，也会触发input事件。
+	用户每按下一次按键，就会触发一次input事件。input事件对象继承了InputEvent接口。
+		/* HTML 代码如下
+		<select id="mySelect">
+		  <option value="1">1</option>
+		  <option value="2">2</option>
+		  <option value="3">3</option>
+		</select>
+		*/
+
+		function inputHandler(e) {
+		  console.log(e.target.value)
+		}
+
+		var mySelect = document.querySelector('#mySelect');
+		mySelect.addEventListener('input', inputHandler);
+	select事件当在<input>、<textarea>里面选中文本时触发。选中的文本可以通过event.target元素的selectionDirection、selectionEnd、
+	selectionStart和value属性拿到。
+		// HTML 代码如下
+		// <input id="test" type="text" value="Select me!" />
+
+		var elem = document.getElementById('test');
+		elem.addEventListener('select', function (e) {
+		  console.log(e.type); // "select"
+		  console.log(e.target.value.substr(e.target.selectionStart,e.target.selectionEnd)); // 选中的文本
+		}, false);
+	change事件当<input>、<select>、<textarea>的值发生变化时触发。它与input事件的最大不同，就是不会连续触发，只有当全部修改完成时才会触发	
+		激活单选框（radio）或复选框（checkbox）时触发。
+		用户提交时触发。比如，从下列列表（select）完成选择，在日期或文件输入框完成选择。
+		当文本框或<textarea>元素的值发生改变，并且丧失焦点时触发。
+		var inputElem = document.getElementById('testInput');
+        inputElem.addEventListener('input',function (e) {
+            console.log("input "+e.target.value);
+        },false);
+        inputElem.addEventListener('change',function (e) {
+            console.log("change "+e.target.value);
+        },true);
+	invalid事件在提交表单时，如果表单元素的值不满足校验条件触发：
+		<form>
+		  <input type="text" required oninvalid="console.log('invalid input')" />
+		  <button type="submit">提交</button>
+		</form>
+	reset事件当表单重置（所有表单成员变回默认值）时触发。发生在表单对象<form>上，而不是发生在表单的成员上。
+	submit事件当表单数据向服务器提交时触发。发生在表单对象<form>上，而不是发生在表单的成员上。
 	
-	
+	InputEvent接口主要用来描述input事件的实例。该接口继承了Event接口
+	浏览器原生提供InputEvent()构造函数	new InputEvent(type, options)
+	配置对象的字段除了Event构造函数的配置属性，还可以设置下面的字段：
+		inputType：字符串，表示发生变更的类型，Chrome 浏览器的常用值如下：insertText表示 手动插入文本，insertFromPaste表示 粘贴插入文本，
+deleteContentBackward 表示 向后删除，deleteContentForward表示 向前删除
+		data：字符串，表示插入的字符串。如果没有插入的字符串（比如删除操作），则返回null或空字符串。
+		dataTransfer：一个 DataTransfer 对象实例，该属性通常只在输入框接受富文本输入时有效。
+	InputEvent的实例属性主要就是上面三个属性，这三个实例属性都是只读的。
+==============================
+触摸事件
+	Touch接口的实例对象用来表示触摸点，具有位置、大小、形状、压力、目标元素等属性。多个触摸点的集合由TouchList接口的实例对象表示。
+	TouchEvent接口的实例对象表示由触摸引发的事件，只有触摸屏才会引发这一类事件。
+	很多时候，触摸事件和鼠标事件同时触发，即使这个时候并没有用到鼠标。这是为了让那些只定义鼠标事件、没有定义触摸事件的代码，
+在触摸屏的情况下仍然能用。如果想避免这种情况，可以用event.preventDefault方法阻止发出鼠标事件。
+	浏览器原生提供Touch构造函数：var touch = new Touch(touchOptions);	touchOptions具有以下属性：
+		identifier：必需，表示触摸点的唯一 ID
+		target：必需，类型为元素节点，表示触摸点开始时所在的网页元素。
+		clientX(clientX)：可选，表示触摸点相对于浏览器窗口左上角的水平距离，默认为0。
+		screenX(screenY)：可选，类型为数值，表示触摸点相对于屏幕左上角的水平距离，默认为0。
+		pageX(pageX)：可选，类型为数值，表示触摸点相对于网页左上角的水平位置（即包括页面的滚动距离），默认为0。
+		radiusX(radiusX)：可选，类型为数值，表示触摸点周围受到影响的椭圆范围的 X 轴半径，默认为0。
+		rotationAngle：可选，类型为数值，表示触摸区域的椭圆的旋转角度，单位为度数，在0到90度之间，默认值为0。
+		force：可选，类型为数值，范围在0到1之间，表示触摸压力。0代表没有压力，1代表硬件所能识别的最大压力，默认为0。
+	TouchList接口表示一组触摸点的集合。它的实例是一个类似数组的对象，成员是Touch的实例对象，表示所有触摸点。
+	它的实例主要通过触摸事件的TouchEvent.touches、TouchEvent.changedTouches、TouchEvent.targetTouches这几个属性获取。
+	实例属性：TouchList.length 表示touch实例的数量
+	实例方法：item(i)，返回第I个touch实例
+	TouchEvent 接口继承了 Event 接口，表示由触摸引发的事件实例，通常来自触摸屏或轨迹板。
+	浏览器原生提供TouchEvent()构造函数，new TouchEvent(type, options)
+	options除了可以使用Event接口的配置属性还可以使用下面的属性：
+		touches：TouchList实例，代表所有的当前处于活跃状态的触摸点
+		targetTouches：TouchList实例，代表所有处在触摸的目标元素节点内部、且仍然处于活动状态的触摸点
+		changedTouches：TouchList实例，代表本次触摸事件的相关触摸点
+		ctrlKey(altKey/shiftKey/metaKey)：布尔值，表示 Ctrl 键是否同时按下，默认值为false。
+	以上配置对象属性也是TouchEvent实例对象的可访问属性。
+	类型：
+		touchstart：用户开始触摸时触发，它的target属性返回发生触摸的元素节点。
+		touchend：用户不再接触触摸屏时（或者移出屏幕边缘时）触发，它的target属性与touchstart事件一致的，就是开始触摸时所在的元素节点。
+它的changedTouches属性返回一个TouchList实例，包含所有不再触摸的触摸点（即Touch实例对象）。
+		touchmove：用户移动触摸点时触发，它的target属性与touchstart事件一致。如果触摸的半径、角度、力度发生变化，也会触发该事件。
+		touchcancel：触摸点取消时触发，比如在触摸区域跳出一个模态窗口（modal window）、触摸点离开了文档区域（进入浏览器菜单栏）、
+用户的触摸点太多，超过了支持的上限（自动取消早先的触摸点）。
+		var el = document.getElementsByTagName('canvas')[0];
+		el.addEventListener('touchstart', handleStart, false);
+		el.addEventListener('touchmove', handleMove, false);
+
+		function handleStart(evt) {
+		  evt.preventDefault();
+		  var touches = evt.changedTouches;
+		  for (var i = 0; i < touches.length; i++) {
+			console.log(touches[i].pageX, touches[i].pageY);
+		  }
+		}
+
+		function handleMove(evt) {
+		  evt.preventDefault();
+		  var touches = evt.changedTouches;
+		  for (var i = 0; i < touches.length; i++) {
+			var touch = touches[i];
+			console.log(touch.pageX, touch.pageY);
+		  }
+		}
+===================================================
