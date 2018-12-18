@@ -33,8 +33,8 @@ Ctrl+Alt+F1切换回图形用户界面。
 	关机：shutdown -h now/10   -r（重启） 关机前使用sync将内存中数据写到磁盘。
 	忘记root用户密码处理方法：
 	1重启系统，加载内核前使用下键停止继续启动，然后移动到第一行输入e进入编辑界面，找到linux16开头的行，修改ro为
-rw init=/sysroot/bin/bash，然后Ctrl+x进入emergency模式，使用chroot切换到sysroot（原始系统），使用LANG=en改变当前终端
-语言为英语，然后使用passwd输入新密码,touch /.autorebabel 使修改生效，然后使用Ctrl+D，reboot重启系统。
+rw init=/sysroot/bin/bash，然后Ctrl+x进入emergency模式，使用chroot切换到sysroot（原始系统）[chroot /sysroot/]，使用LANG=en改变当前终端
+语言为英语，然后使用passwd输入新密码,touch /.autorelabel 使修改生效，然后使用Ctrl+D，reboot重启系统。
 	2使用rescue模式：虚拟机中电源处选择“打开电源进入固件”，进入BIOS后设置启动系统从光驱开始（将CD-ROM移到最前），F10
 保存退出后进入光驱启动模式，使用下键选择Troubleshooting，回车后选择Rescue a CentOS...连续回车到输出提示，输入1继续，
 然后chroot /mnt/sysimage进入初试系统，使用passwd改密码。Ctrl+D退出Rescue模式，reboot重启。
