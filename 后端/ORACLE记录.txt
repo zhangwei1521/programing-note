@@ -1,5 +1,14 @@
 -----------------ORACLE记录-------------------------
 
+oracle公用用户：
+用户名：541509124@qq.com
+密码：LR4ever.1314
+
+oracle下载地址：
+https://www.oracle.com/technetwork/database/enterprise-edition/downloads/index.html
+
+------------------------------------------------------------------------------------
+
 查询系统时间：
 	select sysdate from dual;
 字符串转date类型：
