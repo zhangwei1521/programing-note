@@ -59,5 +59,57 @@ rw init=/sysroot/bin/bash，然后Ctrl+x进入emergency模式，使用chroot切�
 	mv /tmp/test/test.txt /root/ 移动文件或目录
 	cp aaa bbb 复制文件 -r用于复制目录 CentOS中cp实际是cp -i
 	echo 'abc' > aaa 将'aaa'重定向写入aaa文件
-	
+	cat test.txt -n 显示文件内容和行号
+	cat -A test.txt 显示所有内容，包括不可特殊字符（-A 会将中文作为特殊字符处理，即不能正确识别中文）
+	tac test.txt 倒序显示文件内容
+	more和less用于分页查看文件，使用ctrl+D(B)回翻到上一页，空格键到下一页，less中使用j和k进入下一行和上一行，可以使用
+/和?进行搜索，n跳转到下一个匹配项，/用于向下搜索，?用于向上搜索。
+	head test.txt 默认显示前10行，-n 20 显示前20行，也可以写 head -20 test.txt
+	tail用于查看文件末尾10行，-n 20显示最后20行，-f 动态查看最后10行
+	ls -l 输出的第一列第一位表示文件的类型：
+		d	目录	
+		-	普通文件
+		l	链接文件
+		b 	块设备文件
+		c	串行端口设备文件
+		s	套接字文件
+	ls -l 输出的第三列是节点数
+	groupadd testgroup 新增用户组
+	chgrp testgroup test.txt 修改文件所属组
+	chgrp -R testgroup /tmp 修改目录和子目录所属组
+	chown testuser[:testgroup] test.txt 修改文件所有者和所属组 -R用于同时修改目录和子目录
+	读写执行的数字表示：r--4, w--2, x--1, -:0
+	目录的默认权限是755(rwxr-xr-x)，文件的默认权限是644(rw-r--r--)
+	chmod 750 dir1 改变目录权限 -R用于目录权限的级联修改，还可以这样使用：
+		chmod u=rwx,go=rx dir2
+		chmod u-x,g+w dir3
+	umask 返回设置的umask值，文件的默认权限是根据umask值来设置的：普通文件权限使用666按位减去umask值，目录权限使用
+777减去umask值，比如root用户默认umask值为022，普通用户为002，所以root创建的普通文件权限是644，而目录式755
+	使用umask 002修改umask
+	chattr +i dir4	添加i属性后，文件不能删除、重命名、设定链接、写入和新增数据
+	chattr +a dir5  添加a属性后，文件只能追加不能删除，只有root才能设置这个属性
+	lsattr -aR dir6 列出目录下所有文件和递归子目录的特殊属性
+	set uid	 二进制可执行文件上的一种附加权限，可以让文件在执行时具有文件所有者的权限，比如passwd文件具有这个权限，
+所以普通用户可以执行passwd来修改自己的秘密。
+	set gid 和 set uid 一样，用于让文件在执行时具有文件所属组的权限
+	sticky bit 相当于防删除位，目录设置此权限后，对这个目录有写权限的用户不能删除其它用户的文件。
+		passwd的权限：rwsr-xr-x 如果没有x权限，则使用大写的S 
+		/tmp/的权限： rwxrwxrwt 
+	which vi 查找命令文件
+	where [-b/-s/-m] file 查找[二进制/源码/帮助]文件 在索引库中执行模糊查找
+	locate 类似于where，可以使用updatedb更新索引库，但是这个命令可能会需要一段时间
+	find /path [options]
+		find /path -mtime[-atime/-ctime] -10 10天以内进行过 “写入数据/访问文件/修改文件内容、属性”的文件 
+			stat file 查询文件的mtime、ctime、atime
+		find /path -name fileName 或 find /path -name "test*"
+		find /path -type d 按类型查询
+	查看支持的文件系统：cat /etc/filesystems
+	centos7默认使用xfs文件系统，centos6使用的文件系统是ext4
+	现代linux支持最多可使用255个字符作为文件名
+	软链接和硬链接：
+		ln -s orifile soft-link 
+		ln orifile hard-link
+		软链接相当于windows的快捷方式，删除原文件后就不能打开了。
+		硬链接是复制了一个新的原文件的inode节点，这样删除删除原文件就不会实际删除文件，而只是删除了原文件名指向的
+		inode节点，这时使用硬链接仍然可以访问原文件。
 	
