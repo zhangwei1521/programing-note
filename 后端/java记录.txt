@@ -9,7 +9,7 @@ java从C和C++继承了大量的特性。
     java出现的背景其实是为了实现平台独立，C++程序需要使用为不同CPU编写的编译器编译，C++程序本身也可能设计到操作系统
 调用，出现了和操作系统的耦合，难以实现平台独立。而java被设计成基于虚拟机的语言，sun官方提供主流操作系统的虚拟机实现和SDK（包含编译器），
 而且不用为每一种CPU提供一个编译器。个人理解是java编译器、虚拟机都只需要和操作系统打交道，而不需要关注CPU。
-Internet上的服务器的硬件设施和操作系统的多样性要求开发的程序需要是平台独立的，这也使java兴起的一个重要推动力。
+Internet上的服务器的硬件设施和操作系统的多样性要求开发的程序需要是平台独立的，这也是java兴起的一个重要推动力。
 	目前主流的java版本仍然是1.8，学习也以1.8为准。
 
 										第二章 java综述
@@ -29,6 +29,12 @@ Internet上的服务器的硬件设施和操作系统的多样性要求开发的
 	编译程序：javac Example.java
 	运行程序：java Example
 	打印classpath：System.out.println(System.getProperty("java.class.path"));
+	关于dt.jar和tools.jar、rt.jar：
+		dt.jar是BeanInfo(swing的BeanInfo)文件的DesignTime归档，集成开发环境（IDE）使用这些BeanInfo显示Java组件和设置属性编辑器。
+		tools.jar是关于一些工具的类库，主要是jdk工具，包括javac,java,javap，javadoc等(集成开发环境也使用这些工具)。
+		rt.jar位于：{Java_Home}/jre/lib/下，是JAVA基础类库，也就是在java doc里面看到的所有的类的class文件，
+		rt.jar 默认就在Root Classloader的加载路径里面的，jre/lib目录下的，其他jar:jce.jar、jsse.jar、charsets.jar、resources.jar
+		也都在Root Classloader中，所以不需要手动添加到环境变量CLASSPATH中。
 
 										第三章 数据类型
 	强类型的语言有利于在代码编译时进行检测，因此可以避免很多不必要的问题，增强程序的安全性和健壮性。
@@ -82,7 +88,7 @@ long型，有float参与就提升为float型，有double参与就提升为double
 	JDK7之前exp只能是byte、short、int或枚举类型，现在可以是String类型。case后只能是常量表达式，且不能重复。
 	和break、continue连用的标签用来标记代码块，break或continue加标签只能跳到所在的代码块标签处，即break或continue
 后的标签必须是当前代码块或当前代码块的上级代码块。
-	^ :异或运算符，对两个操作数进行按位异或，及只有一个1取1，否则取0：-1 ^(-1 << 12) --> 4095
+	^ :异或运算符，对两个操作数进行按位异或，即只有一个1取1，否则取0：-1 ^(-1 << 12) --> 4095
 	
 										第五章 类和对象
 	每个类都定义了一种数据类型（数据结构），声明对象的对象名只是一个变量，通常称为对象引用，大体上可以认为是为对象所分配内存的地址，
@@ -123,7 +129,7 @@ long型，有float参与就提升为float型，有double参与就提升为double
 	可以使用超类的类型变量指向子类的实例对象，这有一些实际的好处，比如说作为多态的一种实现方式，但是需要注意使用
 超类的类型变量只能访问在超类中定义的变量和方法，而不能使用实际子类定义的成员。
 	子类的构造函数中使用super(args);调用父类的构造函数；并不会创建父类的对象，但是会为父类定义的属性分配内存（堆
-空间中）；子类对象调用继承父类的方法时，首先找到与该方法静态绑定的父类字节码对象，在找到和父类字节码对象动态绑定的
+空间中）；子类对象调用继承父类的方法时，首先找到与该方法静态绑定的父类字节码对象，再找到和父类字节码对象动态绑定的
 父类属性所分配的内存空间。
 	如果子类中定义了父类中已有的属性或方法，还是可以使用super访问父类中的对应属性或方法。
 	方法的重写和重载是不一样的概念，重写是指子类的方法签名和父类的方法签名完全相同时隐藏父类方法的机制，而重载的方法
@@ -144,7 +150,7 @@ long型，有float参与就提升为float型，有double参与就提升为double
 	JDK8提供接口的默认方法的动机主要有两点：一个是扩展原有接口的功能而不破坏已有的代码；第二个是为本质上可选的方法提供
 默认实现（空实现）以免除实现类自己去提供空实现冗余代码。
 	尽管可以提供接口的默认实现，但是仍然不能创建接口的实例对象，接口不能维持状态信息的基本特性没有发生变化。现在的接口
-看起来抽象类已经很相像了。
+看起来和抽象类已经很相像了。
 	default String getName(){
         return "hello";
     }
@@ -178,6 +184,8 @@ long型，有float参与就提升为float型，有double参与就提升为double
 	非必检异常的用意：非必检异常表示的是语义上可能会出现的异常，如空指针异常，任何对象属性、方法的访问语义上都可能
 抛出，但是设计成熟的程序不会抛出该异常。自定义异常不需要捕获的设计目的在于，这类异常通常只是在程序的最外层处理，中
 间层并不需要麻烦地去捕获再抛出。
+	java预定义的非必检异常通常不会发生（设计良好，经过充分测试的程序不应该发生这些异常），必检异常则不能得到这种保证，
+比如文件异常（如文件错误），一旦发生这些异常就会严重影响程序执行，所以必须捕获处理。
 											第八章 并发编程
 	多线程需要的开销比多进程要小，进程需要自己的地址空间，进程间通信开销大而且限制多，从一个进程上下文切换到另一个
 进程上下文开销很大。多线程共享相同的地址空间，互相通信开销较小，上下文切换开销也很小。
@@ -515,16 +523,252 @@ Object引用所有类型对象，这样的方式并不安全，比如手动类�
             logWriter.log("lllllll");
         }
 						
+											第十二章 lambda表达式
+	lambda表达式提升了java的表达能力。
+	lambda表达式包括三个部分，参数列表、->、lambda体 ：(n)->n%2==0
+	lambda表达式本质上是一个匿名方法，这个方法并不能独立执行，而是作为一个函数式接口的抽象方法的实现。
+	函数式接口是一个仅包含一个抽象方法的接口，用来指定接口的特定用途，比如Runnable接口。
+	函数式接口的实例仍然可以调用定义在Object上的一些方法：如equals
+		public interface MyFuncInterface {
+			int sum(int a, int b);
+		}
+	lambda表达式的参数列表可以声明参数的类型，也可以不声明参数类型，参数类型通常可以从上下文中推断出来。
+	lambda表达式体可以只有一条语句，也可以是一个代码块。一条语句不需要写return，表达式结果将直接返回。
+		MyFuncInterface myFunc;
+        myFunc = (a,b)->a+b;
+        System.out.println("--- "+myFunc.sum(2,3));
+	lambda表达式参数和返回值类型都必须匹配函数式接口中的方法（编译器检查）。
+	如果参数只有一个，也可以不写括号： n -> n%2;
+	函数式接口可以引用任何和它兼容的lambda表达式。
+		myFunc = (a,b)->(a+b)*1;
+	如果有多个参数，参数类型要么全不写，或者全写上。
+		(int n, m)-> m+n;	//Error
+	表达式体为代码块的lambda表达式如果需要返回值，必须使用return xxx;返回
+		public interface MyFuncInterface {
+			int func(int n);
+		}
+		MyFuncInterface myFunc;
+		myFunc = (n) ->{
+            int result = 1;
+            for(int i=1; i<=n; i++){
+                result *= i;
+            }
+            return result;
+        };
+	泛型函数式接口：
+		public interface MyGenFuncInterface<T> {
+			T func(T t);
+		}
+	引用lambda表达式：
+		MyGenFuncInterface<String> myGenFuncS;
+        myGenFuncS = (s)->{
+            StringBuilder buffer = new StringBuilder();
+            for(int i=s.length()-1;i>=0;i--){
+                buffer.append(s.charAt(i));
+            }
+            return buffer.toString();
+        };
+        MyGenFuncInterface<Integer> myGenFuncI;
+        myGenFuncI = (n)->{
+            int result = 1;
+            for(int i=1; i<=n; i++){
+                result *= i;
+            }
+            return result;
+        };
+	将lambda表达式作为参数传递：
+		static String dealStr(MyFuncInterface myFunc, int n){
+			return n+" 的处理结果是："+myFunc.func(n);
+		}
+		String resultS = dealStr((n)->{
+            int result = 1;
+            for(int i=1; i<=n; i++){
+                result *= i;
+            }
+            return result;
+        },10);
+	这种写法通常用在lambda表达式不会复用的地方，如果觉得这种写法不便阅读，可以使用函数式接口引用：
+		MyFuncInterface myFunc = (n)->{
+            int result = 1;
+            for(int i=1; i<=n; i++){
+                result *= i;
+            }
+            return result;
+        };
+		String resultS = dealStr(myFunc,10);
+	lambda表达式抛出必检异常，匹配的函数式接口也就必须使用throws声明抛出该类异常，否则不能使用该
+lambda表达式作为该函数式的实例。
+	外部变量捕获：lambda表达式内部可以使用外部局部变量，但是外部局部变量必须是实质上的final变量，即
+设置值后不能再修改过，不论是在lambda表达式前还是后修改。lambda表达式内部也不能修改这些外部局部变量。
+		int num;
+		num = 100;
+        //num = 90;	不允许再次修改值
+        myFunc = (n)->{
+            // num = 90; 不允许再次修改值
+            return num+n;
+        };
+        System.out.println(myFunc.func(10));
+        //num = 90; 不允许再次修改值
+	lambda表达式内部可以显式或隐式引用调用实例的属性，而且可以在表达式内部修改实例的属性（非final属性）。
+		private int num = 10;
+		private static int nu = 100;
+		public void test1(){
+			MyFuncInterface myFunc;
+			myFunc = (n)->{
+				this.num = 90;
+				this.nu = 10;
+				return this.num+n;
+			};
+			System.out.println(myFunc.func(10));
+		}
+	引用方法作为函数式接口的实例：
+	引用静态方法：		
+		public interface StringFunc {
+			String func(String str);
+		}
+		
+		public class LambdaDemo2 {
+			public static void main(String[] args) {
+				String inStr = "lambda expression";
+				strOps(MyStringOps::stringReverse,inStr);
+			}
+
+			static String strOps(StringFunc stringFunc,String str){
+				return stringFunc.func(str);
+			}
+		}
+
+		public class MyStringOps{
+			public static String stringReverse(String str){
+				StringBuilder buffer = new StringBuilder();
+				for(int i=str.length()-1;i>=0;i--){
+					buffer.append(str.charAt(i));
+				}
+				return buffer.toString();
+			}
+		}
+	这里使用strOps(MyStringOps::stringReverse,inStr);将MyStringOps的静态方法：stringReverse作为
+函数式接口StringFunc的实现，当然这需要静态方法和函数式接口的抽象方法相匹配。
+	引用实例方法：
+		MyStringOps:
+		String stringToUpperCase(String str){
+			return str.toUpperCase();
+		}
+		LambdaDemo2.main:
+		MyStringOps stringOps = new MyStringOps();
+        strOps(stringOps::stringToUpperCase,inStr);
+	这里的实例方法和函数式接口的抽象方法是匹配的。
+	另一种引用实例方法的模式：				
+		public interface MyFunc<T> {
+			boolean func(T t1,T t2);
+		}
+				
+		public class LambdaDemo3 {
+			static <T> int counter(T[] objs,MyFunc<T> myFunc,T obj){
+				int count = 0;
+				for(int i=0; i<objs.length;i++){
+					if(myFunc.func(objs[i],obj)){
+						count++;
+					}
+				}
+				return count;
+			}
+
+			public static void main(String[] args) {
+				HeighTemp[] heighTemps = {new HeighTemp(10),new HeighTemp(20),new HeighTemp(30),new HeighTemp(40),
+					new HeighTemp(50),new HeighTemp(60)};
+				int result = counter(heighTemps,HeighTemp::lessTemp,new HeighTemp(35));
+				System.out.println("result: "+result);	// result: 2
+			}
+		}
+
+		class HeighTemp{
+			private int htemp;
+
+			public int getHtemp(){return htemp;}
+			public HeighTemp(int htemp){this.htemp = htemp;}
+
+			public boolean lessTemp(HeighTemp heighTemp){
+				if(this.htemp < heighTemp.htemp){
+					return true;
+				}
+				else {
+					return false;
+				}
+			}
+		}
+	这里是使用类名（HeighTemp::lessTemp）来引用实例方法，但是实例方法和函数式接口的方法是不一样的
+	函数式接口的方法 boolean func(T t1,T t2);的第一个参数实际是调用方法的实例对象，这里是myFunc.func(objs[i],obj)
+的objs[i]作为调用对象
+	泛型函数式接口和泛型静态方法：	
+		interface MyFunc2<T>{
+			 int func(T t1,T t2);
+		}
+		class MyComparator{
+			public static <T> int compare(T t1, T t2){
+				if(t1 == t2) return 0;
+				return -1;
+			}
+		}
+		demo：
+		static <T> int compareOp(MyFunc2<T> func2,T t1,T t2){
+			return func2.func(t1,t2);
+		}
+		调用：
+			compareOp(MyComparator::<Integer>compare,10,12);
+		实际上这里的泛型类型可以从上下文推断出来，不需要写出来
+	Collections.max(Collections<T> coll,Comparator<T> compartor)需要传入一个比较器实例对象，可以使用静态方法引用
+代替比较器实例:
+		class MyComparator{			
+			static <T> int compare2(T t1, T t2){
+				if(t1 == t2) return 0;
+				else if(t1 < t2) return -1;
+				return 1;
+			}
+		}
+		
+		Collections.max(list,MyComparator::compare2);
+	函数引用(看起来没什么用)：
+		public interface MyBeanFactory<R,T> {
+			R newInstance(T t);
+		}
+		class MyClassA<T>{
+			private T val;
+			MyClassA(T val){this.val = val;}
+			public void setVal(T val){this.val = val;}
+			public T getVal(){return val;}
+		}
 
 
-
-
-
-
-
-
-
-
+		class MyClassB<T>{
+			private T val;
+			MyClassB(T val){this.val = val;}
+			public void setVal(T val){this.val = val;}
+			public T getVal(){return val;}
+		}
+		public class LambdaDemo4 {
+			public static void main(String[] args) {
+				MyBeanFactory<MyClassA<String>,String> beanFactory1 = MyClassA<String>::new;
+				MyClassA<String> classA = beanFactory1.newInstance("12345");
+				MyBeanFactory<MyClassB<Double>,Double> beanFactory2 = MyClassB<Double>::new;
+				MyClassB<Double> classB = beanFactory2.newInstance(12.1);
+			}
+		}
+	预定义函数式接口：新的包java.util.function中定义的函数式接口：
+		interface Function<T, R>
+			方法：R apply(T t);
+		interface Consumer<T>
+			方法：void accept(T t);
+		interface UnaryOperator<T> extends Function<T, T>
+			方法：T apply(T t);
+		interface BiFunction<T, U, R>
+			方法：R apply(T t, U u);
+		interface BinaryOperator<T> extends BiFunction<T,T,T> 
+			方法：T apply(T t, T u);
+		interface Supplier<T> 
+			方法：T get();
+		interface Predicate<T>
+			方法：boolean test(T t);
 
 
 

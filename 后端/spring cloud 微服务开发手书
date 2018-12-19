@@ -693,8 +693,8 @@ title为任意值，点击monitor stream查看端点提供的hystrix信息
 		#当引入了spring-security,ignored-headers会加入一些相关的值，如果需要转发给微服务，配置如下：
 		zuul.ignoreSecurity-Headers=false
 	配置上传文件时处理上传文件的微服务接收文件的大小：
-		spring,http.multipart.max-file-size=1000Mb
-		spring,http.multipart.max-request-size=1200Mb
+		spring.http.multipart.max-file-size=1000Mb
+		spring.http.multipart.max-request-size=1200Mb
 	如果通过zuul转发上传文件，小文件不需要额外处理，大文件需要为上传路径添加/zuul前缀，如果zuul使用
 了ribbon和hystrix，还需要修改超时时间：
 		hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds=60000
