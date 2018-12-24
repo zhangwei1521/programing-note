@@ -110,6 +110,46 @@ rw init=/sysroot/bin/bash，然后Ctrl+x进入emergency模式，使用chroot切�
 		ln -s orifile soft-link 
 		ln orifile hard-link
 		软链接相当于windows的快捷方式，删除原文件后就不能打开了。
-		硬链接是复制了一个新的原文件的inode节点，这样删除删除原文件就不会实际删除文件，而只是删除了原文件名指向的
+		硬链接是复制了一个新的原文件的inode节点，这样删除原文件就不会实际删除文件，而只是删除了原文件名指向的
 		inode节点，这时使用硬链接仍然可以访问原文件。
+	
+	用户管理
+	查看/etc/passwd文件：cat /etc/passwd | head
+	返回：root:x:0:0:root:/root:/bin/bash
+	/etc/passwd文件中每一行被:分隔为7个字段：第一个是用户名，可以是大小写字母、数字(不能再首位)、减号、点号和下划线
+第二个字段是密码，现在不真正保存在这里，所以使用x占位，第三个字段是uid，root是0，自建的用户通常从1000开始；第四个字段
+是gid，第五个字段是用户信息说明，第六个字段是用户的家目录；第七个字段是用户的shell，如果是/sbin/nologin表示这个用户
+不能登陆。
+	查看/etc/shadow文件：cat /etc/shadow | head -n 3
+	返回：root:$6$xEeBczsD$U486aOPTUqBNei7PmpQVm9RqKIvy6XN3Rfr4F52sm1XP1WE6.T5HFdlmsLfyv6ltGZwvapet0rPlHzlF2
+uvhV.:17883:0:99999:7:::
+	/etc/shadow文件每条记录被:分隔为9个字段：第一个是用户名，第二个是加密后的密码，第三个是上一次修改密码的日期(距离
+1970年1月1日的天数，考虑闰年)，第四个字段表示要过多少天才能修改密码，默认为0，第五个是密码多少天后到期，第六个是密码
+到期前发出警告的天数，第七个是失效日期，即到期未修改密码过后多少天锁定账号，第八个字段是账号有效日期，即从1970年开始
+有效的天数，过了时间账号就被锁定，第九个是保留使用，没有意义
+	为了安全，/etc/shadow文件权限通常被设置为000，只有root能修改查看
+	新增用户组：groupadd [-g gid] groupName 查看：tail -n3 /etc/group
+	删除用户组：groupdel groupName 不能删除具有用户的用户组，必须先删除用户
+	新增用户：useradd [-u uid] [-g gid] [-d homeDir] [-M] [-s shellDir] userName
+	-d表示自定义家目录，-M表示不创建家目录(/etc/passwd文件中会有家目录名，但是这个目录实际没有创建)，-s表示自定义shell
+	删除用户：userdel userName
+	更改/etc/passwd记录的第五个字段-用户说明：chfn shanyu
+	根据关键词过滤查询：grep 'shanyu' /etc/passwd
+	更改密码：更改自己的秘密直接使用passwd
+	root用户可以使用 passwd userName修改指定用户的秘密
+	使用mkpasswd生成密码：先安装expect ： yum install -y expect 然后直接使用mkpasswd生成9位随机密码
+指定长度： mkpasswd -l 12
+	切换用户：su [-] userName [-]表示初始化用户环境变量，root切换普通用户不需要密码，使用exit返回原用户
+	普通用户使用su切换到root是需要root密码的，但是这不太安全，所以出现了sudo
+	sudo配置文件：/etc/sudoers
+	默认只有root能使用sudo，使用visudo 编辑/etc/sudoers文件（先安装 yum install -y sudo）:
+shanyu  ALL=(ALL)  ALL 允许shanyu用于在所有主机上以所有用户身份使用sudo执行所有命令
+	使用sudo：sudo cat /etc/shadow 使用sudo需要输入自己的秘密
+	为用户组shanyu配置sudo：%shanyu  ALL=(ALL)  ALL
+	/etc/sudoers中配置用户别名：User_Alias USER_AUTH = shanyu,zhangwei
+	/etc/sudoers中配置命令别名：Cmnd_Alias SU = /usr/bin/su
+	/etc/sudoers中配置不需要密码切换用户：USER_AUTH ALL=(ALL) NOPASSWD:SU
+	这样shanyu用户就可以使用 sudo su - root 直接切换到root，而不用输入密码
+	sshd配置文件：/etc/ssh/sshd_config,不允许root远程登录：PermitRootLogin no, 重启sshd服务：systemctl restart sshd.system
+	
 	
