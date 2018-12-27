@@ -152,4 +152,115 @@ shanyu  ALL=(ALL)  ALL 允许shanyu用于在所有主机上以所有用户身份
 	这样shanyu用户就可以使用 sudo su - root 直接切换到root，而不用输入密码
 	sshd配置文件：/etc/ssh/sshd_config,不允许root远程登录：PermitRootLogin no, 重启sshd服务：systemctl restart sshd.system
 	
+	磁盘管理
+	df 不加参数查看挂载的磁盘和目录情况，大小单位为KB。其中/和/boot是安装系统时划分的分区。/dev和/dev/shm是内存分区，
+保存在这两个分区的文件相当于保存在内存中，关机会丢失。/run等都是临时文件系统。
+	df -i 查看inode节点使用情况，一个文件系统中可以保存的inode节点数是限定的，如果用完了，即使磁盘还有空间也不能继续
+保存文件了。
+	df -h 自动选择合适的单位显示文件系统大小
+	df -k 以KB为单位，和不使用-k结果是一样的
+	df -m 以MB为单位
+	df -i | grep -v tmpfs 过滤掉包含字符串tmpfs的行
+	du /home/zhangwei/test_dir 不加参数查看目录和子目录所占空间大小。-a 用于列出目录和子目录下的文件；-b指定单位为B，
+-k指定单位为KB，-m指定单位为MB，-h自动使用合适单位。注意，使用-k,-h和不加参数，占用空间大小不足4KB会显示为4KB，
+-m也会把不足1MB的大小显示为1MB. -c用于计算占用空间总和； -s用于只显示占用空间总和
+	使用 du -sh /home/zhangwei/test_dir以合适单位显示指定目录占用空间总和
+	fdisk -l 列出所有设备和分区表
+	fdisk -l /dev/sdb 列出指定设备和分区表
+	fdisk /dev/sdb 对/dev/sdb进行分区划分：
+命令： m 显示命令说明；
+	   p 打印分区情况；
+	   n 建立新的分区；
+	   w 保存；
+	   q 退出；
+	   d 删除分区；
+	   建立分区时可以选择主分区(p)和扩展分区(e),一块磁盘最大只能划分4个主分区，设置分区结束扇区可以使用+1000M这种方法
+	设置扇区大小。建立扩展分区后，再建立分区只能选择主分区和逻辑分区(l)，如果磁盘空间已经分完了，就不能再选主分区了，只能在扩展分区
+	里面划分逻辑分区。逻辑分区的id总是从5开始。
+	mke2fs 可以格式化分区为ext2、ext3和ext4格式，实际上还有mkfs.ext2、mkfs.ext3、mkfs.ext4命令。
+参数：-b n*1024 设置数据块的大小，只能是1024的倍数，通常不能大于4096，单位是B
+	  -t ext4 设置文件系统类型
+	  -L LABEL 设置label
+	  -i 设置inode节点的大小
+	  -N 设置inode节点的数量
+	  -c 格式化前检查磁盘
+	  -j 设置类型为ext3，相当于使用mkfs.ext3
+	格式化分区为xfs类型需要使用 mkfs.xfs 命令；mkfs.xfs 设置块大小参数：-b size=2048 
+	mke2fs 可以直接重新格式化已经格式化的分区，mkfs.xfs重新格式化则需要加 -f
+		mke2fs -t ext4 -b 2048 -L TEST-5 /dev/sdb5
+		mkfs.xfs -b size=2048 -L TEST-6 /dev/sdb6
+	e2label /dev/sdb5 查看extn格式分区标签
+		e2label /dev/sdb5
+	格式化后的磁盘分区被看成是一个块设备文件，使用前需要先挂载到某个目录下，挂载目录一般是空目录，如果挂载目录原来有
+文件，挂载分区后就不能在看到目录下原来的文件了
+	mount 不加参数可以查看所有挂载的分区信息
+	mount /dev/sdb5 /newdir/ 挂载/dev/sdb5分区到/newdir/目录
+	卸载：umount /newdir/
+	使用LABEL挂载：mount LABEL=TEST-5 /newdir/
+	/etc/fstab文件：
+	cat /etc/fstab
+		UUID=9d6efa31-598f-4326-b819-706d907fbaa6	/boot	xfs  defaults   0   0
+	一共6列，第一列可以是挂载分区名、UUID、LABEL；第二列是挂载点，第三列是文件系统类型；第四列是挂载分区的一些特性，
+第五列0表示不备份，1表示备份；第六列表示是否开机自检磁盘，0不自检，1自检优先级高于2
+	第四列常用选项：async/sync 非实时同步/实时同步数据到磁盘；auto/noauto 开机自动/不自动挂载；ro/rw 只读/可读写挂载；
+exec/noexec 允许/不允许可执行文件操作，不能把根分区挂载为noexec；user/nouser 允许/不允许非root用户挂载(卸载)；
+defaults 包含rw、exec、auto、nouser、async
+	通过/etc/fstab文件挂载：
+	新增一行：
+		LABEL=TEST-5 /newdir/ ext4 defaults 0 0
+	使用 mount -a 挂载所有/etc/fstab文件中的分区
+	使用mount 挂载分区可以使用 -t 指定分区格式类型，但是通常是可以自动识别的，并不需要这样指定，使用-o可以设置/ect/fstab
+文件中第四列的挂载分区特性
+	重新挂载： mount -o remount /newdir/  这里-o没有写具体值应该是使用defaults
+	blkid 查看所有挂载过的分区的UUID；也可以使用：blkid /dev/sdb5
+	使用UUID挂载：mount UUID="9d6efa31-598f-4326-b819-706d907fbaa6" /newdir/
+	/etc/fstab文件中配置的分区会在系统启动后挂载，另一种让系统启动后挂载分区的方法是在/etc/rc.d/rc.local文件中写入
+挂载命令：/usr/bin/mount UUID="xxxx" /newdir/ (这里mount最好使用完整路径)
+	如果当前在挂载目录内，可以使用umount -l /newdir/来卸载
+	虚拟内存不够，可以增加一个虚拟磁盘：先建立swapfile，然后格式化为swap格式，然后启用虚拟磁盘
+	dd if=/dev/zero of=/tmp/newdisk bs=1M count=1024
+	if指定源文件(UNIX系统/dev/zero文件可以提供0)，of指定目标文件，bs指定块大小，count指定块数量，目标文件大小=bs*count
+	mkswap -f /tmp/newdisk 格式化为swap格式
+	swapon /tmp/newdisk 启用虚拟磁盘
+	free -m 使用MB为单位查看内存使用情况。
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	
