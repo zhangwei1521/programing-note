@@ -772,7 +772,24 @@ lambda表达式作为该函数式的实例。
 		interface Predicate<T>
 			方法：boolean test(T t);
 
-
+	补充：
+	List<String> list = Arrays.asList("aaa","bbb");
+	Iterator<String> iterator = list.iterator();
+	while (iterator.hasNext()){
+		String name = iterator.next();
+		if(name.equals("aaa")){
+			iterator.remove();
+		}
+	}
+	执行报错：java.lang.UnsupportedOperationException: null		
+			at java.util.AbstractList.remove(AbstractList.java:161)
+	说明：在使用Arrays.asList()后调用add，remove这些method时出现java.lang.UnsupportedOperationException异常，
+是由于Arrays.asList()返回java.util.Arrays$ArrayList，而不是ArrayList。
+	Arrays$ArrayList和ArrayList都是继承AbstractList，remove，add等method在AbstractList中是默认throw 
+UnsupportedOperationException而且不作任何操作。ArrayList override这些method来对list进行操作，但是Arrays$ArrayList
+没有override remove()，add()等，所以throw UnsupportedOperationException。
+	可以这样处理：
+		List<String> list = new ArrayList<>(Arrays.asList("aaa","bbb"));
 
 
 
