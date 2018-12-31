@@ -271,7 +271,104 @@ defaults 包含rw、exec、auto、nouser、async
 		:q!			强制退出，不保存修改
 		:set nu		显示行号
 		:set nonu	不显示行号
+	
+	压缩和打包
+	gzip压缩工具：gizp [-d#] filename -d用于解压，-#用于设置压缩级别，1最差，9最好，默认为6
+	gzip压缩完成后会删除原文件，gzip不支持压缩目录，如果压缩的是文本文件，可以使用 zcat filename.gz查看内容
+	bzip2压缩工具：bzip2 [-zd#] filename -z用于压缩，写不写都一样，-d用于解压，-#设置压缩级别，也是1~9，默认为9
+	bzip2压缩完成后会删除原文件，bzip2不支持压缩目录，如果压缩的是文本文件，可以使用 bzcat filename.bz2查看内容
+	xz压缩工具：xz [-dz] filename 
+	xz也不能压缩目录，使用xzcat filename.xz 查看压缩文本文件的内容
+	tar 打包工具：
+		tar [-zjJxcvfpP] filename tarname 
+		-z表示打包后使用gzip压缩
+		-j表示打包后使用bzip2压缩
+		-J表示打包后使用xz压缩
+		-x表示解包或解压缩
+		-t表示查看tar包里的文件列表
+		-c表示建立一个tar包
+		-v表示可视化
+		-f 后跟文件名，表示打包后的包名(压缩包名)，解包则是要解包的包名。多个参数需要把f写到最后面
+		-p表示为tar包添加原文件的属性
+		-p表示可以使用绝对路径、
+		--exclude filename表示打包时不包括指定文件
+	打包文件：tar -cvf filename.tar filename
+	查看tar包中的文件列表：tar -tf filename.tar
+	安装tree工具：yum install tree
+	使用tree查看目录内容：tree dirname
+	使用tar打包文件或目录都不会删除原文件或目录，同样解包也不会删除tar包文件
+	打包同时使用gzip压缩：tar -czvf dirname.tar.gz dirname/
+	虽然对tar包进行了gzip压缩，还是可以使用tar -tf dirname.tar.gz查看文件列表
+	排除指定文件并使用bzip2压缩：tar -cjvf test_tar.tar.bz2 test_tar/ --exclude first.c
+	解压和解包：tar -xjvf test_dir.tar.bz2
+	zip压缩包可以在windows和linux中通用，而且可以压缩目录
+		zip filename.zip filename
+	压缩目录：zip dirname.zip dirname/* 这种方式只会压缩目录下的文件和子目录本身，子目录下的文件不会被包含
+使用-r压缩目录下的所有文件：zip dirname.zip dirname/
+	解压缩：unzip filename.zip 
+	zip压缩和解压缩都不会删除原文件。
+	解压缩到指定目录：unzip -d tmpdir dirname.zip 
+	查看zip压缩包内容：unzip -l dirname.zip
+	检测是否损坏：unzip -t dirname.zip 
+	解压缩后覆盖已有文件：unzip -o dirname.zip -d tempdir
+	解压缩后不覆盖已有文件： unzip -n -d tempdir dirname.zip
+	touch test.txt
+	echo "hello" > !$		//!$表示上一个命令的参数
+	
+	安装RPM包
+	RPM包是预先在Linux上编译并打包的文件，安装起来非常快捷
+	软件为什么需要安装：安装的目的是把执行程序放到执行路径下来，把配置文件放到程序可读位置，把需要的链接库放到可
+找到的位置，以及配置一些需要预先配置的参数等。如果一个程序不需要这些准备就可以执行，就不需要安装了。
+	挂载安装linux的光盘：mount /dev/cdroom /mnt
+	查看安装光盘里的npm包：ls /mnt/Packages | head
+	rpm包：	abrt-2.1.11-48.el7.centos.x86_64.rpm
+			包名 版本号  发布版本号	  运行平台
+	安装：rpm -ivh libjpeg-turbo-devel-1.2.90-5.el7.x86_64.rpm
+		  -i 表示安装 -v表示可视化 -h表示显示进度
+	升级：rpm -Uvh filename.rpm
+	卸载：rpm -e name 这里的name只是安装的包名，而非rpm文件名，可以使用rpm -qa name查询
+	查询是否已安装指定包：rpm -q name
+	查询系统已安装的所有rpm包： rpm -qa | head
+	查询已安装包的详细信息：rpm -qi name
+	列出rpm包安装后的所有文件：rpm -ql name
+	查询某个文件属于哪个rpm包：rpm -qf filename
+	使用rpm安装需要自己处理依赖问题，也就是说需要自己先手动安装依赖包，才能安装当前包
+	yum工具可以联网下载需要的rpm包，同时会自动解决依赖包的安装
+	列出所有的rpm包资源：yum list | head
+	搜索rpm包：yum search vim 也可以使用：yum list | grep 'vim'
+	使用安装yum安装：yum install -y vim-enhanced		//不加-y表示以与用户交互的方式安装
+	卸载：rpm remove name（卸载时最好不使用-y，防止卸载了某些依赖的重要的包）
+	升级：yum update name 
+	使用光盘作为yum源：
+	先挂载光盘：mount /dev/cdroom /mnt
+	删除/etc/yum.repos.d目录下的文件：cp -r /etc/yum.repos.d /etc/yum.repos.bak
+		rm -rf /etc/yum.repos.d/*
+	在/etc/yum.repos.d创建新文件：dvd.repo:  vim /etc/yum.repos.d/dvd.repo
+		[dvd]
+		name=install dvd
+		baseurl=file:///mnt
+		enabled=1
+		gpgcheck=0
+	刷新repos生成缓存：yum makecache
+	然后就可以使用yum安装了：yum install -y tftp
+	恢复yum源：rm -rf /etc/yum.repos.d
+		mv /etc/yum.repos.bak /etc/yum.repos.d
+		yum list
+	使用yum下载rpm包而不安装：
+		yum install npmname -y --downloadonly --downloadonlydir=/usr/local/src/
+		如果已经安装该rpm包，可以使用：
+		yum reinstall npmname -y downloadonly --downloadonlydir=/usr/local/src/
+	编译源码安装：
+		获取源码 wget http://archive.apache.org/dist/apr/apr-util-1.5.1.tar.gz
+		解压：tar -zxvf apr-util-1.5.1.tar.gz
+		进入解压后的目录：cd apr-util-1.5.1
+		执行： ./configure --prefix=/usr/local/apr-util --with-apr=/usr/local/apr/
+		执行：make
+		执行：make install
+	
+	
 
+		
 
 
 
