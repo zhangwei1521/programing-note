@@ -812,8 +812,67 @@ UnsupportedOperationException而且不作任何操作。ArrayList override这些
 		static BeanInfo getBeanInfo(Class<?> bean) throw IntrospectionException;
 这个方法可以使用内省机制返回bean的信息提供者BeanInfo实例（如果在bean的包下自己提供了BeanInfo实现，获取的BeanInfo实例
 就是自己提供的那个类的实例）。
+											第十四章 Servlet
+	早期获取动态资源使用CGI程序（公共网关接口），HTTP请求先被CGI程序获取，CGI为每个请求创建一个进程，这个进程再和数据
+库通信，这中方式的问题是性能不高，每个请求就产生一个进程，占用内存和CPU资源太多，而且每个进程都和数据库通信引起的频繁
+的数据库连接和关闭连接也是很昂贵的代价。并且CGI可以使用各种语言开发，通常存在平台移植问题。
+	servlet在web服务器的内存空间中运行，不创建单独的进程，同时servlet基于java，没有移植问题，而且java的安全管理机制很
+完善，可以有效保护服务器上的资源。
+	servlet的三个生命周期方法，在特定的时间由服务器调用它们：init()、service()、destroy()
+	服务器接收到HTTP请求后根据请求中的资源路径映射到指定的servlet，如果servlet没有被加载，就找到这个servlet并加载到
+服务器的内存空间中，然后调用servlet的init方法对servlet进行初始化处理（传递初始化参数配置servlet），然后调用servlet的
+service方法处理HTTP请求。处理请求结束后servlet可以驻留在服务器的内存空间中，当服务器决定卸载servlet时才会调用servlet的
+destroy方法回收资源。
+	servlet-api.jar包含了开发servlet需要的api接口和类，它是由服务器开发者实现的，javaSE没有提供这些接口和类（servlet
+接口都是在服务器提供的jar包中），javaEE提供了这些接口和类(应该是由javaEE定义的规范)。	
+	编译servlet： javac MyServlet.java -classpath="...\tomcat...\lib\servlet-api.jar"
+	编译得到的class文件应该放到tomcat的webapp目录下的工程的WEB-INF\classes\下。
+	配置servlet：在工程的WEB-INF目录下的web.xml中配置：
+		<servlet>
+			<servlet-name>MyServlet</servlet-name>
+			<servlet-class>aMyServlet</servlet-class>
+		</servlet>
+		<servlet-mapping>
+			<servlet-name>MyServlet</servlet-name>
+			<url-pattern>/servlet/myservlet</url-pattern>
+		</servlet-mapping>
+	启动tomcat后访问：http://localhost:8080/webappname/servlet/myservlet
+	servlet相关类和接口主要位于两个包：javax.servlet和javax.servlet.http。
+	javax.servlet包提供接口：
+		Servlet：声明servlet的生命周期方法以及getServletConfig()
+		ServletConfig：方法：getServletContext()、getInitParameter(String paramName)、Enumeration<String> getInitParameterNames()
+		ServletContext: 方法：Object getAttribute(String name)[返回服务器空间中的属性]、getRealPath(String rPath)
+		ServletRequest: 方法：Object getAttribute(String name)[返回请求中的属性]、getContentType()、getParameter(...)
+、getInputStream()、getReader()、getRemoteHost()等
+		ServletResponse: 方法：setContentType(...)、getOutputStream()
+	javax.servlet包提供类：
+		GenericServlet:实现了Servlet和ServletConfig接口
+		ServletInputStream: 扩展了InputStream，由servlet容器实现，方法：int readLine(byte[] buffer, int offset, int size),
+从输入流读取size个字节放入buffer从offset开始的位置
+		ServletOuputStream: 扩展了OutputStream，由servlet容器实现，方法：print()、println()
+		ServletException，继承ServletException 的UnAvailableException
+	读取servlet请求参数：
+		（ServletRequest request）
+		Enumeration e = request.getParameterNames();
+		while(e.hasMoreElements()){
+			String pName = (String)e.nextElement();
+			String param = request.getParameter(pname);
+		}
+	处理HTTP请求时通常使用http包下的类和接口：
+	接口：
+		HttpServletRequest:方法：getCookies()、getHeaders()、getMethod()、getSession()等
+		HttpServletResponse：方法：addCookie(Cookie cookie)、sendError(...)、setDataHeader(...)、setStatus(int code)
+		HttpSession:方法：Object getAttribute(...)、setAttribute(...)、removeAttribute(...)
+	核心类：
+		Cookie:包括这些信息：名称、值、截止日期、域和路径(需要携带cookie的请求域和路径)。方法：getName、getValue、
+	getMaxAge、getDomain、getPath以及对应的set方法。cookie不设置到期时间，默认就是当前回话结束到期
+		HttpServlet：方法：doDelete(...)、doGet(...)、doPost(...)、doPut(...)、doTrace(...)、service(...)等
+		使用HttpServletRequest的getSession()获取session，如果不存在就创建session
+		
 	
 	
+	
+		
 
 
 
