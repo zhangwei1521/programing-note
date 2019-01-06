@@ -138,14 +138,32 @@ git diff --staged，效果是相同的）
 	git remote -v 查看远程仓库名和url
 	添加远程仓库：git remote add origin  https://github.com/zhangwei1521/programing-note.git 
 	从远程仓库中抓取数据：git fetch [remote-name] 这个命令不会自动合并或修改当前的工作，需要手动处理。
+进行合并处理：git merge origin/master
 	从远处仓库中拉取数据：git pull [remote-name] 这个命令会自动的抓取然后合并远程分支到当前分支。
 	推送到远程仓库：git push [remote-name] [branch-name]
 	查看某一个远程仓库的详细信息：git remote show [remote-name] 
 	重命名远程仓库的本地名称：git remote rename origin myhub
 	移除一个远程仓库：git remote rm myhub
 	
-
-
+	列出所有标签名：git tag
+	按模式查找标签：git tag -l 'v1.8.5*'
+	Git 使用两种主要类型的标签：轻量标签（lightweight）与附注标签（annotated）。
+	一个轻量标签很像一个不会改变的分支 - 它只是一个特定提交的引用。
+	附注标签是存储在 Git 数据库中的一个完整对象，包含打标签者的名字、电子邮件地址、日期时间
+	创建附注标签：git tag -a v1.0 -m "first stage finished" 这里不使用-m就会启动编辑器
+	查看标签具体信息和打标签时的提交：git show v1.0
+	创建轻量标签：git tag v1.0-lt
+	对过去的提交打标签: git tag -a v0.9 0ea308		(0ea308是过去提交的部分校验和，也可以用完整校验和)
+	git push 命令并不会传送标签到远程仓库服务器上。需要手动操作：git push origin [tagname]或者：
+git push origin --tags 推送所有标签
+	在 Git 中并不能真的检出一个标签，将工作目录切换到某个标签版本,需要创建一个该标签处的分支：
+git checkout -b [branch-name] [tag-name]
+	可以通过 git config 文件来轻松地为每一个命令设置一个别名:
+		git config --global alias.co checkout
+	添加自己的取消暂存别名:
+		git config --global alias.unstage 'reset HEAD --'
+	在命令前面加入 ! 符号执行外部命令，而不是一个 Git 子命令:
+		git config --global alias.visual '!gitk'
 
 
 
