@@ -791,6 +791,29 @@ UnsupportedOperationException而且不作任何操作。ArrayList override这些
 	可以这样处理：
 		List<String> list = new ArrayList<>(Arrays.asList("aaa","bbb"));
 
+											第十三章 JavaBean
+	Java Bean 是能够在各种不同的环境中重用的软件组件。
+	内省：分析Bean的过程用以确定Bean的功能的技术。
+	暴露Bean的属性、事件和方法的两种方式：一是使用约定的规则命名，二是提供一个实现了BeanInfo接口的附加类，由这个类
+提供Bean的信息。
+	属性命名规则：Bean的属性决定Bean的外观和行为，通过约定的getter和setter方法获取和设置属性的值，两种属性类型：
+简单属性和索引属性，索引属性是指一个属性有多个值，比如属性是一个数组，可以使用带有索引参数的getter和setter方法
+获取和设置指定索引的值。
+	事件命名规则：Bean可以产生和监听事件，添加监听器方法：addTListener(TListener eventListener),T是事件的类型
+	内省机制可以发现Bean的公开方法，受保护方法和私有方法不能被内省获得。
+	BeanInfo接口定义了三个方法：
+		PropertyDiscriptor[] getPropertyDiscriptors();
+		EventSetDiscriptor[] getEventSetDiscriptors();
+		MethodDiscriptor[] getMethodDiscriptor();
+	返回的对象数组描述Bean的属性、事件和方法信息。
+	BeanInfo实例命名：BeanNameBeanInfo，也可以选择继承SimpleBeanInfo这个类，重写其中的方法来暴露指定的信息，未被重写
+的方法代表的信息将使用约定的命名规则来发现。
+	Introspector类：这个类提供方法：
+		static BeanInfo getBeanInfo(Class<?> bean) throw IntrospectionException;
+这个方法可以使用内省机制返回bean的信息提供者BeanInfo实例（如果在bean的包下自己提供了BeanInfo实现，获取的BeanInfo实例
+就是自己提供的那个类的实例）。
+	
+	
 
 
 
