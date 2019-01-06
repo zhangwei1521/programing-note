@@ -9,7 +9,7 @@
 然后通过合并原始文件和修改片段得到当前的文件，Git则是保存每次提交时的所有文件快照，
 没有修改的文件不会创建新的文件快照而是使用指针指向原来的文件。
 	这也导致一个问题，如果一个文件被修改多次，就会在Git中保存多个文件，如果文件数量很多，
-就会导致项目的占用空间比较大，比如一个普通的约6000次提交的项目，项目可能占到40~60G的磁盘空间。
+就会导致项目的占用空间比较大，比如一个普通的约6000次提交的项目，项目可能占到40~60MB的磁盘空间。
 
 	在 Git 中的绝大多数操作都只需要访问本地文件和资源，一般不需要来自网络上其它计算机的信息。
 	Git 中所有数据在存储前都计算校验和，然后以校验和来引用。 这意味着不可能在 Git 不知情时
@@ -99,7 +99,7 @@ git diff --staged，效果是相同的）
 	选项 -n，显示最近n次提交。
 	选项 --stat，显示所有被修改过的文件、有多少文件被修改了以及被修改过的文件的哪些行被移除或是添加了
 	选项 --pretty，指定使用不同于默认格式的方式展示提交历史。--pretty=oneline，还有short，full和fuller
-	选项 --format，git log --pretty=format:"%h - %an, %ar : %s"		：
+	选项 --pretty=format，git log --pretty=format:"%h - %an, %ar : %s"		：
 		%H		提交对象（commit）的完整哈希字串
 		%h		提交对象的简短哈希字串
 		%T		树对象（tree）的完整哈希字串
@@ -132,3 +132,28 @@ git diff --staged，效果是相同的）
 	使用 git reset HEAD <file>... 来取消暂存
 	使用 git checkout -- [file] 撤销修改（工作目录中的该文件将被重置为仓库中正确分支的最新提交版本）
 	
+	远程仓库是指托管在因特网或其他网络中的项目版本库。一个本地项目可以有好几个远程仓库。管理远程仓
+库包括了解如何添加远程仓库、移除无效的远程仓库、管理不同的远程分支并定义它们是否被跟踪等等。
+	git remote 查看远程仓库名
+	git remote -v 查看远程仓库名和url
+	添加远程仓库：git remote add origin  https://github.com/zhangwei1521/programing-note.git 
+	从远程仓库中抓取数据：git fetch [remote-name] 这个命令不会自动合并或修改当前的工作，需要手动处理。
+	从远处仓库中拉取数据：git pull [remote-name] 这个命令会自动的抓取然后合并远程分支到当前分支。
+	推送到远程仓库：git push [remote-name] [branch-name]
+	查看某一个远程仓库的详细信息：git remote show [remote-name] 
+	重命名远程仓库的本地名称：git remote rename origin myhub
+	移除一个远程仓库：git remote rm myhub
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
