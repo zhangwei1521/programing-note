@@ -165,6 +165,15 @@ git checkout -b [branch-name] [tag-name]
 	在命令前面加入 ! 符号执行外部命令，而不是一个 Git 子命令:
 		git config --global alias.visual '!gitk'
 
+	#拒绝提交包含混合换行符的文件
+	git config --global core.safecrlf true
+	#提交时转换为LF，检出时转换为CRLF
+	git config --global core.autocrlf true
+	#提交时转换为LF，检出时不转换
+	git config --global core.autocrlf input
+	#提交检出均不转换
+	git config --global core.autocrlf false
+	
 	Git 分支
 	相较于其它版本控制系统，git创建分支要高效得多。
 	进行提交操作时，git保存一个提交对象，这个提交对象包含了提交者的信息、提交的说明信息以及一个指向
