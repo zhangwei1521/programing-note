@@ -190,13 +190,14 @@ dependency:tree 用于列出依赖树
 				  <artifactId>maven-source-plugin</artifactId>
 				  <version>2.1.1</version>
 				  <executions>
-					<exclusion>
+					<excution>
 						<id>xxxx<id>
 						<phase>verify</phase>
 						<goals>
 							<goal>jar-no-fork</goal>
 						</goals>
-				  </exclusions>
+					</excution>
+				  </excutions>
 				</plugin>
 			</plugins>
 		</build>
@@ -220,7 +221,7 @@ dependency:tree 用于列出依赖树
 		  <artifactId>maven-antrun-plugin</artifactId>
 		  <version>1.3</version>
 		  <executions>
-			<exclusion>
+			<excution>
 				<id>xxxx<id>
 				<phase>validate</phase>
 				<goals>
@@ -230,7 +231,9 @@ dependency:tree 用于列出依赖树
 					<tasks>
 						<echo>hello world</echo>
 					</tasks>
-		  </exclusions>
+				</configuration>
+			</excution>
+		  </executions>
 		</plugin>
 		使用maven-help-plugin插件查看插件的信息：
 		mvn help:describe-Dplugin=groupid:artifactId:version或者：
@@ -245,4 +248,72 @@ dependency:tree 用于列出依赖树
 		</pluginRepositories>
 	配置插件时虽然可以不写版本号，核心插件会使用maven官方设定的版本号，而其他插件会解析插件仓库中最新的release版本，
 所以最好还是手动配置需要的版本号
+	
+												第六章
+	聚合项目：为了统一一组项目的一些信息，可以为这一组项目设置一个共同的聚合源，聚合源项目需要设置打包方式：
+<packaging> pom </packaging>
+	设置子模块：
+		<modules>
+			<module>child-project1</module>
+			<module>child-project2</module>
+		</modules>
+	通常子模块和聚合源项目以父子目录结构组织，但是maven不要求一定要这样，<module>元素使用的实际是子模块的路径，使用
+平行目录结构：<module>../child-project1</module>
+	在聚合源项目下使用mvn clean install，maven会分析子模块并计算出一个构建顺序，根据这个顺序来依次构建各个模块。
+	子模块使用<parent>元素实现继承：
+<parent>
+	<groupId>com.zhangwei.springdemo</groupId>
+	<artifactId>bean-demo</artifactId>
+	<version>1.0.0.SNAPSHOT</version>
+	<relativePath>../parent-project/pom.xml</relativePath>
+</parent>
+	<relativePath>元素如果不写，默认值就是../pom.xml。
+	子模块可以继承的父工程元素包括：groupId、version、properties、url等信息，还有：distributionManagement、dependencies、
+dependencyManagement、repositories、build等
+	<dependencyManagement>元素声明的依赖不会被实际引入，通常是用来统一设置依赖的参数信息，比如在父工程中指定各个依赖
+的版本号，子模块会继承这些信息，然后子模块使用自己的<dependencies>引入实际的依赖，使用dependencies时就不需要再写版本号了。
+	如果当前项目想要使用某个项目的dependencyManagement声明，可以在自己的dependencyManagement中使用import引入：
+<dependencyManagement>
+	<dependencies>
+		<dependency>
+			<groupId>xxx</groupId>
+			<artifactId>yyy</artifactId>
+			<version>???</version>
+			<type>pom</type>
+			<scope>import</scope>
+		</dependency>
+	</dependencies>
+</dependencyManagement》
+	在父POM中统一插件配置：
+<build>
+	<pluginManagement>
+		<plugins>
+			<plugin>
+				...
+				<configuration>
+					...
+				</configuration>
+			</plugin>
+		</plugins>
+	</pluginManagement>
+</build>
+	子模块中使用插件只需要写插件的基础信息引入就可以了
+	maven的聚合和继承是两个不同的概念，二者的目的是完全不同的，聚合模块知道它包含的被聚合模块，但是被聚合模块并不需要
+知道聚合模块，其目的是方便快速构建。
+	继承的父POM不知道谁继承了它，而子模块必须指定所继承的父模块，通常用于消除重复配置。
+	聚合模块和继承父模块的packaging都必须是pom。
+	实际中通常会把继承和聚合融合成一个模块，这样简化了模型结构。
+	maven强调约定由于配置，使用默认的约定项目结构可以降低出错的概率和学习的复杂性，当然maven也支持自定义配置，比如修改
+源代码路径：
+<build>
+	<sourceDirectory>src/java</sourceDirectory>
+</build>
+	超级POM的位置：$MAVEN_HOME/lib/maven-model-builder-x.x.x.jar下的org/apache/maven/model/pom-4.0.0.xml
+	超级POM定义了仓库和插件仓库地址为中央仓库，默认关闭了SNAPSHOT的支持；超级POM还定义了源代码目录、资源目录、测试代码
+目录、输出目录、构件名结构等；核心插件的版本号也在超级POM中指定。
+	构建聚合模块指定的子模块时，maven会先构建子模块依赖的模块，一直找到没有其他依赖模块的模块开始构建。
+	裁剪构建模块：
+	mvn clean install -pl demo1-module  		-pl只构建列出的模块
+	mvn clean install -pl demo1-module -am 		-am也构建列出模块依赖的模块 -amd构建依赖列出模块的模块
+	mvn clean install -rf demo1-module 			-rf在完整的构建顺序基础上从指定模块开始构建
 	
