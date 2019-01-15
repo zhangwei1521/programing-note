@@ -286,7 +286,7 @@ repositories的配置了。
 			<scope>import</scope>
 		</dependency>
 	</dependencies>
-</dependencyManagement》
+</dependencyManagement>
 	在父POM中统一插件配置：
 <build>
 	<pluginManagement>
@@ -319,4 +319,5 @@ repositories的配置了。
 	mvn clean install -pl demo1-module  		-pl只构建列出的模块
 	mvn clean install -pl demo1-module -am 		-am也构建列出模块依赖的模块 -amd构建依赖列出模块的模块
 	mvn clean install -rf demo1-module 			-rf在完整的构建顺序基础上从指定模块开始构建
-	
+
+nexus下载：https://help.sonatype.com/repomanager2/download/download-archives---repository-manager-oss	

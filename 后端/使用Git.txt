@@ -222,4 +222,11 @@ git status 查看冲突文件，冲突文件看起来像是这样：
 提交历史中落后一大截，而前沿分支的指针往往比较靠前。
 	特性分支：一种短期分支，它被用来实现单一特性或其相关工作
 
-
+	git cherry-pick [<options>] commitid 挑拣 提交
+	git cherry-pick用于在当前分支合入其他分支的某一次提交。
+	当cherry-pick时，如果没有成功自动提交，说明存在冲突，因此需要解决冲突,解决冲突后需要git commit手动进行提交
+	git cherry-pick -n commitid 取消自动提交
+	git cherry-pick -e commitid 合入后启动编辑器编辑提交信息
+	解决冲突后也可以使用git cherry-pick --continue命令，继续进行cherry-pick操作。
+	git cherry-pick --abort 前分支恢复到cherry-pick前的状态
+	如果在git cherry-pick后加一个分支名，则表示将该分支顶端提交进cherry-pick
