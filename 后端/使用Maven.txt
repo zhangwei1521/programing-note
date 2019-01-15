@@ -250,17 +250,17 @@ dependency:tree 用于列出依赖树
 所以最好还是手动配置需要的版本号
 	
 												第六章
-	聚合项目：为了统一一组项目的一些信息，可以为这一组项目设置一个共同的聚合源，聚合源项目需要设置打包方式：
+	聚合项目：为了一次构建一组相互关联的项目，可以使用聚合项目组织项目群结构，聚合项目需要设置打包方式：
 <packaging> pom </packaging>
-	设置子模块：
+	设置被聚合模块：
 		<modules>
 			<module>child-project1</module>
 			<module>child-project2</module>
 		</modules>
-	通常子模块和聚合源项目以父子目录结构组织，但是maven不要求一定要这样，<module>元素使用的实际是子模块的路径，使用
+	通常被聚合模块和聚合项目以父子目录结构组织，但是maven不要求一定要这样，<module>元素使用的实际是被聚合模块的路径，使用
 平行目录结构：<module>../child-project1</module>
-	在聚合源项目下使用mvn clean install，maven会分析子模块并计算出一个构建顺序，根据这个顺序来依次构建各个模块。
-	子模块使用<parent>元素实现继承：
+	在聚合项目下使用mvn clean install，maven会分析被聚合模块并计算出一个构建顺序，根据这个顺序来依次构建各个模块。
+	继承：为了统一设置一组项目的一些信息，可以为这一组项目设置一个共同的父项目，子模块使用<parent>元素实现继承：
 <parent>
 	<groupId>com.zhangwei.springdemo</groupId>
 	<artifactId>bean-demo</artifactId>
@@ -270,6 +270,9 @@ dependency:tree 用于列出依赖树
 	<relativePath>元素如果不写，默认值就是../pom.xml。
 	子模块可以继承的父工程元素包括：groupId、version、properties、url等信息，还有：distributionManagement、dependencies、
 dependencyManagement、repositories、build等
+	子模块可以继承父工程的repositories，如果公司私服仓库被写在父工程的pom中，但是如果本地仓库没有父工程，那在构建子模块的
+时候就会报错：relativePath设置错误，找不到父项目依赖。通常父项目会被安装到公司私服，所以这时就需要在子模块中再写一次
+repositories的配置了。
 	<dependencyManagement>元素声明的依赖不会被实际引入，通常是用来统一设置依赖的参数信息，比如在父工程中指定各个依赖
 的版本号，子模块会继承这些信息，然后子模块使用自己的<dependencies>引入实际的依赖，使用dependencies时就不需要再写版本号了。
 	如果当前项目想要使用某个项目的dependencyManagement声明，可以在自己的dependencyManagement中使用import引入：
