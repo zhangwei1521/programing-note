@@ -2999,7 +2999,7 @@ document.addEventListener('drop', function( event ) {
 	unload事件发生时，文档处于一个特殊状态。所有资源依然存在，但是对用户来说都不可见，UI 互动全部无效。
 这个事件是无法取消的，即使在监听函数里面抛出错误，也不能停止文档的卸载。手机上，浏览器或系统可能会直接丢弃网页，这时该事件根本不会发生。
 任何情况下都不应该依赖这个事件，指定网页卸载时要执行的代码，可以考虑完全不使用这个事件。
-	load事件在页面或某个资源加载成功时触发。
+	load事件在页面或某个资源加载成功时触发。页面上所有的资源（图片，音频，视频等）被加载以后才会触发页面load事件
 	error事件是在页面或资源加载失败时触发。
 	abort事件在用户取消加载时触发。
 	pageshow 事件在页面加载时触发，包括第一次加载和从缓存加载两种情况。如果要指定页面每次加载（不管是不是从浏览器缓存）时都运行的代码，
@@ -3010,30 +3010,73 @@ document.addEventListener('drop', function( event ) {
 	pagehide事件实例也有一个persisted属性，将这个属性设为true，就表示页面要保存在缓存中；设为false，表示网页不保存在缓存中，这时
 如果设置了unload 事件的监听函数，该函数将在 pagehide 事件后立即运行。
 	如果页面包含<frame>或<iframe>元素，则<frame>页面的pageshow事件和pagehide事件，都会在主页面之前触发。
+	
+	DOMContentLoaded 事件：
+	当文档中没有脚本时，浏览器解析完文档便能触发 DOMContentLoaded 事件；如果文档中包含脚本，则脚本会阻塞文档的解析，因为脚本可能会更改DOM，
+脚本执行完成才会触发DOMContentLoaded事件。在任何情况下，DOMContentLoaded 的触发不需要等待图片等其他资源加载完成。
+	readystatechange事件：
+	当 Document 对象和 XMLHttpRequest 对象的readyState属性发生变化时触发。document.readyState有三个可能的值：loading（网页正在加载）、
+interactive（网页已经解析完成，但是外部资源仍然处在加载状态）和complete（网页和所有外部资源已经结束加载，load事件即将触发）。
+		document.onreadystatechange = function () {
+		  if (document.readyState === 'interactive') {
+			// ...相当于DOMContentLoaded事件
+		  }
+		}
 
+浏览器渲染页面过程：
+	1、HTML解析出DOM Tree
+	2、CSS解析出Style Rules
+	3、将二者关联生成Render Tree
+	4、Layout 根据Render Tree计算每个节点的信息
+	5、Painting 根据计算好的信息绘制整个页面
+浏览器解析文档，当遇到<script>标签的时候，会立即解析脚本，停止解析文档（因为JS可能会改动DOM和CSS，所以继续解析会造成浪费）。
+如果脚本是外部的，会等待脚本下载完毕，再继续解析文档。现在可以在script标签上增加属性 defer或者async。
+脚本解析会将脚本中改变DOM和CSS的地方分别解析出来，追加到DOM Tree和Style Rules上。
 
+	现代浏览器为了更好的用户体验,渲染引擎将尝试尽快在屏幕上显示的内容。它不会等到所有HTML解析之前开始构建和布局渲染树。
+部分的内容将被解析并显示。也就是说浏览器能够渲染不完整的dom树和cssom，尽快的减少白屏的时间。假如我们将js放在header，
+js将阻塞解析dom，dom的内容会影响到First Paint，导致First Paint延后。所以说我们会将js放在后面，以减少First Paint的时间，
+但是不会减少DOMContentLoaded被触发的时间。
 
+	hashchange事件：
+	在 URL 的 hash 部分（即#号后面的部分，包括#号）发生变化时触发。该事件一般在window对象上监听。hashchange的事件实例具有两个特有属性：
+oldURL属性和newURL属性，分别表示变化前后的完整 URL。
+	scroll事件：在文档或文档元素滚动时触发，主要出现在用户拖动滚动条。该事件会连续地大量触发，所以它的监听函数之中不应该有非常耗费计算的操作。
+	resize事件：在改变浏览器窗口大小时触发，主要发生在window对象上面。
+	fullscreenchange事件：在进入或退出全屏状态时触发，该事件发生在document对象上面。
+	copy事件：进行复制动作时触发。此事件是ClipboardEvent的实例，有一个实例属性clipboardData，是一个 DataTransfer 对象，存放剪贴的数据。
 
+	focus：元素节点获得焦点后触发，该事件不会冒泡。
+	blur：元素节点失去焦点后触发，该事件不会冒泡。
+	由于focus和blur事件不会冒泡，只能在捕获阶段触发，所以addEventListener方法的第三个参数需要设为true。
 
+	自定义事件：CustomEvent构造函数接受两个参数。第一个参数是字符串，表示事件的名字，这是必须的。第二个参数是事件的配置对象，这个参数是可选的。
+CustomEvent的配置对象除了接受 Event 事件的配置属性，只有一个自己的属性：detail--表示事件的附带数据，默认为null。
+	var myEvent = new CustomEvent('myevent', {
+	  detail: {
+		foo: 'bar'
+	  },
+	  bubbles: true,
+	  cancelable: false
+	});
 
+	el.addEventListener('myevent', function (event) {
+	  console.log('Hello ' + event.detail.foo);
+	});
 
+	el.dispatchEvent(myEvent);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+GlobalEventHandlers 接口
+	HTMLElement、Document和Window都继承了这个接口,这个接口提供了一种简洁的为元素添加事件处理函数的方式：div.onclick=function(e){...}。 
+	abort属性：某个对象的abort事件（停止加载）发生时，就会调用onabort属性指定的回调函数。
+	error属性：error事件发生时，就会调用onerror属性指定的回调函数。
+	JavaScript 运行时错误，会传到window对象，触发window.onerror()。
+	资源加载错误，比如<img>或<script>加载的资源出现加载错误；Error 对象会传到对应的元素，导致该元素的onerror属性指定的回调函数开始执行
+	其他属性：onload\onloadstart\onfocus\onblur\onscroll 
+	oncontextmenu:用户在页面上按下鼠标的右键，会触发contextmenu事件，导致执行oncontextmenu()。如果该属性执行后返回false，
+就等于禁止了右键菜单。
+	元素的右键菜单显示时，会触发该元素的onshow监听函数。
 
 
 
