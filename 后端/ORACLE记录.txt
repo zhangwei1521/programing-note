@@ -8,6 +8,11 @@ oracle下载地址：
 https://www.oracle.com/technetwork/database/enterprise-edition/downloads/index.html
 
 ------------------------------------------------------------------------------------
+中大使用机器：
+安装新增Windows用户：oracle，密码oracle
+全局数据库名：oracle12C，密码oracle12C
+安装路径：f:\app\oracle
+--------------------
 
 查询系统时间：
 	select sysdate from dual;
