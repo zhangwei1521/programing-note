@@ -16,14 +16,19 @@
 选中“我要配置分区”，点击“完成”，进入分区界面，LVM下拉框选择“标准分区”，点击 + 号设置挂载点为 /boot，期望容量为 200M，然后
 添加挂载点。继续添加 swap 分区，4GB，根分区 /，期望容量留空，表示将剩下的空间全部给根挂载点。点击完成-->接受更改-->开始安装，
 点击“ROOT密码”设置root密码，然后继续直到安装完成，点击重启。输入root、root密码后登陆系统。
-	使用 dhclient 自动获取一个ip地址，使用 ip addr查看ip地址。使用 ping -c 4 www.baidu.com 测试网络联通性。
-	使用 vi /etc/sysconfig/network-scripts/ifcfg-ens33 设置静态ip：ONBOOT=no 改为yes（网卡驱动随着系统一起启动），
+	NAT网络连接模式设置：
+	1、检查宿主机的VMware DHCP Service 和VMwareNAT Service两个服务是否启动
+	2、设置宿主机的本地连接的属性：共享--允许其他网络用户通过此计算机的Internet连接来连接，选择VMnet8.
+	3、查看本机使用的DNS：ipconfig -all,设置VMnet8网络适配器的Ipv4属性：ip地址使用一个需要的局域网地址，DNS设置为宿主机使用的DNS
+	4、VMware的虚拟网络编辑器中选择NAT模式，子网ip设置为VMnet8设定的网段，NAT设置中网关地址设置为VMnet8的地址。
+	5、使用 dhclient 自动获取一个ip地址，使用 ip addr查看ip地址。使用 ping -c 4 www.baidu.com 测试网络联通性。
+	6、使用 vi /etc/sysconfig/network-scripts/ifcfg-ens33 设置静态ip：ONBOOT=no 改为yes（网卡驱动随着系统一起启动），
 BOOTPROTO=dhcp 改为static（静态ip），新增：
-		IPADDR=192.168.112.88
+		IPADDR=192.168.112.88（VMnet8设置的网段中的一个地址）
 		NETMASK=255.255.255.0
-		GATEWAY=192.168.112.2
-		DNS1=119.29.29.29
-	使用 systemctl restart network.service 重启网络服务。
+		GATEWAY=192.168.112.2（VMnet8的地址）
+		DNS1=119.29.29.29（VMnet8设置的DNS地址，也就是宿主机的DNS）
+	7、使用 systemctl restart network.service 重启网络服务。
 	使用图形用户界面登陆，默认在tty1，但是tty命令显示是0，可以使用Ctrl+Alt+(F2~F6)不关闭图形服务切换到命令行，使用
 Ctrl+Alt+F1切换回图形用户界面。
 	图形用户界面使用 init 3 关闭图形服务并切换到命令行界面。
@@ -112,6 +117,7 @@ rw init=/sysroot/bin/bash，然后Ctrl+x进入emergency模式，使用chroot切�
 		软链接相当于windows的快捷方式，删除原文件后就不能打开了。
 		硬链接是复制了一个新的原文件的inode节点，这样删除原文件就不会实际删除文件，而只是删除了原文件名指向的
 		inode节点，这时使用硬链接仍然可以访问原文件。
+	查看系统内核版本：uname -r
 	
 	用户管理
 	查看/etc/passwd文件：cat /etc/passwd | head
@@ -143,7 +149,7 @@ uvhV.:17883:0:99999:7:::
 	普通用户使用su切换到root是需要root密码的，但是这不太安全，所以出现了sudo
 	sudo配置文件：/etc/sudoers
 	默认只有root能使用sudo，使用visudo 编辑/etc/sudoers文件（先安装 yum install -y sudo）:
-shanyu  ALL=(ALL)  ALL 允许shanyu用于在所有主机上以所有用户身份使用sudo执行所有命令
+shanyu  ALL=(ALL)  ALL 允许shanyu用户在所有主机上以所有用户身份使用sudo执行所有命令
 	使用sudo：sudo cat /etc/shadow 使用sudo需要输入自己的秘密
 	为用户组shanyu配置sudo：%shanyu  ALL=(ALL)  ALL
 	/etc/sudoers中配置用户别名：User_Alias USER_AUTH = shanyu,zhangwei
@@ -365,7 +371,8 @@ defaults 包含rw、exec、auto、nouser、async
 		执行： ./configure --prefix=/usr/local/apr-util --with-apr=/usr/local/apr/
 		执行：make
 		执行：make install
-	
+	yum-config-manager: command not found
+	这个是因为系统默认没有安装这个命令，这个命令在yum-utils 包里，可以通过命令yum -y install yum-utils 安装就可以了。
 	
 
 		

@@ -8,6 +8,11 @@ oracle下载地址：
 https://www.oracle.com/technetwork/database/enterprise-edition/downloads/index.html
 
 ------------------------------------------------------------------------------------
+中大使用机器：
+安装新增Windows用户：oracle，密码oracle
+全局数据库名：oracle12C，密码oracle12C
+安装路径：f:\app\oracle
+--------------------
 
 查询系统时间：
 	select sysdate from dual;
@@ -64,3 +69,36 @@ timestamp转换为字符串类型：
 	
 对于session的 必须先truncate ，才能drop
 对于事物的，必须先commit ，才能drop
+
+欠费表 XSQFXX 中 qfxmmc字段为 本科生学费、留学生医保费、自费留学本科生学费、自费留学生全英班学费、非学历留学生医保费 欠费金额小于等于0的学生
+记为 缴费未完成：
+select 
+	xh, case when sum(case when qf.qfje<=0 then 1 else 0 end )<count(qf.qfje) then '0' else '1' end as jfzt 
+from 
+	   XSQFXX qf where qf.qfxmmc='本科生学费' or qf.qfxmmc='留学生医保费' or qf.qfxmmc='自费留学本科生学费' 
+	   or qf.qfxmmc='自费留学生全英班学费' or qf.qfxmmc='非学历留学生医保费' 
+group by qf.xh 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

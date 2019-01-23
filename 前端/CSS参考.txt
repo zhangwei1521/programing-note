@@ -1,0 +1,101 @@
+														CSS参考
+	CSS：层叠样式表 (Cascading Style Sheets)
+	样式定义如何显示 HTML 元素，样式通常存储在样式表中，样式表可以在html文件中编写，也可以在单独的样式表文件中编写后引入html文件，
+外部样式表可以方便的复用和替换，修改一个样式表文件就可以改变站点中所有的页面的外观。外部样式表通常存储在 CSS 文件中，多个样式定义可层叠为一。
+	HTML 3.2 时代使用字体标签和颜色属性表现标签的外观，W3C在HTML 4.0中引入了CSS，主要目的是实现内容与表现的分离。
+	
+	CSS基础语法：
+	通常所说的层叠样式表指的是一组CSS规则构成的集合。
+	一条CSS 规则由两个主要的部分构成：选择器，以及一条或多条声明:
+		p {color:red;text-align:center;}
+	选择器可以是需要改变样式的 HTML 元素，也可以是元素的某些属性如id、class等。
+	每条声明由一个属性和一个值组成。属性是需要设置的样式属性，如color。每个属性有一个值。属性和值被冒号分开。声明之间使用分号分割。
+	在声明中每行只描述一个属性，可以让CSS可读性更强：
+		p {
+			color:red;
+			text-align:center;
+		}
+	CSS注释以 "/*" 开始, 以 "*/" 结束：
+		/*这是个注释*/
+		p {
+			text-align:center;
+			/*这是另一个注释*/
+			color:black;
+			font-family:arial;
+		}
+		
+	id 和 class 选择器：
+	id 选择器可以为标有特定 id 的 HTML 元素指定特定的样式。通常情况下页面(站点所有页面)内部某个特定id只应该属于一个HTML元素，CSS 中 id 选择器以
+"#" 来定义。注：id属性不要以数字开头，数字开头的ID在 Mozilla/Firefox 浏览器中不起作用。
+		#para1 {color:red;text-align:center;}
+	class 选择器用于描述一组元素的样式，class 选择器有别于id选择器，class可以在多个元素中使用。class 选择器在HTML中以class属性表示, 在 CSS 中，
+类选择器以一个点"."号显示。注：class属性的第一个字符不能使用数字，它无法在 Mozilla 或 Firefox 中起作用。
+		.center {color:red;text-align:center;}
+	
+	插入样式表的三种方式:
+	外部样式表,页面使用 <link> 标签引用外部css文件：
+			<head>
+				<link rel="stylesheet" type="text/css" href="mystyle.css">
+			</head>
+		外部css文件中直接书写CSS 规则，不要在属性值与单位之间留有空格
+			hr {color:sienna;}
+			p {margin-left:20px;}
+			body {background-image:url("/images/back40.gif");}
+	内部样式表，使用 <style> 标签在文档头部定义内部样式表：
+		<head>
+			<style>
+				hr {color:sienna;}
+				p {margin-left:20px;}
+				body {background-image:url("images/back40.gif");}
+			</style>
+		</head>
+	内联样式，元素使用style属性。style 属性可以包含任何 CSS 属性：
+		<p style="color:sienna;margin-left:20px">这是一个段落。</p>
+	多重样式：如果某些属性在不同的样式表中被同样的选择器定义，那么属性值将从更具体的样式表中被继承过来，不同样式表中重复定义的属性的优先级：
+内联样式 > 内部样式 >外部样式 > 浏览器默认样式
+实际上，如果外部样式放在内部样式的后面，则外部样式将覆盖内部样式，可见样式表中样式的应用是根据声明顺序（加载顺序）来的。
+更准确地说，选择器具有优先级，浏览器根据选择器的优先级决定元素的样式：
+	通用选择器（*）< 元素(类型)选择器 < 类选择器 < 属性选择器 < 伪类 < ID 选择器 < 内联样式
+选择器具体权重：
+内联样式表的权值最高 1000； ID 选择器的权值为 100； Class 类选择器的权值为 10； HTML 标签选择器的权值为 1
+	当 !important 规则被应用在一个样式声明中时,该样式声明会覆盖CSS中任何其他的声明, 无论它处在声明列表中的哪里,使用 !important 不是一个好习惯，
+因为它改变了样式表本来的级联规则，从而使其难以调试。只在需要覆盖全站或外部 css（例如引用的 ExtJs 或者 YUI ）的特定页面中使用 !important
+
+CSS 优先级法则总结：
+ A 选择器都有一个权值，权值越大越优先；
+ B 当权值相等时，后出现的样式表设置要优于先出现的样式表设置；
+ C 创作者的规则高于浏览者：即网页编写者设置的CSS 样式的优先权高于浏览器所设置的样式；
+ D 继承的CSS 样式不如后来指定的CSS 样式；
+ E 在同一组属性设置中标有“!important”规则的优先级最大
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
