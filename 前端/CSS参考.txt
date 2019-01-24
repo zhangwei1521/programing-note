@@ -67,29 +67,139 @@ CSS 优先级法则总结：
  C 创作者的规则高于浏览者：即网页编写者设置的CSS 样式的优先权高于浏览器所设置的样式；
  D 继承的CSS 样式不如后来指定的CSS 样式；
  E 在同一组属性设置中标有“!important”规则的优先级最大
- 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	CSS 背景属性
+	CSS 背景属性用于定义HTML元素的背景,属性包括：background-color; background-image; background-repeat; background-attachment; background-position
+		body {background-color:#b0c4de;}
+	CSS中，颜色值通常以以下方式定义: ① 十六进制 - 如："#ff0000"；② RGB - 如："rgb(255,0,0)"；③ 颜色名称 - 如："red"
+		body {background-image:url('paper.gif');}
+	默认情况下 background-image 属性会在页面的水平或者垂直方向平铺。指定平铺方向：
+		body{
+			background-image:url('gradient2.png');
+			background-repeat:repeat-x/repeat-y/no-repeat;
+		}
+	使用background-position 属性改变图像在背景中的位置:
+		body{
+			background-image:url('img_tree.png');
+			background-repeat:no-repeat;
+			background-position:right top;
+		}
+	固定/随页面滚动背景图片位置：(inherit 指定background-attachment的设置应该从父元素继承)
+		body{
+			background-image:url('smiley.gif');
+			background-repeat:no-repeat;
+			background-attachment:fixed/scroll;
+		}
+	使用简写属性 "background"代替上面的属性：
+		body {background:#ffffff url('img_tree.png') no-repeat right top;}
+	当使用简写属性时，属性值需要按以下顺序书写:background-color、background-image、background-repeat、background-attachment、background-position
+以上属性无需全部使用，可以按照页面的实际需要使用。
+	浅墨蓝色：#5d9ab2		浅亮蓝色：#d0f0f6
+	
+	CSS文本样式：
+	设置颜色：
+		<style>
+			body {color:red;} /*body及子元素内的文本的文本颜色*/
+			h1 {color:#00ff00;} /*将覆盖body中设置的文本颜色*/
+			p.ex {color:rgb(0,0,255);}
+		</style>
+	设置文本的水平对齐方式：
+		<style>
+			h1 {text-align:center;}
+			p.date {text-align:right;}
+			p.main {text-align:justify;}
+		</style>
+	text-align设置为"justify"，每一行被展开为宽度相等，左，右外边距是对齐（如杂志和报纸）。
+	设置或删除文本的装饰：(不建议强调指出不是链接的文本(使用underline装饰文本)，因为这常常混淆用户)
+		<style>
+			h1 {text-decoration:overline;}
+			h2 {text-decoration:line-through;}
+			h3 {text-decoration:underline;}
+			h4 {text-decoration:none}
+		</style>
+	指定文本的第一行的缩进：
+		p {text-indent:50px;}
+	增加或减少字符之间的空间：(字母之间和中文的字之间的距离)
+		<style>
+			h1 {letter-spacing:10px;}
+			h2 {letter-spacing:-3px;}
+		</style>
+	指定段落内行之间的空间：
+		<style>
+			p.small {line-height:70%;}
+			p.big {line-height:200%;}
+		</style>
+	改变元素的文本方向：
+		div.ex1 {direction:rtl;} /*文本的字符将从右向左显示，无文本对其样式设置时会从页面右侧开始(符号如*等不会遵循这个规则，
+所以可能出现奇怪的文本展示)*/
+		<div class="ex1">一些文本。从右到左的书写方向菜鸟1*。</div>
+		页面显示					。*一些文本。从右到左的书写方向菜鸟1
+		这里如果进行复制，复制的文本还是原来的文本顺序。
+	文本镜像显示：
+		div{
+			direction:rtl;
+			unicode-bidi:bidi-override;
+		}
+		文本：Override text direction.		显示：.noitcerid txet edirrevO
+	改变单词之间的空白空间：
+		p{word-spacing:30px;}
+	禁用一个元素内的文字环绕，默认浏览器会忽略(不渲染)文本间的空白，使用pre可以显示空白，使用nowrap去掉自动换行，
+pre-wrap用于保留空白符序列，但是正常地进行换行。pre-line会合并空白符序列为一个空白符，同时保留换行符。
+		p{white-space:nowrap;}
+	设置一个元素的垂直对齐方式:
+		img.top {vertical-align:text-top/top/middle/bottom/text-bottom/-12px/-120%;}
+		top表示 把元素的顶端与行中最高元素的顶端对齐；text-top表示把元素的顶端与父元素字体的顶端对齐
+		bottom表示 把元素的底端与行中最低的元素的顶端对齐。
+	设置文本阴影效果：
+		h1 {text-shadow:2px 2px #FF0000;} /*先左右后上下*/
+	设置单词大小写转换：
+		<style>
+			p.uppercase {text-transform:uppercase;}
+			p.lowercase {text-transform:lowercase;}
+			p.capitalize {text-transform:capitalize;} /*单词首字母大写*/
+		</style>
+	
+	CSS字体：
+	几种字体类型：
+		Serif：衬线体，衬线(serif)指的是笔画边缘的装饰部分。网页设计中常用的衬线体有Times New Roman和Georgia。中文中的宋体也是衬线体。
+		Sans-serif：无衬线体，网页设计中常用的非衬线体有Arial、Verdana、Tahoma、Helivetica、Calibri等。
+		Monospace：等宽字体，事实上只针对西文字体，Monospace字体中i和m具有相同宽带。
+		此外还有手写体、符号体等非主流字体。
+	font-family 属性设置文本的字体系列：
+		p{font-family:"Times New Roman", Times, serif;}
+		如果浏览器不支持第一种字体，他将尝试下一种字体
+	font-style设置字体样式：
+		<style>
+			p.normal {font-style:normal;}
+			p.italic {font-style:italic;} /*以斜体字显示的文字*/
+			p.oblique {font-style:oblique;} /*文字向一边倾斜（和斜体非常类似，但不太支持）*/
+		</style>
+	font-size 属性设置文本的大小:字体大小的值可以是绝对或相对的大小。如果不指定一个字体的大小，默认大小和普通文本段落一样，是16像素（16px=1em）。
+		h1 {font-size:40px;} /*使用像素*/ 
+		h1 {font-size:2.5em;} /* 使用em：2.5em*16=40px */ 
+		<style> /*使用这种设置可以保证所有浏览器显示的字体大小一样*/
+			body {font-size:100%;}
+			h1 {font-size:2.5em;}
+			h2 {font-size:1.875em;}
+			p {font-size:0.875em;}
+		</style>
+	font-weight 设置字体的加粗：
+		p.light {font-weight:lighter/bold/900;}
+	font-variant 显示小型大写字母的字体:所有小写字母转换为大写，单词首字母将放大显示
+		p.small{font-variant:small-caps/normal;}
+	使用font属性代替上面的属性：(font-size和font-family的值是必需的)
+		p{font:italic bold 12px/30px Georgia,serif;}
+		
+	CSS链接样式
+	链接的样式，可以用任何CSS属性（如颜色，字体，背景等）
+	四个链接状态：a:link - 正常，未访问过的链接; a:visited - 用户已访问过的链接; a:hover - 当用户鼠标放在链接上时; a:active - 链接被点击的那一刻
+		<style>
+			a:link {color:#000000;}      /* 未访问链接*/
+			a:visited {color:#00FF00;}  /* 已访问链接 */
+			a:hover {color:#FF00FF;}  /* 鼠标移动到链接上 */
+			a:active {color:#0000FF;}  /* 鼠标点击时 */
+		</style>
+	注：a:hover 必须跟在 a:link 和 a:visited后面,a:active 必须跟在 a:hover后面
 
 
 
