@@ -249,3 +249,95 @@ slt和beq(实际是bne，这里为了方便使用了beq)两条指令: slt $at, $
 ROM只能读取的原因。
 	无关项：如果一部分输入已经确定了输出值，剩下的输入项就成了无关项，无关项可以用于优化逻辑设计。
 	逻辑单元阵列：简单地重复逻辑单元就可以实现某些功能，例如32位输入选择器使用32个一位输入选择器来实现。
+	
+	硬件描述语言Verilog:
+	Verilog和VHDL是两种主流的硬件描述语言，Verilog语言风格类似于C语言，它可以定义数字系统的行为功能和组成
+结构。硬件合成工具可以根据Verilog程序描述生成逻辑电路设计图。
+	Verilog的两种基本数据类型：
+		wire：表示组合信号，比如一个输入；
+		reg：表示一个变量（一个存储硬件，比如寄存器）。
+	声明一个32位的存储硬件：reg[31:0] X; 声明一个32位的输入信号：wire[31:0] Y
+	声明16个32位的存储硬件：reg[31:0] regs[0:15]
+	常量的表示：4'b0100	表示4位的值为4的二进制常数
+				-8'h4 表示值为-4的8位双补码常数
+				|16|2'b01|| 表示创建32位的值，其模式是0101...01
+				|A[31:16],B[15:0]| 表示创建32位的值，高16位是A的高16位，低16位是B的低16位
+	Verilog提供类似C的运算符：+、-、*、/、&、|、~、==、!=、>、<、>>、<<、&A(对A的所有位进行&运算)
+	Verilog程序由一组模块组成，模块可以表示一个简单的逻辑门电路，也可以是一个ALU逻辑单元，甚至是整个系统。
+模块需要声明它的输入和输出，模块体包括：
+		初始化语句，初始化reg变量；连续的赋值语句，仅用于定义组合逻辑；always指令；其它模块实例。
+	一个半加器的Verilog描述：
+		module half_adder (A,B,Sum,Carry);
+			input A,B;
+			output Sum,Carry;
+			assign Sum=A^B; //异或
+			assign Carry=A&B;
+		endmodule
+	
+	1位ALU：
+		进位输入(CarryIn)  操作数(0、1、2)
+				  |			|
+		a-->|-----------------|
+			|	  &/|/+	      |--->和(Sum)
+		b-->|_________________|
+				  |
+				进位输出(CarryOut)							   _ _______   _   _______   _ _
+	布尔表达式：CarryOut=(b.CarryIn)+(a.CarryIn)+(a.b)	Sum=(a.b.CarryIn)+(a.b.CarryIn)+(a.b.CarryIn)+(a.b.CarryIn)
+	将32个1位ALU串起来就可以得到一个32位行波进位加法器。
+	为上面的1位ALU添加一个Binvert输入选择器对输入b取反，同时设置进入输入初试值为1就可以实现减法，这也是使用2进制补码
+表示法的一个原因。
+	实现或非：a或b后再取非		_____   _ _
+		德.摩根定律：			(a+b) = a.b
+		根据上面的德摩根定律，只需要再引入一个Ainvert选择器对a取反就可以实现或非操作了。
+	实现小于置位(slt)指令：
+		引入一个less输入，1~31位的ALU的less输入都为0，第0位的ALU的less输入第31位的ALU的运算结果的符号位，这样如果
+a<b,a-b<0,slt输出就是1（a-b的结果符号位为1）
+	因为第0位的进位输入只在做减法时需要设置为1，而Binvert也只在做减法时设置为1，所以这个两个输入可以合并为一个。
+这样就可以使用一个4位的控制线来输入控制 |\信号：第0位控制&/|，第1位控制+，第1位和第2位控制-，第3位或非
+		0000	与						| \ALU操作数(控制信号)
+		0001	或						|  \|
+		0010	加						|   \
+		0110	减				   a--->|ALU |
+		0111	小于比较设置			 \	 |-->0
+		1100	或非					  \  |
+										  /  |-->结果									
+										 /   |
+								   b--->|    /-->溢出
+										|   /
+										|  /|
+										| / |
+	上面的32位MIPSALU的Verilog描述：	|/ 进位输出
+		module MIPSALU (ALUctl, A, B, ALUOut, Zero);
+			input [3:0] ALUctl;
+			input [31:0] A,B;
+			output reg [31:0] ALUOut;
+			output Zero;
+			assign Zero=(ALUOut==0);
+			always @(ALUctl, A, B) begin
+				case (ALUctl)
+					0: ALUOut <= A & B;
+					1: ALUOut <= A | B;
+					2: ALUOut <= A + B;
+					6: ALUOut <= A - B;
+					7: ALUOut <= A < B ? 1 : 0;
+					12: ALUOut <= ~(A | B);
+					default: ALUOut <= 0;
+				endcase
+			end
+		endmodule
+	产生上面的4位控制信号的控制器的Verilog描述：
+		module ALUControl (ALUOp, FuncCode, ALUctl);
+			input [1:0] ALUOp;
+			input [5:0] FuncCode;
+			output [3:0] reg ALUctl;
+			always case (FuncCode)
+				32: ALUctl <=2;
+				34: ALUctl <=6;
+				36: ALUctl <=0;
+				37: ALUctl <=1;
+				39: ALUctl <=12;
+				42: ALUctl <=7;
+				default: ALUctl <=15;
+			endcase
+		endmodule
+	
