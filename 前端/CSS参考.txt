@@ -130,7 +130,7 @@ CSS 优先级法则总结：
 			p.big {line-height:200%;}
 		</style>
 	改变元素的文本方向：
-		div.ex1 {direction:rtl;} /*文本的字符将从右向左显示，无文本对其样式设置时会从页面右侧开始(符号如*等不会遵循这个规则，
+		div.ex1 {direction:rtl;} /*文本的字符将从右向左显示，无文本水平对齐样式设置时会从页面右侧开始(符号如*等不会遵循这个规则，
 所以可能出现奇怪的文本展示)*/
 		<div class="ex1">一些文本。从右到左的书写方向菜鸟1*。</div>
 		页面显示					。*一些文本。从右到左的书写方向菜鸟1
@@ -143,13 +143,13 @@ CSS 优先级法则总结：
 		文本：Override text direction.		显示：.noitcerid txet edirrevO
 	改变单词之间的空白空间：
 		p{word-spacing:30px;}
-	禁用一个元素内的文字环绕，默认浏览器会忽略(不渲染)文本间的空白，使用pre可以显示空白，使用nowrap去掉自动换行，
+	禁用一个元素内的文字环绕，浏览器默认会忽略(不渲染)文本间的空白，使用pre可以显示空白，使用nowrap去掉自动换行，
 pre-wrap用于保留空白符序列，但是正常地进行换行。pre-line会合并空白符序列为一个空白符，同时保留换行符。
-		p{white-space:nowrap;}
+		p{white-space:nowrap/pre/pre-wrap/pre-line;}
 	设置一个元素的垂直对齐方式:
 		img.top {vertical-align:text-top/top/middle/bottom/text-bottom/-12px/-120%;}
 		top表示 把元素的顶端与行中最高元素的顶端对齐；text-top表示把元素的顶端与父元素字体的顶端对齐
-		bottom表示 把元素的底端与行中最低的元素的顶端对齐。
+		bottom表示 把元素的底端与行中最低的元素的底端对齐。
 	设置文本阴影效果：
 		h1 {text-shadow:2px 2px #FF0000;} /*先左右后上下*/
 	设置单词大小写转换：
@@ -200,6 +200,166 @@ pre-wrap用于保留空白符序列，但是正常地进行换行。pre-line会�
 			a:active {color:#0000FF;}  /* 鼠标点击时 */
 		</style>
 	注：a:hover 必须跟在 a:link 和 a:visited后面,a:active 必须跟在 a:hover后面
+
+	CSS列表属性
+	对于无序列表，浏览器默认添加标记是实心圆，有序列表默认标记是数字1、2、3...
+		ul.a {list-style-type:circle/square/upper-roman/lower-alpha/cjk-ideographic;} /*circle:空心圆; cjk-ideographic:一、二...*/
+		ul.b {list-style-image:url('sqpurple.gif');} /*使用图片作为列表标记，这在所有浏览器中显示并不相同，IE和Opera显示图像标记比火狐，
+Chrome和Safari更高一点点，可以使用下来的样式解决这个问题：*/
+			ul.b{
+				list-style-type:none;
+				padding:0px;
+				margin:0px;
+			}
+			ul.b li{
+				background-image:url(sqpurple.gif);
+				background-repeat:no-repeat;
+				background-position:0px 5px; 
+				padding-left:14px;
+			}
+	简写模式：ul.c {list-style:circle url("sqpurple.gif");}	
+	设置标记的位置：ul {list-style-position: inside/outside}
+	
+	CSS表格样式属性：
+	为表格添加边框：(这里需要写出table的子元素，说明table的边框不会被子元素继承)
+		table,th,td {border:1px solid black;}
+	设置表格的边框被折叠成一个单一的边框或隔开：(这里只需要在table上设置border-collapse属性)
+		table {border-collapse:collapse;}
+		注： 如果没有指定 !DOCTYPE border-collapse 属性在 IE8 及更早 IE 版本中是不起作用的。
+	设置表格宽带、行高、文本对齐：
+		table {width:100%;text-align:right;}
+		tr {height:50px;}
+		th {text-align:center;}
+		td {vertical-align:bottom;}
+	设置表格内部元素的边距等：
+		th,td {padding:15px;}
+	表格名称<caption>的位置：
+		caption {caption-side:bottom;}
+	
+	CSS 盒子模型
+	盒子模型将元素及周围空间分为：边距，边框，填充，和实际内容 四个部分
+	指定一个CSS元素的宽度和高度属性时，只是设置了内容区域的宽度和高度。
+	设置盒子模型四个部分的像素：盒子模型总宽带为450px.
+		div {
+			background-color: lightgrey;
+			width: 300px;
+			border: 25px solid green;
+			padding: 25px;
+			margin: 25px;
+		}
+	注： IE5和IE6的呈现不遵循这个模式，不过现在不用再考虑这样古老的浏览器了。
+	
+	CSS 边框属性
+	设置边框的样式：
+		p {
+			border-style:none/dotted/dashed/solid/double/inset;/* inset: 嵌入边框*/
+			border-width:5px;
+			border-color:red;
+		} 
+	单独设置各边：
+		p{
+			border-top-style:dotted;
+			border-right-style:solid;
+			border-bottom-style:dotted;
+			border-left-style:solid;
+		}
+	使用border-style设置各个边：(border-width、border-color也可以这样用)
+		p{ border-style: dotted solid dashed double; } /*这里可以设置4个值，按顺序分别是上右下左，如果设置3个值，顺序就是上(右左)下，
+也可以是2个值和一个值*/
+	使用border实现简写：(border-bottom、border-left、border-right、border-top也可以这样用)
+		p {border:5px solid red;}
+	
+	CSS 轮廓：
+	轮廓（outline）是绘制于元素周围的一条线，位于边框边缘的外围，可起到突出元素的作用。CSS outline 属性规定元素轮廓的样式、颜色和宽度。
+		p{
+			border:3px solid red;
+			outline:green solid thick;
+		}
+	也可以单独使用outline-color、outline-style、outline-width属性
+	outline不会增加元素的width和height，但是会占据元素边框外的空间
+	
+	外边距 margin：
+		p {	margin-top:100px; margin-bottom:2cm; margin-right:50px; margin-left:50px;} /*这里可以使用厘米cm作为单位*/
+	简写：p {margin: 100px, 50px}
+	使用%： p {margin: 5%} /*这里取到的是body的width的5%*/
+	
+	填充 padding：(也称为 内边距)
+		p {	padding-top:100px; padding-bottom:2cm; padding-right:50px; padding-left:50px;} /*这里可以使用厘米cm作为单位*/
+	简写：p {padding: 100px, 50px}
+	使用%： p {padding: 5%} /*这里取到的是body的width的5%*/
+	
+	分组选择器，每个选择器用逗号分隔：
+		h1,h2,p {color:green;}
+	嵌套选择器，包括选择器指向的元素内部元素的选择器的复合选择器 和 具有class、id或其他属性的元素复合选择器
+		.marked p{ }: 为所有 class="marked" 元素内的 p 元素指定一个样式。
+		p.marked{ }: 为所有 class="marked" 的 p 元素指定一个样式。
+	
+	CSS 尺寸 (Dimension)
+	设置元素的宽和高可以使用元素的width和height属性，但是如果使用了样式属性：height:auto; 设置的元素的height属性就不会生效了。
+	设置元素高：img.big{height:120px/50%;} /* 这里的50%是指body的height的50% */
+	设置最大高度：p {max-height:50px; background-color:yellow;} /* 如果最大高度不能容纳内容，内容将溢出到下方的元素，但是不会挤压下方
+的元素，而是出现在下方元素的背景中 */
+	设置最小高度：p {min-height:50px; background-color:yellow;}
+	行高：line-height:50%; 这里的50%指的是当前元素的字体的大小的50%，行高的增加或减少对应的元素的content部分的高度，与填充padding无关。
+	
+	display属性设置一个元素应如何显示，visibility属性指定一个元素应可见还是隐藏。
+	隐藏一个元素可以通过把display属性设置为"none"，或把visibility属性设置为"hidden"。但是请注意，这两种方法会产生不同的结果。
+visibility:hidden可以隐藏某个元素，但隐藏的元素仍需占用与未隐藏之前一样的空间。也就是说，该元素虽然被隐藏了，但仍然会影响布局。
+	display:none可以隐藏某个元素，且隐藏的元素不会占用任何空间。浏览器中查看页面源码还是可以看到这个元素的
+	块元素是一个元素，占用了全部宽度，在前后都是换行符。块元素的例子：<p>、<div>
+	内联元素只需要必要的宽度，不强制换行。<span>、<a> 内联元素无法修改width、height(修改不会产生效果)
+	可以更改内联元素和块元素，反之亦然，可以使页面看起来是以一种特定的方式组合，并仍然遵循web标准。
+	列表项水平显示：li {display:inline/inline-block;}
+		inline-block -- 显示为内联块元素，表现为同行显示并可修改宽高内外边距等属性
+	span作为块级元素：span {display:block;}
+	visibility 属性，通常其值被设置成 visible 或 hidden。另外一个不常用的值是collapse，Chrome下普通元素的表现和display:none一样，
+table相关元素的表现比较独特，元素在页面上隐藏不显示，不占据table内空间（不影响表格布局），但也不像display:none那样无法使用调试
+工具查看其盒子模型。新版本Firefox和Chrome表现类似。
+		tr.collapse {visibility:collapse;}
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
