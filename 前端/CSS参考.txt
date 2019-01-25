@@ -226,7 +226,7 @@ Chrome和Safari更高一点点，可以使用下来的样式解决这个问题�
 	设置表格的边框被折叠成一个单一的边框或隔开：(这里只需要在table上设置border-collapse属性)
 		table {border-collapse:collapse;}
 		注： 如果没有指定 !DOCTYPE border-collapse 属性在 IE8 及更早 IE 版本中是不起作用的。
-	设置表格宽带、行高、文本对齐：
+	设置表格宽、行高、文本对齐：
 		table {width:100%;text-align:right;}
 		tr {height:50px;}
 		th {text-align:center;}
@@ -300,7 +300,7 @@ Chrome和Safari更高一点点，可以使用下来的样式解决这个问题�
 	设置最大高度：p {max-height:50px; background-color:yellow;} /* 如果最大高度不能容纳内容，内容将溢出到下方的元素，但是不会挤压下方
 的元素，而是出现在下方元素的背景中 */
 	设置最小高度：p {min-height:50px; background-color:yellow;}
-	行高：line-height:50%; 这里的50%指的是当前元素的字体的大小的50%，行高的增加或减少对应的元素的content部分的高度，与填充padding无关。
+	行高：line-height:50%; 这里的50%指的是当前元素的字体的大小的50%，行高的增加或减少对应元素的content部分的高度，与填充padding无关。
 	
 	display属性设置一个元素应如何显示，visibility属性指定一个元素应可见还是隐藏。
 	隐藏一个元素可以通过把display属性设置为"none"，或把visibility属性设置为"hidden"。但是请注意，这两种方法会产生不同的结果。
@@ -317,14 +317,75 @@ table相关元素的表现比较独特，元素在页面上隐藏不显示，不
 工具查看其盒子模型。新版本Firefox和Chrome表现类似。
 		tr.collapse {visibility:collapse;}
 	
-
-
-
-
-
-
-
-
+	CSS定位
+	CSS使用position 属性指定元素的定位类型。position 属性有五个值：static、relative、fixed、absolute、sticky
+	HTML元素默认使用static定位，即没有定位，遵循正常的文档流。
+	使用fixed 定位：元素的位置相对于浏览器窗口是固定位置，即使窗口是滚动的它也不会移动
+		p.pos_fixed{
+			position:fixed;
+			top:30px;
+			right:5px;
+		}
+		Fixed 定位在 IE7 和 IE8 下需要描述 !DOCTYPE 才能支持。Fixed定位使元素的位置与文档流无关，因此不占据空间。所以Fixed定位的元素
+可以和其他元素重叠。
+	使用relative 定位：相对元素在文档流中的正常位置定位
+		h2.rel_pos{
+			position:relative;
+			left:-20px;
+			top:-50px;
+		}
+	relative定位移动元素后，元素原来占用的空间还是会保留给该元素，即后面的元素不会流到这个位置。
+	元素移动后的位置不在文档流内部，所以可以和其他元素重合。
+	使用absolute 定位：绝对定位的元素的位置相对于最近的已定位父元素，如果元素没有已定位的父元素，那么它的位置相对于<html>
+		h2{
+			position:absolute;
+			left:100px;
+			top:150px;
+		}
+		absolute 定位使元素的位置与文档流无关，因此不占据空间。所以absolute 定位的元素可以和其他元素重叠。absolute 定位的元素的
+正常位置将会被后面的元素占据。
+		使用relative定位的元素作为使用absolute定位的元素的父元素时，父元素不感知absolute定位子元素的定位信息，也就是说盒子模型中
+父元素的数据不包含该子元素。如果绝对定位父元素的子元素全是相对定位，那么父元素的height就为0，这是后面的元素就会流到父元素的位置。
+		绝对定位的元素可以在css中使用clip属性裁剪元素的形状：
+		div{
+			width:100px;
+			height:100px;
+			position:absolute;
+			clip:rect(0px,50px,50px,0px); /**rect(...)是唯一合法语法*/
+			background-color:red;
+		}
+	使用sticky 定位：粘性定位的元素是依赖于用户的滚动，在 position:relative 与 position:fixed 定位之间切换。它的行为就像 
+position:relative; 而当页面滚动超出目标区域时，它的表现就像 position:fixed;，它会固定在目标位置。
+		div.sticky {
+			position: -webkit-sticky; /* Safari */
+			position: sticky;
+			top: 5px; /* 阈值为距窗口top边5px*/
+			background-color: green;
+			border: 2px solid #4CAF50;
+		}
+		可以理解成：sticky定位是一种fixed定位的变形，它的固定定位坐标和元素的当前坐标一致，但是它的固定定位坐标有一个阈值，超过这个
+值就把定位坐标固定为这个阈值。
+		Internet Explorer, Edge 15 及更早 IE 版本不支持 sticky 定位。 Safari 需要使用 -webkit- prefix。
+	使用z-index:
+		img{
+			position:absolute;
+			left:0px;
+			top:0px;
+			z-index:-1;
+		}
+		这里img元素使用绝对定位流到了文档的开始，正常情况下它会挡住文档开始部分的内容，使用z-index:-1;将它移到了该位置内容的后一层。
+	
+	使用overflow属性创建一个滚动条，适应一个元素的内容超出指定的区域的容量。
+		div.ex1 {
+			background-color: lightblue;
+			width: 110px;
+			hei?ght: 110px;
+			overflow: scroll/hidden/auto/visible;
+		}
+		使用scroll总是显示滚动条框；hidden不显示滚动条框，超出的内容将被隐藏；auto只有内容超出区域才显示滚动条；visible不显示滚动条框，
+超出部分将显示，但不会挤占后面的元素位置。
+	设置光标样式：
+<span style="cursor:auto/crosshair/default/help/move/n-resize/e-resize/ne-resize/nw-resize/pointer/progress/text/wait">xxxxxxx</span><br>
 
 
 
