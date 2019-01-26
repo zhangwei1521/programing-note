@@ -386,21 +386,169 @@ position:relative; 而当页面滚动超出目标区域时，它的表现就像 
 超出部分将显示，但不会挤占后面的元素位置。
 	设置光标样式：
 <span style="cursor:auto/crosshair/default/help/move/n-resize/e-resize/ne-resize/nw-resize/pointer/progress/text/wait">xxxxxxx</span><br>
+	
+	CSS浮动
+	浮动会使元素向左或向右移动，其周围的元素也会重新排列。
+		img{float:right/left/none/inherit;}
+	浮动只能是水平方向上向左或向右，当浮动元素的边缘碰到容器的边缘或其他浮动元素的外边缘时就停止浮动。
+	如果浮动元素的前面的元素是行级元素，前面的行级元素依然会被浮动元素取代位置，但是块级元素因为会面自带一个换行符，所以不会受后面的
+浮动元素影响。
+	浮动元素后面的元素总是会随着浮动元素的移动调整位置。浮动非常灵活，多个元素浮动时，其中的某个元素无法占据它应该流到的位置时，后面
+合适的元素(可以不是浮动元素)会流到这个位置。
+	使用clear 属性指定元素两侧不能出现浮动元素。这个属性对行级元素没有作用。
+		p {clear:both/left/right;}
+	
+	元素的水平 & 垂直对齐
+	设置元素水平居中对齐：(不适用于行级元素，因为行级元素设置width无效，当然可以通过设置display:block;改变行级元素CSS行为为块级元素)
+		p {
+			margin: auto;
+			width: 50%; /*设置>=100% 或不设置width将不能实现居中 */
+		}
+		img {
+			display: block;
+			margin: auto; /*图片尺寸合适时不需要设置width*/
+		}
+	虽然绝对定位也可以实现水平对齐，但是绝对定位元素会被从正常流中删除，并且能够交叠元素，所以可能会出现意料之外的情况。
+	注：当使用 position或float 属性时，请始终设置 !DOCTYPE 声明，这是因为IE9之前的IE使用position，float时总是表现很奇怪（会在右侧增加
+17px 的外边距）。
+	还可以使用 float 属性来对齐元素：
+		.right {
+			float: right;
+			width: 300px;
+			border: 3px solid #73AD21;
+			padding: 10px;
+		}
+	如果子元素的高度大于父元素，且子元素设置了浮动，那么子元素将溢出，可以在父元素上添加 overflow: auto; 来解决子元素溢出的问题
+	垂直居中对齐指的其实是元素内的内容的位置，可以使用padding实现：
+		.center {
+			padding: auto;
+			border: 3px solid green;
+			text-align: center;
+		}
+	使用绝对定位，设置top:50%后需要居中的元素其实是从容器高度的50%处开始的，并不是实际的居中，可以使用 transform 属性来设置垂直居中：
+		.center p {
+			margin: 0;
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%); /*第一个50%表示回退居中元素width的50%，后一个50%表示回退居中元素height的50%*/
+		}
+	
+	组合选择器：
+	在 CSS3 中包含了四种组合方式:
+		后代选择器(以空格分隔)		div p {background-color:yellow;}	/*p可以不是div的子元素*/
+		子元素选择器(以大于号分隔） div>p {background-color:yellow;}	/*p是div的子元素*/
+		相邻兄弟选择器（以加号分隔）div+p {background-color:yellow;}	/*p是div的后一个元素，p和div有相同的父元素，p只有一个*/
+		普通兄弟选择器（以破折号分隔） div~p {background-color:yellow;}	/*p是div的同级元素，p和div有相同的父元素，p可以有多个*/
+	
+	CSS伪类用来添加一些选择器的特殊效果。
+	伪类的语法：selector:pseudo-class {property:value;}
+	伪类选择元素基于的是当前元素处于的状态，或者说元素当前所具有的特性，而不是元素的id、class、属性等静态的标志。
+	伪元素是对元素中的特定内容进行修饰，它并不是根据元素的状态来决定样式，而是和存在的元素类似，比如选择指定元素的第一个字母，它
+本身只是基于元素的抽象，并不存在于文档中，所以叫伪元素。
+	链接的不同状态使用的就是伪类，称为 anchor伪类
+		a:hover {color:#FF00FF;} 如果a上设置了id或class，也可以使用id或class选择器：#id1/.class1 : hover {...}
+		a:link
+		a:visited 
+		a:active
+	:first-child 伪元素：选择父元素的第一个子元素，在IE8的之前版本必须声明<!DOCTYPE> ，这样 :first-child 才能生效。
+		p:first-child{color:blue;}			/* 选择器匹配作为任何元素的第一个子元素的 <p> 元素。p必须是父元素的第一个子元素 */
+		p > i:first-child {color:blue;}  	/* 选择器匹配所有<p>元素的第一个 <i> 元素。i元素必须是p元素的第一个子元素 */
+		p:first-child i {color:blue;}   	/* 选择器匹配所有作为父元素的第一个子元素的 <p> 元素中的所有 后代<i> 元素 */
+	
+	:lang 伪类：为不同的语言定义特殊的规则， 仅当 !DOCTYPE 已经声明时 IE8 支持 :lang.
+		<p>Some text <q lang="no">A quote in a paragraph</q> Some text.</p>
+		q:lang(no) {quotes: "~" "~";}
+		页面：Some text ~A quote in a paragraph~ Some text.  /*这里的~是不存在文本中的，无法用鼠标选中*/
+	:checked 伪类：选择所有选中的表单元素
+		input:checked {
+			height: 50px;
+			width: 50px;
+		}
+		form元素内type为radio的input，具有相同的name的input为一组，只能选中其中的一个。
+	:disabled 伪类：选择所有禁用/启用的表单元素
+		input[type="text"]:disabled/enabled {
+			background:#dddddd/#ffff00;
+		}
+	:empty伪类：选择每个没有任何子级的元素（包括文本节点）。
+		p:empty {background:#ff0000;}
+	:first-of-type伪元素：选择特定类型的第一个元素。
+		p:first-of-type {background:#ff0000;} /*所有容器内第一个p元素*/
+		div > p:first-of-type {background:#ff0000;} /*父元素是div的第一个p元素*/
+	:in-range伪类：用于标签的值在指定区间值时显示的样式。
+		<input type="number" min="5" max="10" value="7" />
+		input:in-range {border:2px solid yellow;}
+		注意： :in-range 选择器只作用于能指定区间值的元素，例如 input 元素中的 min 和 max 属性。ie不支持这个伪类
+	:invalid伪类：用于在表单元素中的值是非法时设置指定样式。
+		<input type="email" value="supportEmail" />
+		input:invalid {border:2px solid red;}
+	:valid伪类： 选择在表单元素的值符合指定条件的元素。
+		:valid 选择器只作用于能指定区间值的元素，例如 input 元素中的 min 和 max 属性，及正确的 email 字段, 合法的数字字段等。
+	:last-child伪元素： 选择最后一个子元素
+		p:last-child {background:#ff0000;}	/* 选择所有p元素的最后一个子元素 */
+	:last-of-type伪元素：选择特定类型的最后一个元素。
+		p:last-of-type {background:#ff0000;}	/* 选择所有容器内最后一个p元素 */
+		div > p:last-of-type {background:#ff0000;}	/* 选择父元素是div的最后一个p元素 */
+	:not(selector)伪元素： 匹配每个元素不是指定的元素/选择器
+		:not(p/#id1) {background:#ff0000;}
+	:nth-child(n)伪元素： 匹配父元素中的第 n 个子元素，子元素是选择器中的类型，n的计数与类型无关。
+		p:nth-child(2) {background:#ff0000;} /* 如果p元素前面有一个元素，这里2指的就是第一个p元素*/
+	:nth-last-of-child(n)伪元素： nth-child(n)的倒数版本。
+	:nth-of-type(n)伪元素：类似于nth-child(n)伪元素，不同的是它的n的计数是从选择器中的类型开始的。
+	:nth-last-of-type(n)伪元素： :nth-of-type(n)伪元素的倒数版本
+	:only-of-type伪元素：匹配容器中选择器类型只有一个同级元素的元素。
+		<div>
+			<p>This is a paragraph.</p>
+			<article>
+				<p>This is a paragraph.</p>
+			</article>
+		</div>
+		p:only-of-type {background:#ff0000;} /*两个p都符合条件*/
+	:only-child伪元素：匹配属于父元素中唯一子元素的元素。
+		p:only-child {background:#ff0000;}
+	:optional伪类：在表单元素是可选项时设置指定样式。
+		input:optional {background-color: yellow;}
+		表单元素中如果没有特别设置 required 属性即为 optional 属性。optional 选择器只适用于表单元素: input, select 和 textarea。
+	:required伪类：选择有"required"属性指定的元素
+	:out-of-range伪类：用于标签的值在指定区间之外时显示的样式。
+		input:out-of-range {border:2px solid red;}
+		:out-of-range 选择器只作用于能指定区间之外值的元素，例如 input 元素中的 min 和 max 属性。
+	:read-only伪类： 用于选取设置了 "readonly" 属性的元素。
+		input:read-only {background-color: yellow;}
+		目前，大多数浏览器, :read-only 选择器适用于 input 和 textarea 元素，如果其他元素设置 "readonly" 属性这个伪类不能起作用。
+	:read-write伪类：选择没有只读属性的元素
+	:root伪元素：匹配文档的根元素。HTML中就是<html>
+	:target伪类：选择当前活动的target元素。
+		<p><a href="#news1">Jump to New content 1</a></p>
+		<p><a href="#news2">Jump to New content 2</a></p>
 
+		<p>Click on the links above and the :target selector highlight the current active HTML anchor.</p>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+		<p id="news1"><b>New content 1...</b></p>
+		<p id="news2"><b>New content 2...</b></p>
+		
+		:target {
+			border: 2px solid #D4D4D4;
+			background-color: #e5eecc;
+		}
+		这种链接到某个元素的链接称为锚，使用目标元素的id选择器作为href的值。
+	:focus伪类：选择具有焦点的元素。 :focus选择器接受键盘事件或其他用户输入的元素。
+		input:focus{background-color:yellow;}
+		:focus 选择器选择器在IE8中必须声明<!DOCTYPE> .
+	:first-letter伪元素：用来指定元素第一个字母的样式。注: "first-letter" 选择器仅适用于在块级元素中.
+		p:first-letter { 
+			font-size:200%;
+			color:#8A2BE2;
+		}
+	:first-line伪元素：用来指定选择器第一行的样式。
+		p:first-line { background-color:yellow;}
+	:before伪元素： 用于向选定的元素前插入内容。使用content 属性来指定要插入的内容。
+		<p>My name is Donald</p>
+		<p>I live in Ducksburg</p>
+		p:before{content:"Read this -";}
+		添加的内容不能使用鼠标选中，before在IE8中运行，必须声明 <!DOCTYPE> 。
+	:after伪元素： 用于向选定的元素之后插入内容。使用content 属性来指定要插入的内容。
+		p:after{content:"- 注意我";}
 
 
 
