@@ -549,7 +549,22 @@ position:relative; 而当页面滚动超出目标区域时，它的表现就像 
 		添加的内容不能使用鼠标选中，before在IE8中运行，必须声明 <!DOCTYPE> 。
 	:after伪元素： 用于向选定的元素之后插入内容。使用content 属性来指定要插入的内容。
 		p:after{content:"- 注意我";}
-
+	
+	对导航栏应用CSS样式：
+	使用无序列表创建导航栏：
+		<ul>
+		  <li><a href="#home">主页</a></li>
+		  <li><a href="#news">新闻</a></li>
+		  <li><a href="#contact">联系</a></li>
+		  <li><a href="#about">关于</a></li>
+		</ul>
+	删除边距和填充：
+		ul {
+			list-style-type: none;
+			margin: 0;
+			padding: 0;
+		}
+	
 
 
 
