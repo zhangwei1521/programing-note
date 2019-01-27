@@ -1,0 +1,171 @@
+										CSS实例
+对导航栏应用CSS样式：
+	使用无序列表创建导航栏：
+		<ul>
+		  <li><a href="#home">主页</a></li>
+		  <li><a href="#news">新闻</a></li>
+		  <li><a href="#contact">联系</a></li>
+		  <li><a href="#about">关于</a></li>
+		</ul>
+	删除边距和填充：
+		ul {
+			list-style-type: none;
+			margin: 0;
+			padding: 0;
+			width: 200px;
+			background-color: #f1f1f1;
+		}
+		
+	设置垂直导航条：
+		li a {
+			display: block;
+			color: #000;
+			padding: 8px 16px;
+			text-decoration: none;
+		}
+	添加悬浮效果：
+		li a:hover {
+			background-color: #555;
+			color: white;
+		}
+	添加默认激活项：
+		<li><a class="active" href="#home">主页</a></li>
+		li a.active {
+			background-color: #4CAF50;
+			color: white;
+		}
+		li a:hover:not(.active) {
+			background-color: #555;
+			color: white;
+		}
+	添加边框：
+		ul {
+			...
+			border: 1px solid #555;
+		}
+		li {
+			text-align: center;
+			border-bottom: 1px solid #555;
+		}
+		li:last-child {
+			border-bottom: none;
+		}
+	固定导航条到左侧：
+		ul {
+			...
+			position: fixed;
+			width: 25%;
+			height: 100%;
+			overflow: auto;
+		}
+	右侧内容区域：
+		.content {
+			...
+			margin-left:25%;
+			padding:1px 16px;
+			height:1000px;
+		}
+	
+	设置水平导航栏
+	使用内联(inline): 默认情况下，<li>元素是块元素。所以需要删除每个列表项之前和之后的换行符，以显示一行。
+		li {display: inline;}
+	使用浮动: 
+		li {float: left;}
+		li a {
+			display: block;
+			color: white;
+			text-align: center;
+			padding: 14px 16px;
+			text-decoration: none;
+		}
+	固定导航条到头部：
+		ul {
+			position: fixed;
+			top: 0;
+			width: 100%;
+		}
+	
+	
+设置悬停下拉效果：
+	<div class="dropdown">
+	  <button class="dropbtn">下拉菜单</button>
+	  <div class="dropdown-content">
+		<a href="http://www.runoob.com">菜鸟教程 1</a>
+		<a href="http://www.runoob.com">菜鸟教程 2</a>
+		<a href="http://www.runoob.com">菜鸟教程 3</a>
+	  </div>
+	</div>
+	
+	<style>
+		.dropbtn {
+			background-color: #4CAF50;
+			color: white;
+			padding: 16px;
+			font-size: 16px;
+			border: none;
+			cursor: pointer;
+		}
+
+		.dropdown {
+			position: relative;
+			display: inline-block;
+		}
+
+		.dropdown-content {
+			display: none;
+			position: absolute;
+			background-color: #f9f9f9;
+			min-width: 160px;
+			box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+		}
+
+		.dropdown-content a {
+			color: black;
+			padding: 12px 16px;
+			text-decoration: none;
+			display: block;
+		}
+
+		.dropdown-content a:hover {background-color: #f1f1f1}
+
+		.dropdown:hover .dropdown-content {
+			display: block;
+		}
+
+		.dropdown:hover .dropbtn {
+			background-color: #3e8e41;
+		}
+	</style>
+
+设置图片悬停放大：
+	<div class="dropdown">
+	  <img src="http://www.runoob.com/wp-content/uploads/2015/09/banner.jpg" alt="Trolltunga Norway" width="100" height="50">
+	  <div class="dropdown-content">
+		<img src="http://www.runoob.com/wp-content/uploads/2015/09/banner.jpg" alt="Trolltunga Norway" width="400" height="200">
+		<div class="desc">学的不仅是技术，更是梦想！</div>
+	  </div>
+	</div>
+	
+	<style>
+		.dropdown {
+			position: relative;
+			display: inline-block;
+		}
+
+		.dropdown-content {
+			display: none;
+			position: absolute;
+			background-color: #f9f9f9;
+			min-width: 160px;
+			box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+		}
+
+		.dropdown:hover .dropdown-content {
+			display: block;
+		}
+
+		.desc {
+			padding: 15px;
+			text-align: center;
+		}
+	</style>
