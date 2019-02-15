@@ -59,7 +59,8 @@
 选择器具体权重：
 内联样式表的权值最高 1000； ID 选择器的权值为 100； Class 类选择器的权值为 10； HTML 标签选择器的权值为 1
 	当 !important 规则被应用在一个样式声明中时,该样式声明会覆盖CSS中任何其他的声明, 无论它处在声明列表中的哪里,使用 !important 不是一个好习惯，
-因为它改变了样式表本来的级联规则，从而使其难以调试。只在需要覆盖全站或外部 css（例如引用的 ExtJs 或者 YUI ）的特定页面中使用 !important
+因为它改变了样式表本来的级联规则，从而使其难以调试。只在需要覆盖全站或外部 css（例如引用的 ExtJs 或者 YUI ）的特定页面中使用 !important:
+		p {color:red !important;}
 
 CSS 优先级法则总结：
  A 选择器都有一个权值，权值越大越优先；
@@ -391,7 +392,7 @@ position:relative; 而当页面滚动超出目标区域时，它的表现就像 
 	浮动会使元素向左或向右移动，其周围的元素也会重新排列。
 		img{float:right/left/none/inherit;}
 	浮动只能是水平方向上向左或向右，当浮动元素的边缘碰到容器的边缘或其他浮动元素的外边缘时就停止浮动。
-	如果浮动元素的前面的元素是行级元素，前面的行级元素依然会被浮动元素取代位置，但是块级元素因为会面自带一个换行符，所以不会受后面的
+	如果浮动元素的前面的元素是行级元素，前面的行级元素依然会被浮动元素取代位置，但是块级元素因为后面自带一个换行符，所以不会受后面的
 浮动元素影响。
 	浮动元素后面的元素总是会随着浮动元素的移动调整位置。浮动非常灵活，多个元素浮动时，其中的某个元素无法占据它应该流到的位置时，后面
 合适的元素(可以不是浮动元素)会流到这个位置。
@@ -455,7 +456,9 @@ position:relative; 而当页面滚动超出目标区域时，它的表现就像 
 		p:first-child{color:blue;}			/* 选择器匹配作为任何元素的第一个子元素的 <p> 元素。p必须是父元素的第一个子元素 */
 		p > i:first-child {color:blue;}  	/* 选择器匹配所有<p>元素的第一个 <i> 元素。i元素必须是p元素的第一个子元素 */
 		p:first-child i {color:blue;}   	/* 选择器匹配所有作为父元素的第一个子元素的 <p> 元素中的所有 后代<i> 元素 */
-	
+	:first-of-type伪元素：选择特定类型的第一个元素。
+		p:first-of-type {background:#ff0000;} /*所有容器内第一个p元素*/
+		div > p:first-of-type {background:#ff0000;} /*所有div元素的第一个p元素*/
 	:lang 伪类：为不同的语言定义特殊的规则， 仅当 !DOCTYPE 已经声明时 IE8 支持 :lang.
 		<p>Some text <q lang="no">A quote in a paragraph</q> Some text.</p>
 		q:lang(no) {quotes: "~" "~";}
@@ -472,9 +475,6 @@ position:relative; 而当页面滚动超出目标区域时，它的表现就像 
 		}
 	:empty伪类：选择每个没有任何子级的元素（包括文本节点）。
 		p:empty {background:#ff0000;}
-	:first-of-type伪元素：选择特定类型的第一个元素。
-		p:first-of-type {background:#ff0000;} /*所有容器内第一个p元素*/
-		div > p:first-of-type {background:#ff0000;} /*父元素是div的第一个p元素*/
 	:in-range伪类：用于标签的值在指定区间值时显示的样式。
 		<input type="number" min="5" max="10" value="7" />
 		input:in-range {border:2px solid yellow;}
@@ -485,14 +485,15 @@ position:relative; 而当页面滚动超出目标区域时，它的表现就像 
 	:valid伪类： 选择在表单元素的值符合指定条件的元素。
 		:valid 选择器只作用于能指定区间值的元素，例如 input 元素中的 min 和 max 属性，及正确的 email 字段, 合法的数字字段等。
 	:last-child伪元素： 选择最后一个子元素
-		p:last-child {background:#ff0000;}	/* 选择所有p元素的最后一个子元素 */
+		p:last-child {background:#ff0000;}	/* 选择作为任何元素的最后一个子元素的p元素 */
 	:last-of-type伪元素：选择特定类型的最后一个元素。
 		p:last-of-type {background:#ff0000;}	/* 选择所有容器内最后一个p元素 */
 		div > p:last-of-type {background:#ff0000;}	/* 选择父元素是div的最后一个p元素 */
+		last-child选择的是 作为父元素的最后一个子元素的x元素，而last-of-type选择的是父元素的最后一个x子元素
 	:not(selector)伪元素： 匹配每个元素不是指定的元素/选择器
 		:not(p/#id1) {background:#ff0000;}
 	:nth-child(n)伪元素： 匹配父元素中的第 n 个子元素，子元素是选择器中的类型，n的计数与类型无关。
-		p:nth-child(2) {background:#ff0000;} /* 如果p元素前面有一个元素，这里2指的就是第一个p元素*/
+		p:nth-child(2) {background:#ff0000;} /* 如果p元素前面有一个非p元素，这里2指的就是第一个p元素*/
 	:nth-last-of-child(n)伪元素： nth-child(n)的倒数版本。
 	:nth-of-type(n)伪元素：类似于nth-child(n)伪元素，不同的是它的n的计数是从选择器中的类型开始的。
 	:nth-last-of-type(n)伪元素： :nth-of-type(n)伪元素的倒数版本
@@ -542,7 +543,7 @@ position:relative; 而当页面滚动超出目标区域时，它的表现就像 
 		}
 	:first-line伪元素：用来指定选择器第一行的样式。
 		p:first-line { background-color:yellow;}
-	:before伪元素： 用于向选定的元素前插入内容。使用content 属性来指定要插入的内容。
+	:before伪元素： 用于向选定的元素前插入内容，可以看成选择了指定元素前的空白。使用content 属性来指定要插入的内容。
 		<p>My name is Donald</p>
 		<p>I live in Ducksburg</p>
 		p:before{content:"Read this -";}
