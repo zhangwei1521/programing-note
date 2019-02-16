@@ -3036,7 +3036,8 @@ interactive（网页已经解析完成，但是外部资源仍然处在加载状
 	现代浏览器为了更好的用户体验,渲染引擎将尝试尽快在屏幕上显示的内容。它不会等到所有HTML解析完成后才开始构建和布局渲染树。
 部分的内容将被提前解析并显示。也就是说浏览器能够渲染不完整的dom树和cssom，尽快的减少白屏的时间。假如我们将js放在header，
 js将阻塞解析dom，dom的内容会影响到First Paint，导致First Paint延后。所以说我们会将js放在后面，以减少First Paint的时间，
-但是不会减少DOMContentLoaded被触发的时间。
+但是不会减少DOMContentLoaded被触发的时间。脚本文件都放在网页尾部加载，还有一个好处。因为在 DOM 结构生成之前就调用 DOM 节点，
+JavaScript 会报错，如果脚本都在网页尾部加载，就不存在这个问题，因为这时 DOM 肯定已经生成了。
 
 	hashchange事件：
 	在 URL 的 hash 部分（即#号后面的部分，包括#号）发生变化时触发。该事件一般在window对象上监听。hashchange的事件实例具有两个特有属性：
@@ -3082,20 +3083,80 @@ GlobalEventHandlers 接口
 浏览器模型
 	浏览器内置了 JavaScript 引擎，并且提供各种接口，让 JavaScript 脚本可以控制浏览器的各种功能。
 	代码嵌入网页的方法：1、<script>元素直接嵌入代码；2、<script>标签加载外部脚本；3、事件属性；4、URL 协议
+	<script>元素有一个type属性，用来指定脚本类型，它有两个值，text/javascript和application/javascript，
+type属性可以省略，那么默认取text/javascript，这个值是老的浏览器用来识别js脚本的，而新的浏览器使用
+application/javascript，当然text/javascript也是可以识别的。如果type属性的值，浏览器不认识，那么它不会
+执行其中的代码，但是这个<script>节点依然存在于 DOM 之中，可以使用<script>节点的text属性读出它的内容。
+		<script id="mydata" type="x-custom-data">
+			console.log('Hello World');  //不会执行
+		</script>
+	使用外部脚本时，如果脚本文件使用了非英语字符，还应该注明字符的编码。为了防止攻击者篡改外部脚本，
+script标签允许设置一个integrity属性，写入该外部脚本的 Hash 签名（SHA256 签名），用来验证脚本的一致性。
+		<script charset="utf-8" src="https://www.example.com/script.js" 
+			integrity="sha256-TvVUHzSfftWg1rcfL6TIJ0XKEGrgLyEq6lEpcmrG9qs=">
+		</script>
+	如果有多个script标签，浏览器会同时并行下载a.js和b.js，但是，执行时会保证先执行a.js，然后再执行b.js，
+即使后者先下载完成
+	在事件属性中添加js代码：<button id="myBtn" onclick="console.log(this.id)">点击</button>
+	在 URL 的位置写入代码：<a href="javascript:console.log('Hello')">点击</a>
+如果 JavaScript 代码返回一个字符串，浏览器就会新建一个文档，展示这个字符串的内容，原有文档的内容都
+会消失。
+如果返回的不是字符串，那么浏览器不会新建文档，也不会跳转。
 	
-
-
-
-
-
-
-
-
-
-
-
-
-
+	<script>元素的defer属性：它的作用是延迟脚本的执行，等到 DOM 加载生成后，再执行脚本。
+		<script src="a.js" defer></script>
+有了defer属性，浏览器下载脚本文件的时候，不会阻塞页面渲染。下载的脚本文件在DOMContentLoaded事件触发
+前执行（即刚刚读取完</html>标签），而且可以保证执行顺序就是它们在页面上出现的顺序。
+	<script>元素的async属性：使用另一个进程下载脚本，下载时不会阻塞渲染，async属性可以保证脚本下载
+的同时，浏览器继续渲染。需要注意的是，一旦采用这个属性，就无法保证脚本的执行顺序。哪个脚本先下载结
+束，就先执行那个脚本。
+	一般来说，如果脚本之间没有依赖关系，就使用async属性，如果脚本之间有依赖关系，就使用defer属性。
+如果同时使用async和defer属性，后者不起作用，浏览器行为由async属性决定。
+	<script>元素还可以动态生成，生成后再插入页面，从而实现脚本的动态加载：
+	['a.js', 'b.js'].forEach(function(src) {
+	  var script = document.createElement('script');
+	  script.src = src;
+	   script.async = false;  //保证b.js在a.js后面执行
+	  script.onload = function() {  //回调
+		done();
+	  };
+	  script.onerror = function() {  //回调
+		done(new Error('Failed to load script ' + src));
+	  };
+	  document.head.appendChild(script);
+	});
+	
+	浏览器的核心是两部分：渲染引擎和 JavaScript 解释器（又称 JavaScript 引擎）。
+	渲染引擎的主要作用是，将网页代码渲染为用户视觉可以感知的平面文档。
+不同的浏览器有不同的渲染引擎。
+		Firefox：Gecko 引擎
+		Safari：WebKit 引擎
+		Chrome：Blink 引擎
+		IE: Trident 引擎
+		Edge: EdgeHTML 引擎
+	渲染引擎处理网页，通常分成四个阶段。
+		解析代码：HTML 代码解析为 DOM，CSS 代码解析为 CSSOM（CSS Object Model）。
+		对象合成：将 DOM 和 CSSOM 合成一棵渲染树（render tree）。
+		布局：计算出渲染树的布局（layout）。
+		绘制：将渲染树绘制到屏幕。
+以上四步并非严格按顺序执行，往往第一步还没完成，第二步和第三步就已经开始了。所以，会看到这种情况：
+网页的 HTML 代码还没下载完，但浏览器已经显示出内容了。
+	页面生成以后，脚本操作和样式表操作，都会触发“重流”（reflow）和“重绘”（repaint）。用户的互动也
+会触发重流和重绘，比如设置了鼠标悬停（a:hover）效果、页面滚动等。
+	重流必然导致重绘，重绘不一定需要重流。比如改变元素颜色，只会导致重绘，而不会导致重流；
+改变元素的布局，则会导致重绘和重流。
+	大多数情况下，浏览器会智能判断，将重流和重绘只限制到相关的子树上面，最小化所耗费的代价，
+而不会全局重新生成网页。
+	JavaScript 引擎的主要作用是，读取网页中的 JavaScript 代码，对其处理后运行。
+	为了提高运行速度，目前的浏览器都将 JavaScript 进行一定程度的编译，生成类似字节码（bytecode）的
+中间代码，以提高运行速度。
+	字节码不能直接运行，而是运行在一个虚拟机（Virtual Machine）之上，一般也把虚拟机称为 JavaScript 引擎。
+	常见的一些 JavaScript 虚拟机：
+		Chakra (ie)
+		Nitro/JavaScript Core (Safari)
+		Carakan (Opera)
+		SpiderMonkey (Firefox)
+		V8 (Chrome, Chromium)
 
 
 
