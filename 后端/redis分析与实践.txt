@@ -1,0 +1,63 @@
+										Redis分析与实践
+	Redis是一个基于内存的轻量级键值数据库，或者说是一个数据结构服务器。Redis在内存中中实现了多种数据
+结构的存储，并提供了操作这些数据结构的API。
+	安装Redis：
+	 1、mkdir -p /mytools/redis
+	 2、cd /mytools/redis 
+		wget http://download.redis.io/releases/redis-4.0.1.tar.gz
+	 3、tar xzvf redis-4.0.1.tar.gz	
+		cd redis-4.0.1
+	 4、mkdir /mytools/redis/conf
+		cp redis.conf /mytools/redis/conf/
+	 5、cd deps
+		make hiredis lua jemalloc linenoise
+		cd ..
+	 6、make
+	 7、make prefix=/mytools/redis install
+	Redis的版本号规则：major.minor.patch
+	/mytools/redis/bin目录下的可执行文件：
+		redis-server:	redis服务端
+		redis-cli:		redis命令行工具
+		redis-sentinel: redis-server的软链接
+		redis-check-rdb:	redis RDB检查工具
+		redis-check-aof:	redis AOF检查工具
+		redis-benchmark:	redis基准/性能测试工具
+	
+	使用默认配置启动一个Redis实例：
+		cd /mytools/redis
+		bin/redis-server
+	使用指定配置文件启动一个Redis实例：
+		bin/redis-server conf/redis.conf
+	以守护进程的方式在后台启动Redis实例：
+		vim conf/redis.conf
+		修改 daemonize 为 yes
+	前台redis实例可以直接停止(Ctrl+C)，后台redis-server守护进程可以使用 kill pid-redis-server 停止
+	使用命令行工具停止redis-server实例：
+		bin/redis-cli shutdown
+	一个redis实例就是一个运行中的redis-server进程，一台机器上可以运行多个redis实例，这些实例采用不
+同的配置，比如监听不同的端口。
+	通常不建议直接 kill redis-server进程，因为这样可能会导致数据未被持久化而丢失。使用shutdown命令
+通常可以保证数据的完整性和一致性。
+	事实上使用kill时如果向redis-server进程发送SIGTERM(15)信号也相当于使用shutdown命令。
+	另外，启动redis-server实例时可以将参数加在命令中。
+	
+	使用redis-cli连接到redis:
+		bin/redis-cli
+		交互界面：127.0.0.1:6379>
+	redis-cli默认连接本机的6379端口。使用-h 指定要连接的主机ip/地址，-p指定端口，-a指定密码，-s指定
+Unix套接字。
+	执行简单命令：set foo value1
+	交互界面中可以使用shutdown命令关闭redis-server实例。
+	获取redis实例状态信息：redis-cli交互环境中使用INFO命令，查看单项(内存)状态信息：
+INFO sec(Memory)	
+	直接在shell中获取redis实例状态信息：redis-cli INFO
+	
+	Redis使用单线程、非阻塞、多路复用的I/O模型。它有一个异步事件支持库，称为ae，这个库封装了各个操
+作系统提供的polling支持，即内核对异步调用的支持。
+	因为redis是单线程执行，所以在一个命令完成前，不能处理其它命令，这就带来了延迟问题。
+	
+	Redis通信协议：RESP，redis序列化协议。
+	客户端发送给redis-server的命令都需要被转换为RESP格式的字符串数组：
+		set foo bar 	->		"*3\r\n\$3\r\nset\r\n\$3\r\nfoo\r\n\$3\r\bbar\r\n"
+		* 表示这是一个数组，3表示数组大小，\r\n是分隔符，\$3表示后面的参数的字符数，set是(命令)参数
+	
