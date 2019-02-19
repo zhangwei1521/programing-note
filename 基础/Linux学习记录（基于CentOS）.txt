@@ -307,6 +307,7 @@ defaults 包含rw、exec、auto、nouser、async
 	虽然对tar包进行了gzip压缩，还是可以使用tar -tf dirname.tar.gz查看文件列表
 	排除指定文件并使用bzip2压缩：tar -cjvf test_tar.tar.bz2 test_tar/ --exclude first.c
 	解压和解包：tar -xjvf test_dir.tar.bz2
+	mm.tar.xz解包：先使用xz解压缩，xz -d mm.tar.xz 再使用tar解包：tar xvf mm.tar
 	zip压缩包可以在windows和linux中通用，而且可以压缩目录
 		zip filename.zip filename
 	压缩目录：zip dirname.zip dirname/* 这种方式只会压缩目录下的文件和子目录本身，子目录下的文件不会被包含
