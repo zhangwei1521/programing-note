@@ -398,6 +398,7 @@ position:relative; 而当页面滚动超出目标区域时，它的表现就像 
 合适的元素(可以不是浮动元素)会流到这个位置。
 	使用clear 属性指定元素两侧不能出现浮动元素。这个属性对行级元素没有作用。
 		p {clear:both/left/right;}
+	如果浮动的元素外层元素没有设置换行样式或不包含其他元素，则浮动会传递给外层元素。
 	
 	元素的水平 & 垂直对齐
 	设置元素水平居中对齐：(不适用于行级元素，因为行级元素设置width无效，当然可以通过设置display:block;改变行级元素CSS行为为块级元素)
@@ -555,11 +556,53 @@ position:relative; 而当页面滚动超出目标区域时，它的表现就像 
 	
 	设置悬停下拉效果：查看CSS实例文档相关部分。
 	设置这种效果的典型用法：容器使用relative定位，需要悬停显示的部分使用absolute定位。
+	设置提示工具(Tooltip)：查看CSS实例文档相关部分。
+	设置透明效果：opacity越大，越不透明
+		img{
+			opacity:0.4;
+			filter:alpha(opacity=40); /* 适用 IE8 及其更早版本 */
+		}
+		img:hover{
+			opacity:1.0;
+			filter:alpha(opacity=100); /* 适用 IE8 及其更早版本 */
+		}
+	使用图像拼合：将页面需要用到的多个图片保存在一个大图片文件中，下载这个图片后使用拼合
+技术显示需要的部分：
+	img.home{
+		width:46px;
+		height:44px;
+		background:url(img_navsprites.gif) 0 0;
+	}
+	img.next {
+		width: 43px;
+		height: 44px;
+		background: url(img_navsprites.gif) -91px 0;
+	}
 	
-
-
-
-
+	media属性：@media 规则允许在相同样式表为不同媒体设置不同的样式。
+		@media screen
+		{
+			p.test {font-family:verdana,sans-serif;font-size:20px;}
+		}
+		@media print
+		{
+			p.test {font-family:times,serif;font-size:40px;}
+		}
+		@media screen,print
+		{
+			p.test {font-weight:bold;}
+		}
+	@media的其他值包括：all、handheld、braille、tty、tv等
+	
+	属性选择器：HTML元素的属性不只是id和class，其他属性也可以用作选择器：
+		[title] {color:blue;}  //选择所有具有title属性的元素
+		[title=runoob] {color:blue;}  //选择所有title属性值为runoob的元素
+		[title~=hello] { color:blue; }  //选择title属性值包含hello(空格作为分隔符)的元素
+		[title|=hello]{	color:blue;}    //选择title属性值包含hello(-作为分隔符且hello是第一个单词)的元素
+		[title*=flower] {...}			//选择title属性值包含flower的元素(只要title值中具有flower这个字符串就匹配)
+		a[src$=".pdf"] {...}			//选择src属性值以.pdf结尾的a元素
+		[lang^=en]{...}					//选择lang属性值以en开始的元素
+		input[type="text"] {background-color:yellow;}
 
 
 

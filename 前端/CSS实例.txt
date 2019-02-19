@@ -169,3 +169,56 @@
 			text-align: center;
 		}
 	</style>
+
+提示工具(Tooltip):
+	<div class="tooltip">鼠标移动到这
+	  <span class="tooltiptext">提示文本</span>
+	</div>
+	
+	<style>
+		.tooltip {
+			position: relative;
+			display: inline-block;//这里使用inline-block后，tooltiptext将显示在下一行
+			border-bottom: 1px dotted black;
+		}
+
+		.tooltip .tooltiptext {
+			visibility: hidden;
+			width: 120px;
+			background-color: black;
+			color: #fff;
+			text-align: center;
+			border-radius: 6px;
+			padding: 5px 0;
+
+			/* 定位 */
+			position: absolute;
+			z-index: 1;
+			/*  显示在右侧				
+				top: -5px;
+				left: 105%;
+			*/
+			/*  显示在头部				
+				bottom: 100%;
+				left: 50%;
+				margin-left: -60px; //使用一半宽度 (120/2 = 60) 来居中提示工具
+			*/
+			
+		}
+		
+		//为tooltiptext添加小箭头
+		.tooltip .tooltiptext::after {
+			content: "";
+			position: absolute;
+			top: 100%;
+			left: 50%;
+			margin-left: -5px;
+			border-width: 5px;
+			border-style: solid;
+			border-color: red transparent transparent transparent; //这里每个边都是一个小三角，只将上边设为red，其他三边都设为透明
+		}
+
+		.tooltip:hover .tooltiptext {
+			visibility: visible;
+		}
+	</style>

@@ -189,6 +189,7 @@ git checkout -b [branch-name] [tag-name]
 	查看分支对应的提交校验和(提交对象)：git log --decorate --oneline
 	切换到一个已存在的分支: git checkout [branch-name]
 	切换分支前需要保存提交当前分支所做的修改。
+	拉取本地不存在的远程分支：git pull origin branch1:branch1 
 	查看分叉历史:git log --oneline --decorate --graph --all
 	创建一个分支只是创建了一个文件，文件内容就是某次提交的校验和加一个换行符
 	创建分支后切换到创建的分支：git checkout -b branch-name
