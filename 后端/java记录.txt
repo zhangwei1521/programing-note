@@ -35,7 +35,18 @@ Internet上的服务器的硬件设施和操作系统的多样性要求开发的
 		rt.jar位于：{Java_Home}/jre/lib/下，是JAVA基础类库，也就是在java doc里面看到的所有的类的class文件，
 		rt.jar 默认就在Root Classloader的加载路径里面的，jre/lib目录下的，其他jar:jce.jar、jsse.jar、charsets.jar、resources.jar
 		也都在Root Classloader中，所以不需要手动添加到环境变量CLASSPATH中。
-
+	
+	新建类：com.zhangwei.javademo1.MainClass
+	编译时进入最内层的目录(javademo1): javac MainClass.java
+	执行时到最外层目录(com目录同级)：java com.zhangwei.javademo1.MainClass
+	打包：在最外层目录(com目录同级)建manifest.txt文件：
+		Manifest-Version: 1.0
+		Main-Class: com.zhangwei.javademo1.MainClass
+	
+	manifest.txt最后一行为空行，并且manifest.txt文件换行符需要使用linux的换行符(windows回车换行符：\r\n无效，linux换行符：\n)
+	打包命令：jar -cvfm aa.jar manifest.txt com
+	执行jar：java -jar aa.jar
+	
 										第三章 数据类型
 	强类型的语言有利于在代码编译时进行检测，因此可以避免很多不必要的问题，增强程序的安全性和健壮性。
 	java的八种基本数据类型：
