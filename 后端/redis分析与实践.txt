@@ -1,4 +1,5 @@
 										Redis分析与实践
+	Redis入门：
 	Redis是一个基于内存的轻量级键值数据库，或者说是一个数据结构服务器。Redis在内存中中实现了多种数据
 结构的存储，并提供了操作这些数据结构的API。
 	安装Redis：
@@ -61,3 +62,49 @@ INFO sec(Memory)
 		set foo bar 	->		"*3\r\n\$3\r\nset\r\n\$3\r\nfoo\r\n\$3\r\bbar\r\n"
 		* 表示这是一个数组，3表示数组大小，\r\n是分隔符，\$3表示后面的参数的字符数，set是(命令)参数
 	
+	Redis数据类型：
+	字符串：基本命令：
+		set zhangsan male
+		set "Extreme Pizza" "100 Broadway, New York"
+		get zhangsan
+		get "Extreme Pizza"
+		get lisi 					(key不存在时返回 nil)
+		strlen "Extreme Pizza"		(返回value的长度，key不存在时返回0)
+		append zhangsan ", 25"		(原字符串末尾追加)
+		setrange "Extreme Pizza" 14 "Washington DC"		(替换，14是index，index从0开始)
+		setnx zhangsan "female, 24"		(key不存在时才设值，等同于 set key value nx)
+		set zhangsan "female, 24" xx	(key存在时才设值，就是覆盖原值)
+		mset zhangsan male lisi male "Extreme Pizza" "100 Broadway"
+		mget zhangsan lisi "Extreme Pizza"
+	Redis内部存储字符串值时使用3种编码方式：
+		1、能够使用 64位有符号整数表示的数使用int存储，如12345
+		2、长度小于等于44的使用embstr编码（redis4.x）
+		3、大于44的使用raw编码（redis4.x）
+	使用object命令查看redis值的内部编码：
+		object encoding zhangsan
+	
+	列表：基本命令：
+		lpush best-friends zhangsan lisi "John St"	(向左插入，"John St"将在最前面)
+		lrange best-friends 0 -1	(列表从左向右index为0~N-1，从右到左index为-1~-N，这里
+0 -1就表示整个列表)
+		rpush best-friends wangwu   (向右插入)
+		linsert best-friends before/after zhangsan liuxiaohua		(在指定值前面/后面插入)
+		lindex best-friends 2		(返回指定索引处的值)
+		lpushx/rpushx friends zhangsan 	(当key存在时才插入值)
+		lpop/rpop best-friends		(从左端/右端弹出(删除)值)
+		ltrim best-friends 2 3		(只保留索引位置为2、3的值)
+		lset best-friends 1 lisi	(替换指定index处的值)
+		blpop/brpop friends 0		(阻塞式弹出，0为超时时间(单位:秒)，0表示永久等待)
+适用于：任务执行程序(redis客户端)等待任务调度程序分配任务
+	redis内部使用quicklist存储列表对象，quicklist的两个配置选项：
+		list-max-ziplist-size : 列表内部节点的最大大小，使用默认值即可
+		list-compress-depth : quicklist两端不被压缩的节点的个数，我们在访问一个很长列表时可能
+常用的数据在列表两端，这样调节这个参数就可以平衡压缩比和访问效率。
+	
+		
+		
+		
+		
+		
+	
+		
