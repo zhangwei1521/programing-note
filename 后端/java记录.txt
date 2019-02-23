@@ -883,7 +883,59 @@ destroy方法回收资源。
 		HttpServlet：方法：doDelete(...)、doGet(...)、doPost(...)、doPut(...)、doTrace(...)、service(...)等
 		使用HttpServletRequest的getSession()获取session，如果不存在就创建session
 		
-	
+	补充：java列表元素的多级比较排序：
+		public class DemoEntity{
+			public String attrA;
+			public String attrB;
+			public String attrC;
+		}
+		List<DemoEntity> list = ...;
+		//排序
+		Collections.sort(list, new Comparator<DemoEntity>(){
+			@Override
+            public int compare(DemoEntity o1, DemoEntity o2){
+				if(o1.attrA != null && o2.attrA != null && !o1.attrA.equals(o2.attrA)){
+					return o1.attrA.compareTo(o2.attrA);
+				}
+				else{
+					if(o1.attrA == null && o2.attrA != null){
+						return 1;
+					}
+					if(o1.attrA != null && o2.attrA == null){
+						return -1;
+					}
+					else{
+						if(o1.attrB != null && o2.attrB != null && !o1.attrB.equals(o2.attrB)){
+							return o1.attrB.compareTo(o2.attrB);
+						}
+						else{
+							if(o1.attrB == null && o2.attrB != null){
+								return 1;
+							}
+							if(o1.attrB != null && o2.attrB == null){
+								return -1;
+							}
+							else{
+								if(o1.attrC != null && o2.attrC != null){
+									if(o1.attrC.equals(o2.attrC)){
+										return 0;
+									}
+									return o1.attrC.compareTo(o2.attrC);
+								}
+								if(o1.attrB == null && o2.attrB != null){
+									return 1;
+								}
+								if(o1.attrB != null && o2.attrB == null){
+									return -1;
+								}
+							}
+						}
+					}
+					
+				}
+			}
+		});
+		
 	
 	
 		
