@@ -68,6 +68,25 @@ springboot应用起步：
 		</plugins>
 	  </build>
 	</project>
+	
+	使用maven打包可独立部署的jar：mvn clean package
+	插件：
+	<plugins>
+		<plugin>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-maven-plugin</artifactId>
+			<configuration>
+				<mainClass>com.zhangwei.eurekaserver.EurekaServerApplication</mainClass>
+			</configuration>
+			<executions>
+				<execution>
+				  <goals>
+					<goal>repackage</goal>
+				  </goals>
+				</execution>
+			</executions>
+		</plugin>
+	</plugins>
 	-----------------------------------------------------------------------------------------------
 
 	父级工程pom:

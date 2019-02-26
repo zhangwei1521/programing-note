@@ -62,6 +62,33 @@ maven统一管理着项目中很多琐碎的信息，方便了查找这些信息
             </execution>
           </executions>
         </plugin>
+	另一种打包插件，将依赖也打包到jar包中，这样打出的jar可以独立执行：
+	<plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.3</version>
+        <configuration>
+          <appendAssemblyId>false</appendAssemblyId>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+          <archive>
+            <manifest>
+              <mainClass>com.zhangwei.mavendemo1.HelloWorld</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id>
+            <phase>package</phase>
+            <goals>
+              <goal>assembly</goal>
+            </goals>
+          </execution>
+        </executions>
+    </plugin>
+	执行：mvn assembly:assembly
 	使用archetype快速创建项目结构：mvn archetype:generate 选择7号（默认）quickstart项目结构
 													第三章
 	依赖的范围：用来表述依赖的jar包和程序编译、测试、运行时的classpath的关系，默认为compile，将在三个阶段的classpath
