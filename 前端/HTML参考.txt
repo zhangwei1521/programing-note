@@ -176,4 +176,39 @@ HTML 使用标记标签来描述网页。
 		<var>    表示变量的名称，或者由用户提供的值。
 		<wbr>	 表示在浏览器窗口或父级窗口宽度足够的情况下，不换行；在宽度不足的情况下，在加了<wbr>处主动换行。可以看出<wbr>其实
 				 没有宽度。
-	
+	媒体元素：
+		<map>    与<img>、<area> 一起使用来定义一个图像映射(一个可点击的链接区域).<map>元素必需提供name属性，值必须不能为空并且不
+				 能带空格。name属性不准与同文档中其他map元素的值相同，如果id属性也被添加，name属性和id属性的值必须相同。<img>使用
+				 usemap属性引用<map>的name属性实现关联。
+		<area>   定义图像映射内部的区域，<area> 元素始终嵌套在 <map> 标签内部。<area>使用shape属性定义链接区域形状，值可以是default,
+				 rect,circle和poly,使用coords定义链接区域位置，shape为rect，coords的值为左上角和右下角坐标，shape为circle，coords
+				 值为圆心坐标和半径。
+				 <img src="../images/planets.gif" usemap="example-map-1" width="145" height="126" />
+				 <map name="example-map-1">
+					<area shape="circle" coords="124,58,8" href="another.html" />
+					<area shape="default" />
+				 </map>
+		<audio>  用于在文档中表示音频内容。 <audio> 元素可以包含多个音频资源， 这些音频资源可以使用 src 属性或者<source> 元素来进行描述；
+				 浏览器将会选择最合适的一个来使用。对于不支持<audio>元素的浏览器，<audio>元素也可以作为浏览器不识别的内容加入到文档中。
+				 目前，<audio> 元素支持的3种文件格式：MP3、Wav、Ogg。IE9支持audio元素，但是只支持mp3格式，Safari不支持Ogg格式。
+					 <audio controls>
+						<source src="horse.ogg" type="audio/ogg">
+						<source src="horse.mp3" type="audio/mpeg">
+						您的浏览器不支持 audio 元素。
+					 </audio>
+				  autoplay指定是否自动播放，controls属性表示是否显示控制组件
+		<img> 	 代表文档中的一个图像。
+		<video>  用于在HTML或者XHTML文档中嵌入视频内容。
+					<video width="320" height="240" controls>
+						<source src="movie.mp4" type="video/mp4">
+						<source src="movie.ogg" type="video/ogg">
+						您的浏览器不支持 video 标签。
+					</video>
+				 autoplay指定是否自动播放，controls属性表示是否显示控制组件。目前，<video> 元素支持三种视频格式：MP4、WebM、Ogg。
+				 IE9开始支持video元素，但是只支持mp4格式。Safari不支持Ogg格式。poster属性设置一个海报帧的URL。preload属性指定用户
+				 操作前的默认处理，可以是以下值：none--不缓存视频，metadata--下载元数据，auto--缓存视频，空字符串--同auto
+		<source> <audio>和<video>使用<source>来指定音频/视频地址和媒体类型。
+		<track>  被当作媒体元素—<audio> 和 <video>的子元素来使用。它允许指定计时字幕（或者基于事件的数据），例如自动处理字幕。
+				 属性default指定默认track，kind指定文本轨道的文本类型，如subtitles(辅助文字)、captions(音频文字)
+		
+		
