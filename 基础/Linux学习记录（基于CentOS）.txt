@@ -151,7 +151,9 @@ uvhV.:17883:0:99999:7:::
 	默认只有root能使用sudo，使用visudo 编辑/etc/sudoers文件（先安装 yum install -y sudo）:
 shanyu  ALL=(ALL)  ALL 允许shanyu用户在所有主机上以所有用户身份使用sudo执行所有命令
 	使用sudo：sudo cat /etc/shadow 使用sudo需要输入自己的秘密
-	为用户组shanyu配置sudo：%shanyu  ALL=(ALL)  ALL
+	当用户以"sudo passwd"或者"sudo passwd root"方式运行命令的时候，可以直接把root用户的密码改掉，这是非常危险的，
+必须要把这两条命令禁止调，在命令前面加上"!"来表示不可执行的命令：
+	为用户组shanyu配置sudo：%shanyu  ALL=(root) !/usr/bin/passwd, /usr/bin/passwd [A-Za-z]*, !/usr/bin/passwd root
 	/etc/sudoers中配置用户别名：User_Alias USER_AUTH = shanyu,zhangwei
 	/etc/sudoers中配置命令别名：Cmnd_Alias SU = /usr/bin/su
 	/etc/sudoers中配置不需要密码切换用户：USER_AUTH ALL=(ALL) NOPASSWD:SU

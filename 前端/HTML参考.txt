@@ -210,5 +210,48 @@ HTML 使用标记标签来描述网页。
 		<source> <audio>和<video>使用<source>来指定音频/视频地址和媒体类型。
 		<track>  被当作媒体元素—<audio> 和 <video>的子元素来使用。它允许指定计时字幕（或者基于事件的数据），例如自动处理字幕。
 				 属性default指定默认track，kind指定文本轨道的文本类型，如subtitles(辅助文字)、captions(音频文字)
-		
+	内嵌内容：
+		<applet> 包含Java的applet。HTML5中已废弃。
+		embed>   将外部内容嵌入文档中的指定位置。此内容由外部应用程序或其他交互式内容源（如浏览器插件）提供。
+					<embed src="../media/helloworld.swf"/> <!-- 这是一段flash动画 -->
+		<iframe> 表示嵌套的浏览上下文，用于将另一个HTML页面嵌入到当前页面中。HTML5、4.01可以使用name属性，XHTML中使用id属性代替name属性。
+					<body>
+						zzzz<br/>
+						<iframe height="500" sandbox="" width="800" src="http://www.runoob.com">
+						  <p>您的浏览器不支持  iframe 标签。</p>
+						</iframe>
+					<div>xxxx</div>
+					sandbox属性对呈现在iframe框架中的内容启用一些额外的限制条件。如果是一个空字符串，将会启用所有的限制。其他
+					值包括：allow-scripts、allow-forms、allow-same-origin、allow-top-navigation，也可以设置多个值用空格分开
+		<object> 表示引入一个外部资源，这个资源可能是一张图片，一个嵌入的浏览上下文，亦或是一个插件所使用的资源。data属性规定对象使用的资源的 URL。
+					<object width="400" height="400" data="helloworld.swf" ></object>
+		<param>  为<object>元素定义参数
+					<object data="horse.wav">
+					  <param name="autoplay" value="true">
+					</object>
+		<picture> 表示一个容器，用来为其内部特定的 <img> 元素提供多样的 <source> 元素。浏览器会根据当前页面（即图片所在的盒子的容器）
+				  的布局以及当前浏览的设备（比如普通的屏幕和高清屏幕）去从中选择最合适的资源。此功能某些浏览器尚在开发中
+					<picture>
+					 <source srcset="mdn-logo.svg" type="image/svg+xml">
+					 <img src="mdn-logo.png" alt="MDN">
+					</picture>
+	脚本标签：
+		<canvas>  可被用来通过脚本（通常是JavaScript）绘制图形。
+					<canvas id="test-canvas" width="200" heigth="100">
+					    <p>浏览器不支持Canvas</p>
+					</canvas>
+					'use strict';
+					var canvas = document.getElementById("test-canvas");
+					if (canvas.getContext) {
+						var ctx = canvas.getContext('2d');
+						ctx.fillStyle='#dddddd';
+						ctx.fillRect(0,0,500,300);						
+					} else {
+						console.log('你的浏览器不支持Canvas!');
+					}
+		<noscript> 如果页面上的脚本类型不受支持或者当前在浏览器中关闭了脚本，则在HTML <noscript> 元素中定义脚本未被执行时的替代内容。
+		<script>  元素用于嵌入或引用可执行脚本。
+	编辑标识：
+		<del>	 表示一些被从文档中删除的文字内容。比如可以在需要显示修改记录或者源代码差异的情况使用这个标签。
+		<ins>    定义已经被插入文档中的文本。
 		
