@@ -346,5 +346,9 @@ repositories的配置了。
 	mvn clean install -pl demo1-module  		-pl只构建列出的模块
 	mvn clean install -pl demo1-module -am 		-am也构建列出模块依赖的模块 -amd构建依赖列出模块的模块
 	mvn clean install -rf demo1-module 			-rf在完整的构建顺序基础上从指定模块开始构建
+	
+	maven编译报错：找不到符号
+	当前项目依赖的外部jar包一般都不会出错，可以在本地仓库找到检查，但是依赖的内部其他项目jar包可能由于没有及时更新而代码
+已经修改就会导致当前项目找不到依赖的类，这种情况下可以本地安装所依赖的项目的最新版本。
 
 nexus下载：https://help.sonatype.com/repomanager2/download/download-archives---repository-manager-oss	

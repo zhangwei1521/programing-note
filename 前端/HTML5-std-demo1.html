@@ -2,6 +2,7 @@
 <html>
 	<head>
 		<meta charset="utf-8">
+		<base href="file:///E:/zhangweei/es5-demo/media/" target="_self">
 		<title>HTML5标准demo1</title>
 	</head>
 	<body>
@@ -21,13 +22,128 @@
 					<h3>origin of HTML</h3>
 					<blockquote>xxxxxxxxx</blockquote>
 					<cite>– Tim Berners-Lee</cite>
+					<br/>
+					<div dir=rtl>123,456</div> 
+					<div dir=rtl>123,<wbr>456</div> 
+					<u>Today's Special</u>: Salmon<br />
+					<data value="3967381398">迷你番茄酱</data>
+					<p dir="ltr">This arabic word <bdi>ARABIC_PLACEHOLDER</bdi> is automatically displayed right-to-left.</p>
 					<p>...</p>
-			    	<p>... </p>
+			    	<pre>
+			    		zzzzz xxxxx 
+			    		yyyyy   lllllll
+			    	</pre>
+			    	<p>To learn AJA<wbr>X, you must be familsdfiar with the XMLHttpRequest Object.To learn AJAX, you must be familiar with the XMLHttpRequest Object.To learn AJAX, you must be familiar with the XMLHttpRequest Object.To learn AJAX, you must be fami<wbr>liar with the XMLHttpRequest Object.</p>
 				</section>
 			    <section>
 					<h3>development of HTML</h3>
-					<p>...</p>
+					<pre>
+						<code lang="java">
+	                public class MainClass{
+	                    public static void main(String [] args){
+	                        System.out.println("hello world");
+	                    }
+	                }
+            			</code>
+					</pre>
+					<p>output: <samp>hello world.</samp></p>
 			    	<p>... </p>
+			    	<ruby>
+					  漢 <rp>(</rp><rt>Kan</rt><rp>)</rp>
+					  字 <rp>(</rp><rt>ji</rt><rp>)</rp>
+					</ruby>
+			    	<p>Type the following in the Run dialog: <kbd>cmd</kbd><br />Then click the OK button.</p>
+					<p>Save the document by pressing <kbd>Ctrl</kbd> + <kbd>S</kbd></p>
+					<ruby>
+					  汉 <rt>Hàn</rt>
+					  字 <rt>Zì</rt>
+					</ruby>
+					<p>The concert took place on <time datetime="2001-05-15 19:00">May 15</time>.</p>
+				</section>
+				<section>
+					<img src="planets.gif" usemap="example-map-1" width="145" height="126" />
+					<map name="example-map-1">
+					  <area shape="circle" coords="124,58,8" href="another.html" />
+					  <area shape="default" />
+					</map>
+					<audio controls>
+					  <source src="Wildlife.ogg" type="audio/ogg">
+					  <source src="Wildlife.mp3" type="audio/mpeg">
+					  您的浏览器不支持 audio 元素。
+					</audio>
+					<br/>
+					<video width="800" height="500" controls>
+						<source src="Wildlife.mp4" type="video/mp4">
+						<!--<source src="movie.ogg" type="video/ogg">-->
+						您的浏览器不支持 video 标签。
+					</video>
+					<br/>
+					<embed src="helloworld.swf"/>
+					<noscript>
+						JavaScript被禁用或浏览器不支持运行JavaScript
+					</noscript>
+					<canvas id="test-canvas" width="200" heigth="100">
+					    <p>浏览器不支持Canvas</p>
+					</canvas>
+				</section>
+				<section>
+					<form action="http://www.runoob.com/try/demo_source/demo-form.php" method="post" 
+					enctype="multipart/form-data" target="_self">
+						<label for="description">description:</label>
+						<input type="text" name="description"><br/>
+						<label>性别:</label>
+						<select name="gender">
+							<option value="male">男</option>
+							<option value="female">女</option>
+							<option value="secret">保密</option>
+						</select>
+						<br/>
+						<label>国籍:</label>
+						<select name="nation">
+							<optgroup label="亚洲">
+								<option value="cn">中国</option>
+								<option value="jap">日本</option>
+								<option value="a_oth">其他</option>
+							</optgroup>
+							<optgroup label="欧洲">
+								<option value="en">英国</option>
+								<option value="ger">德国</option>
+								<option value="e_oth">其他</option>
+							</optgroup>
+						</select>
+						<br/>
+						<fieldset name="connMethods">
+						    <legend name="name">connection methods:</legend>
+						    telephone: <input type="tel" name="tel"><br>
+						    Email: <input type="email" name="email"><br>
+						    Address: <input type="text" name="address">
+						</fieldset>
+						<br/>
+						<input list="browsers" name="browser">
+						<datalist id="browsers">
+						  <option value="Internet Explorer">
+						  <option value="Firefox">
+						  <option value="Chrome">
+						  <option value="Opera">
+						  <option value="Safari">
+						</datalist>
+						<button type="submit">submit</button>
+					</form>
+				</section>
+				<section>
+					<form oninput="x.value=parseInt(a.value)+parseInt(b.value)">0
+					  <input type="range" id="a" value="50">100
+					  +<input type="number" id="b" value="50">
+					  =<output name="x" for="a b"></output>
+					</form>
+					<br/>
+					<progress value="22" max="100"></progress>
+					<meter value="2" min="0" max="10">2 out of 10</meter><br>
+					<meter value="0.6">60%</meter>
+					<table border="1">
+					<dialog id="dialog1" >This is an open dialog window</dialog></th>
+					<button type="button" onclick="document.getElementById('dialog1').setAttribute('open','')">xxx</button>
+					<button type="button" onclick="document.getElementById('dialog1').removeAttribute('open')">yyy</button>
 				</section>
 				<footer>
 					<address>author website: <a href="http://www.somedomain.com/contact">www.somedomain.com</a></address>
@@ -42,4 +158,17 @@
 		  </aside>
 		</main>
 	</body>
+	<script>
+		window.onload=function(){
+			'use strict';
+	    	var canvas = document.getElementById("test-canvas");
+	    	if (canvas.getContext) {
+			    var ctx = canvas.getContext('2d');
+			    ctx.fillStyle='#dddddd';
+			    ctx.fillRect(0,0,500,300);						
+			} else {
+			    console.log('你的浏览器不支持Canvas!');
+			}
+		}
+    </script>
 </html>

@@ -65,6 +65,7 @@ HTML 使用标记标签来描述网页。
 		<html> 元素 表示一个HTML文档的根（顶级元素）,所有其他元素必须是此元素的后代。
 	文档元数据：
 		<base> 元素 指定用于一个文档中包含的所有相对URL的基本URL。一份文档中只能有一个<base>元素。
+				<base href="file:///E:/zhangweei/es5-demo/media/" target="_self">
 		<head> 元素 规定文档相关的配置信息（元数据），包括文档的标题，引用的文档样式和脚本等。
 		<link> 元素规定了外部资源与当前文档的关系。这个元素可用来为导航定义一个关系框架。这个元素最常于链
 			   接样式表。
@@ -254,4 +255,167 @@ HTML 使用标记标签来描述网页。
 	编辑标识：
 		<del>	 表示一些被从文档中删除的文字内容。比如可以在需要显示修改记录或者源代码差异的情况使用这个标签。
 		<ins>    定义已经被插入文档中的文本。
+	表格内容:
+		<table>	 元素表示表格数据 — 即通过二维数据表表示的信息。在 CSS 创建之前， HTML <table> 元素常常被用于布局页面。 
+				 这种用法在 HTML 4之后不被推荐使用，并且 <table>元素 不应该 被用于此目的。
+		<caption> 展示一个表格的标题，它常常作为 <table> 的第一个子元素出现，同时显示在表格内容的最前面，但是，它可以被CSS样式化，
+				 所以，它可以出现在任何相对于表格的任意位置，它也不必须作为<table>的第一个子元素。
+		<colgroup> 用来定义表中的列的分组。作为table的子元素，它是可选的。
+				<table border="1">
+				  <colgroup>
+					<col span="2" style="background-color:red">  <!--前两列背景色为red，第3列背景色为yellow-->
+					<col style="background-color:yellow">
+				  </colgroup>
+				  <tr>
+					<th>ISBN</th>
+					<th>Title</th>
+					<th>Price</th>
+				  </tr>
+				  <tr>
+					<td>3476896</td>
+					<td>My first HTML</td>
+					<td>$53</td>
+				  </tr>
+				  <tr>
+					<td>5869207</td>
+					<td>My first CSS</td>
+					<td>$49</td>
+				  </tr>
+				</table>
+		<thead> 定义一组定义表格的列头的行。<thead> 元素应该与 <tbody> 和 <tfoot> 元素结合起来使用，用来规定表格的各个部分
+				（表头、主体、页脚）。通过使用这些元素，使浏览器有能力支持独立于表格表头和表格页脚的表格主体滚动。当包含多
+				个页面的长的表格被打印时，表格的表头和页脚可被打印在包含表格数据的每张页面上。一般来说，<table>作为 <table> 
+				元素的子元素，应该出现在 <caption>、<colgroup> 元素之后，<tbody>、 <tfoot> 和 <tr> 元素之前。
+				<thead> 元素内部必须包含一个或者多个 <tr> 标签。在 HTML 5 中，不再支持 HTML 4.01 中 <thead> 标签的任何属性。
+		<tbody> 用于组合 HTML 表格的主体内容。作为 <table> 元素的子元素，它应该出现在 <caption>、<colgroup> 和 <thead> 元素之后。
+				<tbody> 元素内部必须包含一个或者多个 <tr> 标签。
+		<tfoot> 用于组合 HTML 表格的页脚内容。作为 <table> 元素的子元素，它应该出现在 <caption>、<colgroup> 和 <thead> 元素之后，
+				<tbody> 和 <tr> 元素之前(HTML4.01)，在HTML5中它可以出现在<tbody> 和 <tr> 之后。
+		<tr>	定义表格中的一行，通常应该放在<thead>、<tbody>、<tfoot>内部，这样语义更清晰，但是也可以独立出现在<table>内部。
+		<th>    定义 HTML 表格中的表头单元格。使用 colspan 和 rowspan 属性将内容横跨多个行或列。<th>中的文本默认呈现为粗体并且居中。
+				<thead>
+					<tr>
+					  <th >Month</th>
+					  <th rowspan="2">savings</th>
+					</tr>
+					 <tr>
+					  <th>月</th>
+					</tr>
+				 </thead>
+		<td>  	定义 HTML 表格中的标准单元格。<td>中的文本默认是普通的左对齐文本。使用 colspan 和 rowspan 属性将内容横跨多个行或列。
+	表单元素：
+		HTML 提供了许多可一起使用的元素，这些元素能用来创建一个用户可以填写并提交到网站或应用程序的表单。
+		<form> 	用于创建供用户输入的 HTML 表单。<form> 元素包含一个或多个如下的表单元素：<input>、<textarea>、<button>、<select>、
+				<option>、<optgroup>、<fieldset>、<label>
+				accept-charset属性用于规定服务器可处理的表单数据字符集。通常浏览器输入表单的内容采用的编码应该是<meta charset="utf-8">
+				指定的，所以accept-charset应该和这个值保持一致。
+				action属性规定当提交表单时向何处发送表单数据。路径是基于当前项目根路径，也可以指定完全路径。
+				enctype属性规定在向服务器发送表单数据之前如何对其进行编码。（适用于 method="post" 的情况）
+				novalidate(HTML5)属性规定提交表单时不进行验证。target属性规定在何处打开 action URL。
+		<input> 用于规定用户可以在其中输入数据的输入字段。在<form> 元素中使用时，用来声明允许用户输入数据的 input 控件。可以使用 <label> 
+				元素来定义 <input> 元素的标注。
+				属性：accept--规定通过文件上传来提交的文件的类型(只针对type="file")。
+					  alt   --定义图像输入的替代文本。 (只针对type="image")
+					  autofocus--规定当页面加载时 <input> 元素应该自动获得焦点。
+					  checked  --规定在页面加载时应该被预先选定的 <input> 元素。(只针对 type="checkbox" 或者 type="radio")
+					  form     --规定 <input> 元素所属的一个或多个表单。
+					  formaction--规定当表单提交时处理输入控件的文件的 URL。(只针对 type="submit" 和 type="image")(form没有设置action)
+					  formenctype、formmethod等都是对应于form的相关属性。
+					  maxlength--规定 <input> 元素中允许的最大字符数。
+					  name --规定 <input> 元素的名称。
+					  placeholder --规定可描述输入 <input> 字段预期值的简短的提示信息 
+					  required--规定必需在提交表单之前填写输入字段。
+					  src --规定显示为提交按钮的图像的 URL。 (只针对 type="image")
+					  type --规定要显示的 <input> 元素的类型：button、checkbox、radio、date、datetime、email、file、image、number、password、
+							 submit、tel、url、text 
+					  value--指定 <input> 元素 value 的值。
+		<textarea> 定义一个多行的文本输入控件。属性：
+					readonly--规定文本区域为只读。
+					rows--规定文本区域内可见的行数。
+					cols--规定文本区域内可见的宽度。（更好的办法是使用 CSS 的 height 和 width 属性。）
+		<button>   定义一个按钮。在 <button> 元素内部，可以放置内容，比如文本或图像。<input> 元素创建的按钮使用value设置显示文本
+					type属性规定按钮的类型。值：button、reset、submit。请始终为 <button> 元素规定 type 属性，不同的浏览器对 <button> 
+					元素的 type 属性使用不同的默认值。
+		<select>   用于创建下拉列表，<select> 元素中的 <option> 标签定义了列表中的可用选项。multiple属性为 true 时，可选择多个选项。
+		<option>   用于定义列表中的可用选项，通常需要使用value属性定义选择项的保存值
+		<optgroup> 定义选项组：
+						<label>国籍:</label>
+						<select>
+							<optgroup label="亚洲">
+								<option value="cn">中国</option>
+								<option value="jap">日本</option>
+								<option value="a_oth">其他</option>
+							</optgroup>
+							<optgroup label="欧洲">
+								<option value="en">英国</option>
+								<option value="ger">德国</option>
+								<option value="e_oth">其他</option>
+							</optgroup>
+						</select>
+		<fieldset> 	用于将表单内的相关元素分组，会在相关表单元素周围绘制边框。<legend> 标签为 <fieldset> 元素定义标题。
+						<fieldset>
+						    <legend>connection methods:</legend>
+						    telephone: <input type="tel"><br>
+						    Email: <input type="email"><br>
+						    Address: <input type="text">
+						</fieldset>
+		<label> 	用于为 input 元素定义标注（标记），它为鼠标用户改进了可用性。如果在 label 元素内点击文本，就会触发此控件。
+					"for" 属性可把 label 绑定到另外一个元素。请把 "for" 属性的值设置为相关元素的 id 属性的值。
+		<datalist>  定义<input>元素可能的选项列表(input可以输入非此列表中的数据)。<input> 元素使用 list属性来绑定<datalist>元素。
+					IE9和Safari都不支持这个元素。
+					<form action="demo-form.php" method="get" target="_self">
+						<input list="browsers" name="browser">
+						<datalist id="browsers">
+						  <option value="Internet Explorer">
+						  <option value="Firefox">
+						  <option value="Chrome">
+						  <option value="Opera">
+						  <option value="Safari">
+						</datalist>
+						<input type="submit">
+					</form>
+		<meter> 	定义度量衡。仅用于已知最大和最小值的度量。 <meter> 不能作为一个进度条来使用， 进度条 <progress> 标签。
+					<meter value="2" min="0" max="10">2 out of 10</meter><br>
+					<meter value="0.6">60%</meter>
+					IE 浏览器完全不支持 meter 标签。<meter> 是 HTML5 的新标签。
+		<progress>  定义运行中的任务进度（进程），是 HTML5 中的新标签。IE 9 或者更早版本的 IE 浏览器不支持 <progress> 标签。
+					规范中没有规定该元素具体如何显示,浏览器开发商可以自己决定,但通常情况下,该元素都显示为一个进度条形式.
+						<progress value="22" max="100"></progress>
+		<output> 	作为计算结果输出显示(比如执行脚本的输出)，是 HTML 5 中的新标签。Internet Explorer 浏览器不支持 <output> 标签。
+					<form oninput="x.value=parseInt(a.value)+parseInt(b.value)">0
+					  <input type="range" id="a" value="50">100
+					  +<input type="number" id="b" value="50">
+					  =<output name="x" for="a b"></output>
+					</form>
+	交互元素：
+		<details> 	描述用户可见的或者隐藏的需求的补充细节，用来供用户开启关闭的交互式控件，任何形式的内容都能被放在 <details> 里边。
+					<details> 标签是 HTML5 中的新标签，目前，只有 Chrome 和 Safari 6 支持 <details> 标签。
+					与 <summary> 标签配合使用可以为 details 定义标题。标题是可见的，用户点击标题时，会显示出 details。设置open属性可以默认打开
+					隐藏的内容
+					<details>
+						<summary>Copyright 1999-2011.</summary>
+						<p> - by Refsnes Data. All Rights Reserved.</p>
+						<p>All content and graphics on this web site are the property of the company Refsnes Data.</p>
+					</details>
+		<summary> 	为 <details> 元素定义一个可见的标题。当用户点击标题时会显示出详细信息。它也是HTML5的新标签，现在也只有Chrome和Safari6支持
+		<dialog> 	定义一个对话框、确认框或窗口，是 HTML5 中的新标签。目前，只有 Chrome 和 Safari 6 支持 <dialog> 标签。
+		<menu> 		设计为定义一个命令列表或菜单，用于文本菜单，工具条和命令列表选项(设计时的想法应该是提供类似桌面应用的菜单)。HTML4.01之前引入，
+					但是HTML4.01又删除了这个元素，HTML5又重新引入。但是现在所有主流浏览器都不支持这个元素。
 		
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
