@@ -79,13 +79,24 @@ from
 	   or qf.qfxmmc='自费留学生全英班学费' or qf.qfxmmc='非学历留学生医保费' 
 group by qf.xh 
 
+字段改名：
+alter table table_name rename column colname1 to colname2;
 
+增加字段：
+alter table table_name add (colname varchar2(40) [default '0' ] [null/not null]);
+修改字段：
+alter table table_name modify (colname varchar2(100) [default '0' ] [null/not null]);
+删除字段：
+alter table table_name drop column colname;
 
+重命名表：
+alter table table_name rename to new_table_name
 
+清空表：
+delete from table_name;
 
-
-
-
+添加主键：
+alter table table_name add constraint PK_TABLE_NAME primary key (ID);
 
 
 

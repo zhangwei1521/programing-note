@@ -11,8 +11,7 @@ HTML 使用标记标签来描述网页。
 		HTML3.2		1997
 		HTML4.01	1999
 		XHTML 1.0	2000
-		HTML5		2012
-		XHTML5		2013
+		HTML5		2014
 	HTML文档由于历史原因有两种后缀名：htm和html。两种后缀名没有区别，都可以使用。
 	一个标准的HTML文档模板：
 		<!DOCTYPE html>
