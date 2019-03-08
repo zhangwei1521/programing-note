@@ -3207,23 +3207,86 @@ window作为全局对象的属性：
 		window.console：指向console对象，用于操作控制台。
 		window.screen：指向Screen对象，表示屏幕信息。height属性表示屏幕总高度，availHeight表示最大可用高度(不包括任务栏)，这两个属性都不会改变。
 		window.isSecureContext属性返回一个布尔值，表示当前窗口是否处在加密环境。如果是 HTTPS 协议，就是true，否则就是false。
-		
+window 对象的方法
+		window.alert()方法弹出的对话框，只有一个“确定”按钮，往往用来通知用户某些信息。用户只有点击“确定”按钮，对话框才会消失。对话框弹出期间，
+浏览器窗口处于冻结状态，如果不点“确定”按钮，用户什么也干不了。参数只能是字符串，没法使用 CSS 样式，但是可以用\n指定换行。
+		window.prompt()方法弹出的对话框，提示文字的下方，还有一个输入框，要求用户输入信息，并有“确定”和“取消”两个按钮。它往往用来获取用户输入的数据。
+			var result = prompt('您的年龄？', 25) //用户填入的值，会作为返回值存入变量result。
+		window.confirm()方法弹出的对话框，除了提示信息之外，只有“确定”和“取消”两个按钮，往往用来征询用户是否同意。
+			var result = confirm('你最近好吗？');  //如果用户点击“确定”，返回true；如果用户点击“取消”，则返回false。
+		这三个方法都具有堵塞效应，一旦弹出对话框，整个页面就是暂停执行，等待用户做出反应。
+		window.open方法用于新建另一个浏览器窗口，类似于浏览器菜单的新建窗口选项。它会返回新窗口的引用，如果无法新建窗口，则返回null。
+			var popup = window.open(
+				'https://www.google.com.hk/', /*这里如果是当前域名下的页面可以不写域名*/
+				'DefinitionsWindows',
+				'height=200,width=200,location=no,status=yes,resizable=yes,scrollbars=yes'
+			);
+			window.open("","","_blank")
+		三个参数都可以省略，默认在新的标签页打开about:blank页面。
+		window.close方法用于关闭当前窗口，一般只用来关闭window.open方法新建的窗口。popup.close();
+		window.stop()方法完全等同于单击浏览器的停止按钮，会停止加载图像、视频等正在或等待加载的对象。
+		window.moveTo()方法用于移动浏览器窗口到指定位置。它接受两个参数，分别是窗口左上角距离屏幕左上角的水平距离和垂直距离，单位为像素。
+		window.moveBy方法将窗口移动到一个相对位置。它接受两个参数，分布是窗口左上角向右移动的水平距离和向下移动的垂直距离，单位为像素。
+		目前只有该窗口是用window.open方法新建的，并且它所在的 Tab 页是当前窗口里面唯一的，这种情况才允许使用上面的两个方法。
+		window.resizeTo()方法用于缩放窗口到指定大小。第一个是参数缩放后的窗口宽度（outerWidth属性，包含滚动条、标题栏等等），第二个参数是缩放后的
+窗口高度（outerHeight属性）。
+		window.resizeBy()方法使用相对数据缩放窗口：
+			window.resizeBy(-200, -200)	//将当前窗口的宽度和高度，都缩小200像素。
+		这两个方法现在也只能用于使用window.open打开的窗口。
+		window.scrollTo方法用于将文档滚动到指定位置。它接受两个参数，表示滚动后位于窗口左上角的页面坐标。也接受一个配置对象作为参数。
+			window.scrollTo(0, 0);	//回滚到页面头部
+			window.scrollTo({top: 1000,left:200,behavior: 'smooth'});
+		window.scroll()方法是window.scrollTo()方法的别名。
+		window.scrollBy()方法用于将网页滚动指定距离（单位像素）。它接受两个参数：水平向右滚动的像素，垂直向下滚动的像素。
+			window.scrollBy(0, window.innerHeight) 	//将网页向下滚动一屏
+		window.print方法会跳出打印对话框，与用户点击菜单里面的“打印”命令效果相同。
+			document.getElementById('printLink').onclick = function () {
+				window.print();
+			}
+		window.focus()方法会激活窗口，使其获得焦点，出现在其他窗口的前面。window.blur()方法将焦点从窗口移除。
+		当前窗口获得焦点时，会触发focus事件；当前窗口失去焦点时，会触发blur事件。
+		window.getSelection方法返回一个Selection对象，表示用户现在选中的文本。
+			var selectedText = window.getSelection().toString();
+		window.getComputedStyle()方法接受一个元素节点作为参数，返回一个包含该元素的最终样式信息的对象
+		window.requestAnimationFrame()方法跟setTimeout类似，都是推迟某个函数的执行。不同之处在于，setTimeout必须指定推迟的时间，
+window.requestAnimationFrame()则是推迟到浏览器下一次重流时执行，执行完才会进行下一次重绘。重绘通常是 16ms 执行一次，不过浏览器会自动调节这个速率
+		window.requestAnimationFrame()的返回值是一个整数，这个整数可以传入window.cancelAnimationFrame()，用来取消回调函数的执行。
+				var element = document.getElementById('animate');
+				element.style.position = 'absolute';
 
+				var start = null;
 
+				function step(timestamp) {
+					if (!start) start = timestamp;
+					var progress = timestamp - start;
+					// 元素不断向左移，最大不超过200像素
+					element.style.left = Math.min(progress / 10, 200) + 'px';
+					// 如果距离第一次执行不超过 2000 毫秒，
+					// 就继续执行动画
+					if (progress < 2000) {
+						window.requestAnimationFrame(step);
+					}
+				}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+				window.requestAnimationFrame(step);
+		window.requestIdleCallback()将回调函数推迟到系统资源空闲时执行。用来保证网页性能。接受一个回调函数和一个配置对象作为参数。配置对象
+可以指定一个推迟执行的最长时间（timeout属性），如果过了这个时间，回调函数不管系统资源有无空虚，都会执行。
+		回调函数执行时，系统会传入一个IdleDeadline对象作为参数。IdleDeadline对象有一个didTimeout属性（布尔值，表示是否为超时调用）和一个
+timeRemaining()方法（返回该空闲时段剩余的毫秒数）。
+		window.requestIdleCallback()方法返回一个整数。该整数可以传入window.cancelIdleCallback()取消回调函数。
+		如果多次执行window.requestIdleCallback()，指定多个回调函数，那么这些回调函数将排成一个队列，按照先进先出的顺序执行。
+事件监听属性：
+		window.onload属性指定文档在浏览器窗口加载完毕这个事件的回调函数。
+		window.onerror属性对浏览器脚本发生错误事件指定回调函数。由于历史原因，window的error事件的回调函数不接受错误对象作为参数，
+而是一共可以接受五个参数（错误消息，脚本网址，行号，列号，错误对象）。如果脚本网址与网页网址不在同一个域，浏览器根本不会提供详
+细的出错信息，只会提示出错。这是浏览器防止向外部泄露脚本信息，个解决方法是在脚本所在的服务器，设置Access-Control-Allow-Origin的 
+HTTP 头信息，然后，在网页的<script>标签中设置crossorigin属性：<script crossorigin="anonymous" src="//example.com/file.js"></script>
+		其他事件监听属性：window.onhashchange：hashchange事件的监听函数、window.onafterprint：afterprint事件的监听函数等
+		对于iframe嵌入的窗口，document.getElementById方法可以拿到该窗口的 DOM 节点，然后使用contentWindow属性获得iframe节点包含的window对象。
+这和使用window.frames[i]获得的对象是同一个对象。只有在满足同源限制的情况下，才可以读取子窗口内部的属性。
+		<iframe>元素的contentDocument属性，可以拿到子窗口的document对象。window.frames[0].document也可以拿到这个document。
+		<iframe>窗口的window对象，有一个frameElement属性，返回<iframe>在父窗口中的 DOM 节点。对于非嵌入的窗口，该属性等于null。
+		每个窗口都有三个引用其他窗口的变量：top：顶层窗口，即最上层的那个窗口、parent：父窗口、self：当前窗口，即自身
 
 
 
