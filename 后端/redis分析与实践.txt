@@ -101,7 +101,55 @@ INFO sec(Memory)
 		list-compress-depth : quicklist两端不被压缩的节点的个数，我们在访问一个很长列表时可能
 常用的数据在列表两端，这样调节这个参数就可以平衡压缩比和访问效率。
 	
+	哈希：
+		hmset "kyoyo ramen" "address" "801 Mission St" "phone" "555-123-654" "rating" "5"
+			  # 插入哈希类型，key为"kyoyo ramen",哈希key为"address"、"phone"、"rating"
+		hmget "kyoyo ramen" address	#获取"kyoyo ramen"的"address"
+		hmget "kyoyo ramen" address phone #获取"kyoyo ramen"的"address"和"phone"
+		hget  "kyoyo ramen" address #获取单个属性值
+		hexists "kyoto ramen" address  #判断哈希对象中是否含有某个属性
+		hgetall "kyoto ramen"  #获取哈希对象所有的属性(不建议对有很多属性的哈希对象使用这个命令)
+		hset "kyoto ramen" rating "6.0"	 #修改或新增一个属性
+		hdel "kyoto ramen" rating	#删除哈希对象的某个属性
+		对于不存在的哈希key或属性字段，hmget和hget都返回nil，hgetall返回empty list or set
+		一个哈希对象最多可以具有2^32 - 1个属性字段，使用hgetall可能会导致阻塞，可以使用
+hscan 来进行 增量读取，hscan使用指针游标，使用前应先检查或修改该游标，命令执行后会返回一个元素列表
+和新的游标，新游标可用于下次读取。
+		hscan "kyoto ramen" 0 match *address*	# 0指定游标，match *address*指定属性字段名包括
+address，这个match部分是可选的，最后还可以使用可选的 count n 指定每次读取的数量，但是这个值默认为
+10，即如果设置的 n 小于10不会生效。返回的数据分为两个部分，第一部分是下次开始继续读取的游标索引，
+如果本次已经查询完所有属性字段列表，就会返回0；第二部分是返回的字段名和字段值。
+	redis在内部使用两种编码存储哈希对象：
+		ziplist：用于属性数量小于配置变量hash-max-ziplist-entries(默认512)的对象，并且属性字段名和
+字段值都小于hash-max-ziplist-value(默认64kb)的配置值。
+		hashtable: 用于不适用于ziplist编码的哈希对象。
+
+	对于哈希对象和列表，使用前都不需要预先初始化空的对象和列表，插入数据的操作会自动完成创建工作。
+同时当一个列表中的数据和哈希对象的属性被全部删除后，redis会自动删除列表和哈希对象占用的空间。
+	
+	SET集合：Set集合中不能有重复的元素，且元素间没有顺序
+		sadd classmates mimi nana didi #添加集合元素
+		sismember classmates mimi	#元素存在于集合中返回1，否则返回0，这里如果classmates实际是list，
+会产生一个error，如果classmates根本就不存在，返回0
+		srem classmates mimi  #删除元素
+		scard classmates  #返回集合中元素的个数
+		smembers classmates  #返回所有元素(对于具有很多元素的集合不建议使用这个命令，建议使用sscan)
+		sscan classmates 0 match *i*	#用法和hscan相同
+		sunion classmates friends 	#返回两个集合classmates和friends的并集
+		sunionstore known-mans classmates friends #将求并集结果保存到新的集合known-mans
+		sinter classmates friends  #返回交集
+		sinterstore new-friends classmates friends  #将交集保存到新集合new-friends
+		sdiff classmates friends #返回前一个集合和后一个集合的差集，这里需要注意集合的顺序和返回的
+结果是有关的。也可以只带第一个集合，这样的效果和smembers相同。
+		sdiffstore not-friends classmates friends	#将差集保存到新的集合not-friends
+	当Set集合中元素都被删除后，redis会删除这个集合的键。
+	一个Set集合最多可以含有2^23 - 1个元素。
+	redis在内部使用两种编码存储Set集合：
+		intset: 用于元素为整数，并且元素个数小于set-max-intset-entries(默认512)的集合
+		hashtable: 用于不适用于intset编码的集合
+	
 		
+	
 		
 		
 		

@@ -16,7 +16,8 @@
 	GNU项目开发了gcc编译器套件，其中包含gcc C编译器，LLVM项目开发了clang编译器。
 	gcc C编译器使用：gcc [options] [filenames]  // gcc -std=c99 xxx.c  指定使用C语言标准的版本
 	C语言标准：K&R C(经典C) -> ANSI C(C89/C90) -> C99 -> C11(C1x是C11的草案，gcc也有对应的实现)
-	
+
+	第二章
 	
 	
 	
