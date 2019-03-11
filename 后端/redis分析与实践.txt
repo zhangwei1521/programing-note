@@ -121,7 +121,7 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 如果本次已经查询完所有属性字段列表，就会返回0；第二部分是返回的字段名和字段值。
 	redis在内部使用两种编码存储哈希对象：
 		ziplist：用于属性数量小于配置变量hash-max-ziplist-entries(默认512)的对象，并且属性字段名和
-字段值都小于hash-max-ziplist-value(默认64kb)的配置值。
+字段值都小于hash-max-ziplist-value(默认64字节)的配置值。
 		hashtable: 用于不适用于ziplist编码的哈希对象。
 
 	对于哈希对象和列表，使用前都不需要预先初始化空的对象和列表，插入数据的操作会自动完成创建工作。
@@ -148,7 +148,28 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 		intset: 用于元素为整数，并且元素个数小于set-max-intset-entries(默认512)的集合
 		hashtable: 用于不适用于intset编码的集合
 	
-		
+	有序集合：
+	zadd ranking:restaurants 100 "Olive Graden" 23 "PF Chang's" 34 "Outback Steakhouse" 
+		45 "Red Lobster" 88 "Longhorn Steakhouse"	# 使用 “权重 值” 添加元素到有序集合
+	zrem ranking:restaurants "Olive Graden"  #删除元素
+	zincrby ranking:restaurants 10 "PF Chang's"		#增加指定元素权重
+	zrevrange ranking:restaurants 0 -1	#返回所有的元素
+	zrevrange ranking:restaurants 0 -1 withscores	#返回所有的元素和权重
+	zrevrank ranking:restaurants "PF Chang's"	#查询指定元素的索引（位序）
+	zscore ranking:restaurants "Olive Graden"	#查询指定元素的权重
+	zunionstore totalranking 2 ranking:restaurants ranking2:restaurants weights 1 2 
+[aggregate sum|max|min (聚合方式)]
+		#求ranking:restaurants和ranking2:restaurants的并集(根据权重合并)并保存到新的集合totalranking
+	zadd ranking:restaurants nx 50 "Olive Graden" 	#只有元素不存在时才添加
+	zadd ranking:restaurants xx 150 "Olive Graden"  #只在元素存在时更新权重值
+	当元素的权重相同时，redis使用字典顺序排序元素
+	zinterstore newranking 2 ranking:restaurants ranking2:restaurants aggregate max #求交集(保留较大的元素)
+	注意：没有zinter 和 zunion操作
+	redis使用两种编码保存有序集合：
+		ziplist: 元素个数小于zset-max-ziplist-entries(默认128)且元素大小小于zset-max-ziplist-value
+(默认64字节)的有序集合。
+		skiplist: 不适用于ziplist的有序集合
+	
 	
 		
 		
