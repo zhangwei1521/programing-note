@@ -153,8 +153,9 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 		45 "Red Lobster" 88 "Longhorn Steakhouse"	# 使用 “权重 值” 添加元素到有序集合
 	zrem ranking:restaurants "Olive Graden"  #删除元素
 	zincrby ranking:restaurants 10 "PF Chang's"		#增加指定元素权重
-	zrevrange ranking:restaurants 0 -1	#返回所有的元素
+	zrevrange ranking:restaurants 0 -1	#返回所有的元素，按权重从大到小排序返回
 	zrevrange ranking:restaurants 0 -1 withscores	#返回所有的元素和权重
+	zrange ranking:restaurants 0 -1 withscores  	#按权重从小到大排序返回
 	zrevrank ranking:restaurants "PF Chang's"	#查询指定元素的索引（位序）
 	zscore ranking:restaurants "Olive Graden"	#查询指定元素的权重
 	zunionstore totalranking 2 ranking:restaurants ranking2:restaurants weights 1 2 
@@ -169,6 +170,37 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 		ziplist: 元素个数小于zset-max-ziplist-entries(默认128)且元素大小小于zset-max-ziplist-value
 (默认64字节)的有序集合。
 		skiplist: 不适用于ziplist的有序集合
+	
+	HyperLogLog:是一种类似集合的数据结构，但是占用内存相比集合少很多，这个数据结构应该主要是用于计数(
+它可以O(1)返回计数)。
+	pfadd Counting:Olive  000123 000456  #添加元素
+	pfcount Counting:Olive				 #返回元素总数
+	pfmerge Counting:Olive-Graden counting:Olive counting:Graden  #求并集（重复元素只保留一个）
+	
+	Geo(Redis3.2开始引入)：存储数据元素的地理位置（经度、纬度）
+	geoadd restaurants:CA -121.896321 37.916750 "Olive Graden" -117.910937 33.804047 "PF Chang's"
+		#添加元素及元素的地理坐标
+	geopos restaurants:CA "PF Chang's"	#查询元素的地理坐标
+	georadius restaurants:CA -121.896310 37.916740 5 km  #返回指定坐标5km距离范围内的元素
+	geodist restaurants:CA "Olive Graden" "PF Chang's" km #返回元素之间的距离，单位km
+	georadiusbymember restaurants:CA "Olive Graden" 10 km #返回距离指定元素10km范围内的元素(参数必
+须是该集合中的元素，返回结果中会包含参数自己)
+	georadius/georadiusbymember restaurants:CA "Olive Graden" 10 km store/storedist neibors 
+		#返回结果保存到新集合中
+	georadius/georadiusbymember restaurants:CA "Olive Graden" 10 km withdist withcoord 
+		#返回元素和距离、坐标
+	geo集合实际上是一个有序集合，所以可以对geo集合使用有序集合的命令。
+	redis使用一个52位的geohash编码保存geo集合元素的坐标。可以实现低于1m的精度，当然不可能完全准确，
+所以保存的坐标和使用geopos返回的坐标有极小的差别。
+	
+	键管理：
+	获取redis中键的个数：dbsize
+	返回所有的键：keys * 或 scan 0(遵循scan语法)
+	删除键：del key 或 unlink key(Redis4.0引入，用于大key的异步删除)
+	判断键是否存在：exists key	
+	获取键对应的数据类型：type key	(使用这个命令就可以看出来geo集合就是有序集合)
+	重命名键：rename key-old key-new
+	使用keys和del都可能导致阻塞，所以对于大数据量的操作建议使用scan和unlink
 	
 	
 		
