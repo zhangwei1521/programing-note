@@ -98,6 +98,13 @@ delete from table_name;
 添加主键：
 alter table table_name add constraint PK_TABLE_NAME primary key (ID);
 
+添加说明：
+comment on table table_name is '测试数据表';
+
+comment on column table_name.field1 is '字段1';
+
+结果拼接：
+select department_id,listagg(worker_name,',') within group (order by worker_name) workers from worker_table where department_id='6F7367A0D7804BA7E053C000100ACA74' group by department_id;
 
 
 

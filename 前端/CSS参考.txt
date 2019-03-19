@@ -281,12 +281,12 @@ Chrome和Safari更高一点点，可以使用下来的样式解决这个问题�
 	
 	外边距 margin：
 		p {	margin-top:100px; margin-bottom:2cm; margin-right:50px; margin-left:50px;} /*这里可以使用厘米cm作为单位*/
-	简写：p {margin: 100px, 50px}
+	简写：p {margin: 100px 50px}
 	使用%： p {margin: 5%} /*这里取到的是body的width的5%*/
 	
 	填充 padding：(也称为 内边距)
 		p {	padding-top:100px; padding-bottom:2cm; padding-right:50px; padding-left:50px;} /*这里可以使用厘米cm作为单位*/
-	简写：p {padding: 100px, 50px}
+	简写：p {padding: 100px 50px}
 	使用%： p {padding: 5%} /*这里取到的是body的width的5%*/
 	
 	分组选择器，每个选择器用逗号分隔：

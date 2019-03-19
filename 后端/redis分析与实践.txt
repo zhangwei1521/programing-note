@@ -143,7 +143,7 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 结果是有关的。也可以只带第一个集合，这样的效果和smembers相同。
 		sdiffstore not-friends classmates friends	#将差集保存到新的集合not-friends
 	当Set集合中元素都被删除后，redis会删除这个集合的键。
-	一个Set集合最多可以含有2^23 - 1个元素。
+	一个Set集合最多可以含有2^32 - 1个元素。
 	redis在内部使用两种编码存储Set集合：
 		intset: 用于元素为整数，并且元素个数小于set-max-intset-entries(默认512)的集合
 		hashtable: 用于不适用于intset编码的集合
