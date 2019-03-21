@@ -335,9 +335,9 @@ springboot项目可以直接import上面的spring-boot-dependencies来控制依�
 	
 	③AOP模块：
 		<dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-aop</artifactId>
-        </dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-aop</artifactId>
+		</dependency>
 	spring-boot-autoconfigure依赖中提供了AopAutoConfiguration，这个配置类可以在aop依赖被引入后自动配置启用aop代理。
 	aop切面类：
 		@Component

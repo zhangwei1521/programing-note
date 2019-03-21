@@ -159,6 +159,8 @@ git diff --staged，效果是相同的）
 git push origin --tags 推送所有标签
 	在 Git 中并不能真的检出一个标签，将工作目录切换到某个标签版本,需要创建一个该标签处的分支：
 git checkout -b [branch-name] [tag-name]
+	
+	git 配置
 	可以通过 git config 文件来轻松地为每一个命令设置一个别名:
 		git config --global alias.co checkout
 	添加自己的取消暂存别名:
@@ -174,6 +176,10 @@ git checkout -b [branch-name] [tag-name]
 	git config --global core.autocrlf input
 	#提交检出均不转换
 	git config --global core.autocrlf false
+	git bash编码配置：修改git安装路径下~/etc/gitbash.bashrc文件，添加：
+		export LANG="zh_CN.UTF-8"
+		export LC_ALL="zh_CN.UTF-8"
+
 	
 	Git 分支
 	相较于其它版本控制系统，git创建分支要高效得多。
