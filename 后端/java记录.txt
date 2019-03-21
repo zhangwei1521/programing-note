@@ -937,6 +937,19 @@ destroy方法回收资源。
 				}
 			}
 		});
+	Integer对象的比较：
+		Integer a = 127, b = 127;
+		System.out.println(a==b);	//true
+		a = new Integer(127);
+		b = new Integer(127);
+		System.out.println(a==b);	//false
+		a = 128;
+		b = 128;
+		System.out.println(a==b);	//false
+		说明：Java在自动装箱创建Integer对象时，如果value小于128或大于-129，实际是引用了Integer的静态内部类IntegerCache的
+静态缓存数组cache中的对象，所以a==b。可以使用System.identityHashCode(a)打印对象的内存地址，就可以看到a和b的地址完全相同。
+使用new语法创建的对象则没有这个问题。String创建对象时也使用了相同的规则，只是String没有大小限制。Float和Double没有这个问题。
+		比较Integer的值时应该使用equals方法
 		
 	
 	

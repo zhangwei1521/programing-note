@@ -3500,11 +3500,20 @@ XMLHttpRequest对象的方法：
 		window.focus()
 		window.postMessage()
 	只有window.location是可读写的，其他八个全部都是只读。而且，即使是location对象，非同源的情况下，也只允许调用location.replace方法和写入location.href属性。
-
-
-
-
-
+规避同源限制：
+	Cookie共享：如果两个网页一级域名相同，只是次级域名不同，浏览器允许通过设置document.domain共享 Cookie。浏览器允许修改document.domain为原值的后缀(也就是
+一级域名)，对于www.example.com，document.domain可以被修改为example.com。如果设置document.domain为其他非当前域名后缀的域名，浏览器就会抛出异常。
+A 和 B 两个网页都需要设置document.domain属性，才能达到同源的目的。因为设置document.domain的同时，会把端口重置为null，因此如果只设置一个网页的document.domain，
+会导致两个网址的端口不同，还是达不到同源的目的。这种方法只适用于 Cookie 和 iframe 窗口，LocalStorage 和 IndexedDB 无法通过这种方法规避同源政策
+服务器可以在设置 Cookie 的时候，指定 Cookie 的所属域名为一级域名，比如.example.com。
+		Set-Cookie: key=value; domain=.example.com; path=/
+这样的话，二级域名和三级域名不用做任何设置，都可以读取这个 Cookie。
+	父窗口运行下面的命令，如果iframe窗口不是同源，就会报错。
+		document.getElementById("myIFrame").contentWindow.document
+	子窗口获取主窗口的 DOM 也会报错：
+		window.parent.document.body
+	iframe窗口、window.open方法打开的窗口，只要跨域，父窗口与子窗口之间就无法通信。
+	如果两个窗口一级域名相同，只是二级域名不同，那么设置document.domain属性，就可以规避同源政策，拿到 DOM。
 
 
 
