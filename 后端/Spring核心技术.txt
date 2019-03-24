@@ -18,7 +18,7 @@
 接口定义)和应用上下文(ApplicationContext接口定义)。现在的spring基本上都是应用上下文作为容器。几种应用上下文：
 		AnnotationConfigApplicationContext：从java配置类中加载配置信息以创建spring应用上下文
 		AnnotationConfigWebApplicationContext：从java配置类中加载配置信息以创建spring web应用上下文
-		ClasspathXmlApplicationContext：从类路径下的xml文件加载配置信息以创建spring应用上下文
+		ClassPathXmlApplicationContext：从类路径下的xml文件加载配置信息以创建spring应用上下文
 		FileSystemXmlApplicationContext：从文件系统指定位置的xml文件加载配置信息以创建spring应用上下文
 		XmlWebApplicationContext：从web应用下的xml文件加载配置信息以创建spring web应用上下文。
 	bean的生命周期：
@@ -335,18 +335,222 @@ Environment、bean工厂、资源加载器等，AnnotatedTypeMetadata接口实�
 		#{peter.teles[2]}
 		#{peter.teles.?[nums matches '159[0-9]+']}
 		
-		
+										第四章
+	横切关注点：分散地分布在应用中的功能，这些功能在概念上是和业务逻辑相分离的，但是往往又是必须要
+保留的。面向切面编程所要解决的问题就是将这些功能和业务逻辑分离开。
+	横切关注点往往是通用的功能，如日志、安全、事务等，实现这些通用功能的传统方式主要有两种：继承和
+委托。继承的问题在于构建的应用的对象体系将会非常脆弱，如果想要调整某个功能在某一处应用的具体形式，
+就会遇到问题：要么全局修改，要么放弃。委托的问题在于调用增加了复杂性。
+	切面提供了一个替代继承和委托的新方案，通用功能点的定义仍然在一个地方完成，但是使用声明的方式来
+定义在什么地方以什么方式（在什么时间）被应用。切面的非常重要的地方在于应用切面不需要更改目标类。
+	什么是切面？切面是横切关注点被模块化组织在一起后的类。
+	AOP术语：
+	通知：定义了一个横切关注点要做的事和什么时候使用，通知的具实现分为两个部分，通知的执行时机由
+spring框架提供API，具体要做的事由我们自己实现。spring提供5种通知执行的时间点，也是通知的5中类型:
+前置通知、后置通知（不管连接点目标执行是否成功都执行）、环绕通知、返回通知（在连接点目标成功返回才
+执行）、异常通知。
+	连接点：应用中（语义上）可以应用通知的时机。可以是某个对象方法调用前、方法调用抛出异常时，甚至
+是对象的字段被修改时、对象构造时等。spring目前只支持方法调用期间应用通知。
+	切点：切点在切面类中定义通知在什么地方应用，切点的定义匹配通知要织入的一个或多个连接点。通常使用
+明确的类名和方法名或者正则表达式来定义切点。
+	切面：通知和切点的结合后的类。
+	引介：为当前类或接口引入新的方法的一种机制，引介不需要修改当前代码，本质上还是代理
+	织入：根据切面和目标对象创建代理对象的过程。织入根据生成代理的时机可以分为三种类型：
+		编译期：在编译阶段使用特殊的编译器直接编译产生代理的class文件。（AspectJ支持）
+		类加载期：在JVM加载类时，使用特殊的类加载器根据目标对象的字节码对象和切面类的字节码对象产生
+代理对象的字节码对象。（AspectJ5支持）
+		运行期：创建目标对象后根据目标对象和切面对象动态创建代理对象。（Spring使用）
+	spring提供4种类型的AOP支持：
+		传统的spring经典AOP实现；
+		纯POJO切面；（基于XML提供配置）
+		@AspectJ注解驱动的切面；
+		注入式AspectJ切面
+	前三种都是使用的动态代理实现，所以只支持对方法调用应用通知。
+	Spring AOP中使用AspectJ的切点表达式来定义切点，但是只支持AspectJ切点指示器的一个子集：
+		args()、@args、execution()、this()、target、@target()、within()、@within()、@annotation
+这里面只有execution是实际进行匹配的，其它的指示器用来限制匹配。
+				返回值类型						方法名
+		execution(int service.intface.GoodsResourse.*(String))
+		方法执行时触发		类全限定名				  参数类型
+		这里可以使用实现类，也可以使用接口，效果是一样的。
+		模糊匹配：
+		execution(* service..*.*(..))
+		使用within()限定类的位置：
+		execution(* service..*.*(..)) && within(service.*)
+											限定类为service包下的类（不包括service的子包）
+	spring提供了一个@bean指示器，可以限定为指定ID的bean启用通知：
+		execution(int service..*.*(..)) && bean('goodsResourse')   //这里可以在bean前加一个!进行取非
+	在基于java类的切点定义中，使用&&和and是一样的，但是在基于xml的配置中只能使用and
+	基于注解的切面：
+		@Aspect
+		@Component
+		public class CommonAspect {
+			@Pointcut("execution(int service..*.*(String))")
+			public void pointCut(){}
 
+			@Before("pointCut()")
+			public void registGoodsOp(){
+				System.out.println("CommonAspect.registGoodsOp...");
+			}
 
+			@Before("execution(int service..*.*(..))")
+			public void registOpArgs(){
+				System.out.println("CommonAspect.registOpArgs...");
+			}
 
+			@After("pointCut()")
+			public void registOpResult(){
+				System.out.println("CommonAspect.registOpResult...");
+			}
+			
+			@Around("pointCut()")
+			public void aroundDo(ProceedingJoinPoint joinPoint){
+				try {
+					System.out.println("before do the task...");
+					joinPoint.proceed();
+					System.out.println("after the task is finished...");
+				}catch (Throwable e){
+					System.out.println("exception happended: "+e.getMessage());
+				}
+			}
+		}
+	spring使用AspectJ注解来声明通知执行的时机：
+		@Before	通知方法在目标方法调用前执行
+		@After	通知方法在目标方法返回或抛出异常后执行
+		@AfterReturning	通知方法在目标方法返回后执行
+		@AfterThrowing	通知方法在目标方法抛出异常后执行
+		@Around	通知方法将目标方法封装起来
+	@Pointcut注解用于在一个切面中定义可重用的切点。
+	@Around注解标记的方法接受一个ProceedingJoinPoint类型的对象作为参数，这个参数是必须的，在方法中，
+通过joinPoint.proceed();调用目标方法，这样完全可以在方法中根据条件不调用或多次调用目标方法。joinPoint
+对象除了调用目标方法外，还可以拿到目标方法签名和调用时传入的参数。
+	处理参数：
+		@Pointcut("execution(* service..*.*(String)) && args(goodsTypeNum)")
+		public void pointCut(String goodsTypeNum){}
 
+		@Before("pointCut(goodsTypeNum)")
+		public void registGoodsOp(String goodsTypeNum){
+			System.out.println("args is: "+goodsTypeNum);
+			System.out.println("CommonAspect.registGoodsOp...");
+		}
+	需要注意的是@Pointcut注解中的参数类型、args(paramName)要和其修饰的方法的参数类型、参数名一致，
+@Before注解后的参数名要和它修饰的方法的参数名一致。
+	引介：
+		需要引入的接口和方法：
+		public interface GoodsPriceResourse {
+			double getHistoryPrice(String date);
+		}
+		引介切面：
+		@Aspect
+		@Component
+		public class ExtraAspect {
+			@DeclareParents(value = "service.intface.GoodsResourse+",defaultImpl = GoodsPriceResourseImpl.class)
+			public static GoodsPriceResourse goodsPriceResourse;
+		}
+		value指定要引入新的接口的bean的类型，defaultValue指定引入接口的实现类
+		这里配置value时不是直接写接口，后面的+表示应用到接口的实现类上。
+		使用：
+		GoodsResourse goodsResourse = (GoodsResourse)context.getBean("goodsResourse");
+        GoodsPriceResourse goodsPriceResourse = (GoodsPriceResourse)goodsResourse;
+        double price = goodsPriceResourse.getHistoryPrice("2018-12-25");
+        System.out.println("price on 2018-12-25 is: "+price);
+	
+	在XML配置文件中声明切面：
+	spring提供以下的aop元素来声明切面：
+		<aop:aspectj-autoproxy>
+		<aop:config>
+		<aop:aspect>
+		<aop:pointcut>
+		<aop:before>
+		<aop:after>
+		<aop:after-returning>
+		<aop:after-throwing>
+		<aop:around>
+		<aop:declare-parents>
+		<aop:advisor>
+	实例：
+		<?xml version="1.0" encoding="UTF-8"?>
+		<beans xmlns="http://www.springframework.org/schema/beans"
+			   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+			   xmlns:aop="http://www.springframework.org/schema/aop"
+			   xsi:schemaLocation="http://www.springframework.org/schema/beans
+					http://www.springframework.org/schema/beans/spring-beans.xsd
+					http://www.springframework.org/schema/aop
+					http://www.springframework.org/schema/aop/spring-aop.xsd">
+			<bean id="goodsResourse" class="service.impl.GoodsResourseImpl">
+			</bean>
+			<bean id="goodsPriceResourse" class="service.impl.GoodsPriceResourseImpl">
+			</bean>
+			<bean id="commonAspect" class="aspect.CommonXmlAspect"></bean>
+			<aop:aspectj-autoproxy proxy-target-class="false"/>
+			<aop:config>
+				<aop:pointcut id="pointcut" expression="execution(* service..*.*(..))"/>
+				<aop:aspect ref="commonAspect">
+					<aop:before method="registGoodsOp" pointcut="execution(* service..*.*(..))"/>
+					<aop:after method="registOpResult" pointcut="execution(* service..*.*(..))"/>
+					<aop:around method="aroundDo" pointcut-ref="pointcut"/>
+				</aop:aspect>
+			</aop:config>
+		</beans>
+	使用<aop:aspectj-autoproxy proxy-target-class="false"/>开启切面代理，proxy-target-class="false"
+表示不使用基于类的代理，这里其实可以不配置这个属性，默认值就是false
+	通知元素的属性pointcut="execution(* service..*.*(..))定义切点表达式，可以将这里的切点表达式放在
+独立的元素<aop:pointcut>中：
+		<aop:pointcut id="pointcut" expression="execution(* service..*.*(..))"/>
+		通知使用pointcut-ref属性引用： <aop:before method="registGoodsOp" pointcut-ref="pointcut"/>
+	<aop:pointcut>可以放在<aop:aspect>内，这时只有<aop:aspect>内的通知元素能引用定义的切点，如果将
+<aop:pointcut>放在<aop:config>下，则该<aop:config>内所有的<aop:aspect>中的通知都可以引用这个切点。
+	传递参数给通知：args(param)中的参数名需要和切面类的通知方法的参数名一致。
+		<aop:pointcut id="pointcut" expression="execution(* service..*.*(String)) and args(param)"/>
+	注意：这里的带参数限制的切点不能让环绕通知引用，因为环绕通知的参数只有joinpoint。
+	配置引介切面：
+		<aop:aspect>
+            <aop:declare-parents
+                    types-matching="service.intface.GoodsResourse+"
+                    implement-interface="service.intface.GoodsPriceResourse"
+                    default-impl="service.impl.GoodsPriceResourseImpl"/>
+        </aop:aspect>
+	default-impl属性可以替换为delegate-ref="goodsPriceResourse"，引用一个bean作为默认实现
+	AspectJ切面类：MyAspectJAspect.aj
+		public aspect MyAspectJAspect {
+			public MyAspectJAspect(){}
 
+			pointcut goodsServicePointcut() : execution(* addOne(..));
 
+			afterReturning() : goodsServicePointcut(){
+				System.out.println("do after");
+			}
 
+			private GoodsPriceResourse goodsPriceResourse;
 
-
-
-
+			public void setGoodsPriceResourse(GoodsPriceResourse goodsPriceResourse){
+				this.goodsPriceResourse=goodsPriceResourse;
+			}
+		}
+	将这个切面使用spring管理：
+		<bean id="myAspectJAspect" class="aspect.MyAspectJAspect" factory-method="aspectOf">
+			<property name="goodsPriceResourse" ref="goodsPriceResourse"/>
+		</bean>
+	aspectj的切面对象不会有spring创建，所以spring只能使用factory-method="aspectOf"获取有aspectj自己
+创建的对象。
+	编译aspectj切面需要使用专门的编译插件：
+		<plugin>
+			<groupId>org.codehaus.mojo</groupId>
+			<artifactId>aspectj-maven-plugin</artifactId>
+			<version>1.8</version>
+			<executions>
+				<execution>
+					<goals>
+						<goal>compile</goal>
+					</goals>
+				</execution>
+			</executions>
+			<configuration>
+				<complianceLevel>1.8</complianceLevel>
+				<source>1.8</source>
+				<target>1.8</target>
+			</configuration>
+		</plugin>
 
 
 
