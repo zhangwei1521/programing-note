@@ -17,3 +17,16 @@ $env:SCOOP_GLOBAL='c:\apps'
 [environment]::setEnvironmentVariable('SCOOP_GLOBAL',$env:SCOOP_GLOBAL,'Machine')
 scoop install -g <app>
 Using Scoop
+
+nginx命令：
+启动：
+start nginx
+停止：
+nginx.exe -s stop
+或
+nginx.exe -s quit
+注：stop是快速停止nginx，可能并不保存相关信息；quit是完整有序的停止nginx，并保存相关信息。
+重启：
+nginx.exe -s reload
+查看版本：
+nginx -v
