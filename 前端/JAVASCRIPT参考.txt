@@ -3608,3 +3608,26 @@ XMLHttpRequest的onerror回调函数捕获。这种错误无法通过状态码�
 			Access-Control-Allow-Credentials: true				//服务器是否接受跨域的cookie
 			Access-Control-Max-Age: 1728000								//指定本次预检请求的有效期，单位为秒。
 		一旦服务器通过了“预检”请求，以后每次浏览器正常的 CORS 请求，就都跟简单请求一样，会有一个Origin头信息字段。服务器的回应，也都会有一个Access-Control-Allow-Origin头信息字段。
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+Storage 接口
+	浏览器提供了两个对象：window.sessionStorage和window.localStorage，这两个对象都实现了Storage接口。
+	这个接口用于在脚本中使用保存数据，与 Cookie 一样，也受同域限制，同域的窗口可以通过这个接口实现数据共享。storage接口允许保存的数据量要比cookie大得多，Chrome
+允许每个窗口(一个域窗口)保存高达2.5MB的数据量，其他游览器支持更大的数据量。
+	属性：length：返回保存的数据项个数。
+	方法：setItem()方法用于存入数据。它接受两个参数，第一个是键名，第二个是保存的数据。如果键名已经存在，该方法会更新已有的键值。该方法没有返回值。
+			setItem()两个参数都是字符串。如果不是字符串，会自动转成字符串，再存入浏览器。如果储存空间已满，该方法会抛错。
+			实际上使用localStorage.foo = '123';和使用localStorage.setItem('foo','bar');是一样的。
+		getItem()方法用于读取数据。它只有一个参数，就是键名。如果键名不存在，该方法返回null。也可以直接使用localStorage.foo或localStorage['foo']来获取值
+		removeItem()方法用于清除某个键名对应的键值。它接受键名作为参数，如果键名不存在，该方法不会做任何事情，也不会报错
+		clear()方法用于清除所有保存的数据。该方法的返回值是undefined。
+		key()接受一个整数作为参数（从零开始），返回该位置对应的键值。
+		Storage 接口储存的数据发生变化时，会触发 storage 事件，可以指定这个事件的监听函数。
+			window.addEventListener('storage', onStorageChange);
+		监听函数接受一个event实例对象作为参数。这个实例对象继承了 StorageEvent 接口，具有以下属性：
+			key：字符串，表示发生变动的键名。如果 storage 事件是由clear()方法引起，该属性返回null。
+			newValue：字符串，表示新的键值。如果 storage 事件是由clear()方法或删除该键值对引发的，该属性返回null。
+			oldValue：字符串，表示旧的键值。如果该键值对是新增的，该属性返回null。
+			storageArea：对象，返回键值对所在的整个对象。
+			url：字符串，表示原始触发 storage 事件的那个网页的网址。
+		这个事件奇怪的地方在于：它不在导致数据变化的当前页面触发，而是在同一个域名的其他窗口触发。
+		
