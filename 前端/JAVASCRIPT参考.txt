@@ -3630,4 +3630,33 @@ Storage 接口
 			storageArea：对象，返回键值对所在的整个对象。
 			url：字符串，表示原始触发 storage 事件的那个网页的网址。
 		这个事件奇怪的地方在于：它不在导致数据变化的当前页面触发，而是在同一个域名的其他窗口触发。
-		
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+History对象
+	window的history属性指向history对象，这个对象保存了当前窗口访问过的所有的页面的网址。
+	浏览器不允许脚本获取history对象记录的历史页面地址，但允许脚本在历史页面进行前进后退。	
+	属性: length--当前窗口访问过的网址数量（包括当前网页）
+			  state：History 堆栈最上层的状态值
+	方法：back()：移动到上一个网址，等同于点击浏览器的后退键。
+				forward()：移动到下一个网址，等同于点击浏览器的前进键。
+				go()：接受一个整数作为参数，以当前网址为基准，移动到参数指定的网址，比如go(1)相当于forward()，go(-1)相当于back()。如果参数超过实际存在的网址范围，
+						  该方法无效果；如果不指定参数，默认参数为0，相当于刷新当前页面。
+				pushState()：用于在历史中添加一条记录。
+					history.pushState(state, title, url)
+					参数state是一个与添加的记录相关联的状态对象，参数title被所有浏览器忽视，填空字符串就行，参数url表示新的网址，必须与当前页面处在同一个域。
+				调用pushState方法会做如下几件事：首先在history记录顶层新增一条记录，设置这条记录对应的state为state参数，然后修改当前窗口的地址为url参数。
+				调用pushState不会跳转到url参数指定的地址，实际上这个url地址可能是不存在的，也不会修改history所在的位置。
+				调用pushstate后，调用forward方法可以将history移动到新增的记录处，表现为state变为设置的值，但是不会更改页面内容。调用back方法跳转到以前的某个页面后，
+	再使用forward或go方法就会跳转到设置的页面。
+				可以使用pushState的 URL 参数设置一个新的锚点值（即hash）：history.pushState(null, '', '#p3');
+				当页面URL 的锚点值发生改变，会在 History 对象创建一条浏览记录。
+				如果pushState()方法设置了一个跨域网址，则会报错。
+				replaceState()：用来修改 History 对象的当前记录，其他都与pushState()方法一模一样。
+					history.pushState({page: 1}, '', '');
+	当同一个文档的浏览历史（即history对象）出现变化时，会触发popstate事件。具体来说：用户点击浏览器倒退按钮和前进按钮，或者使用 JavaScript 调用History.back()、
+History.forward()、History.go()方法时会触发这个事件，调用pushState()方法或replaceState()方法 ，不会触发该事件。
+	popstate事件只针对同一个文档，如果浏览历史的切换，导致加载不同的文档，该事件也不会触发。页面第一次加载的时候，浏览器不会触发popstate事件。
+		window.onpopstate = function (event) {
+			console.log('location: ' + document.location);
+			console.log('state: ' + JSON.stringify(event.state));
+		};

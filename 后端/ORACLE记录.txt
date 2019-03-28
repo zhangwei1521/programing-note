@@ -8,11 +8,23 @@ oracle下载地址：
 https://www.oracle.com/technetwork/database/enterprise-edition/downloads/index.html
 
 ------------------------------------------------------------------------------------
-中大使用机器：
-安装新增Windows用户：oracle，密码oracle
-全局数据库名：oracle12C，密码oracle12C
-安装路径：f:\app\oracle
---------------------
+使用instantclient-basic-win32-10.2.0.5配置plsqldev1005.exe连接远程数据库：
+1、安装plsqldev1005.exe
+2、解压instantclient-basic-win32-10.2.0.5后将文件夹instantclient_10_2复制到plsqldev安装目录下
+3、新建如下环境变量
+	NLS_LANG：AMERICAN_AMERICA.AL32UTF8 --------->编码
+	TNS_ADMIN：plsqldev安装目录\instantclient_10_2
+4、打开PLSql窗口进行设置：
+	Tools ---->preferences(点击)打开选项配置窗口，选中connection，
+	Oracle Home配置为：plsqldev安装目录\instantclient_10_2
+	OCI library配置为：plsqldev安装目录\instantclient_10_2\oci.dll
+5、修改 plsqldev安装目录\instantclient_10_2目录下的tnsnames.ora文件，配置相关的数据库链接
+
+
+
+
+
+
 
 查询系统时间：
 	select sysdate from dual;
