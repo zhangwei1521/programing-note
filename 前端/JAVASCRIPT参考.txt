@@ -3660,3 +3660,88 @@ History.forward()、History.go()方法时会触发这个事件，调用pushState
 			console.log('location: ' + document.location);
 			console.log('state: ' + JSON.stringify(event.state));
 		};
+====================================================================================================================================================
+Location 对象
+	window.location和document.location属性指向浏览器为当前窗口提供的location对象。location对象用于提供 URL 相关的信息和操作方法。
+	Location的属性：
+		href：整个 URL；
+		protocol：当前 URL 的协议，包括冒号（:）；
+		host：主机，包括域名、冒号（:）和端口（默认的80端口和443端口会省略）；
+		hostname：主机名，不包括端口。
+		port：端口号。
+		pathname：URL 的路径部分，从根路径/开始（包括/）
+		search：查询字符串部分，从问号?开始(包括?)
+		hash：片段字符串部分，从#开始(包括#)
+		username：域名前面的用户名(如果当前网页不需要登录访问，这个属性和password属性都返回undefined)
+		password：密码
+		origin：URL 的协议、主机名和端口。
+		典型的locationURL：http://user:passwd@www.example.com:4097/path/a.html?x=111#part1
+	这些属性里面，只有origin属性是只读的，其他属性都可写。
+	如果对Location.href写入新的 URL 地址，浏览器会立刻跳转到这个新地址。Location.href属性是浏览器唯一允许跨域写入的属性。
+	Location的方法：
+		assign方法接受一个 URL 字符串作为参数，使得浏览器立刻跳转到新的 URL。如果参数不是有效的 URL 字符串，则会报错。这里
+的参数不受同源限制，可以跨域。
+		replace方法接受一个 URL 字符串作为参数，也会跳转到新地址，但是调用这个方法会从history里面删除当前网址(跳转前的页面)，
+所以调用方法后无法回退到原页面，而assign方法不会这样做。
+		reload方法使得浏览器重新加载当前网址，相当于按下浏览器的刷新按钮。参数是一个布尔值，不带参数默认为false，参数为true，
+浏览器将向服务器重新请求这个网页，并且重新加载后，网页将滚动到头部（即scrollTop === 0）。如果参数是false或为空，浏览器将从
+本地缓存重新加载该网页，并且重新加载后，网页的视口位置是重新加载前的位置。
+		toString方法返回整个 URL 字符串，相当于读取Location.href属性。
+	浏览器在发送URL请求时和返回网页地址给脚本调用时，只会发送两类字符：
+		URL 元字符：分号（;），逗号（,），斜杠（/），问号（?），冒号（:），at（@），&，等号（=），加号（+），美元符号（$），井号（#）
+		语义字符：a-z，A-Z，0-9，连词号（-），下划线（_），点（.），感叹号（!），波浪线（~），星号（*），单引号（'），圆括号（()）
+	其他字符出现在 URL 之中都必须转义，规则是根据操作系统的默认编码，将每个字节转为百分号（%）加上两个大写的十六进制字母。
+	例如：汉字“春节”不是 URL 的合法字符，所以被浏览器自动转成http://www.example.com/q=%E6%98%A5%E8%8A%82。
+	window对象部署了四个编解码方法用于URL中非法字符的转义：
+		encodeURI()、encodeURIComponent()、decodeURI()、decodeURIComponent()
+	encodeURI()方法用于转码整个 URL。它的参数是一个字符串，代表整个 URL。它会将元字符和语义字符之外的字符，都进行转义。这个参数
+字符串不必须是URL，可以是任何字符串，但是它不会转义URL元字符和URL语义字符。
+	encodeURIComponent()接受一个字符串作为参数，不同于encodeURI，这个方法会对URL元字符进行转义，只有URL语义字符不会被转义。
+	decodeURI()方法用于整个 URL 的解码。它是encodeURI()方法的逆运算。它接受一个参数，就是转码后的 URL。
+	decodeURIComponent()用于URL 片段的解码。它是encodeURIComponent()方法的逆运算。它接受一个参数，就是转码后的 URL 片段。
+	URL对象用来构造、解析和编码 URL
+		var url = new URL('http://www.example.com/index.html');
+		url.href
+	URL的构造函数参数可以是一个页面的完整地址，也可以分为两个字符串，第一个字符串是相对地址，第二个字符串是一个绝对路径。
+这个参数还可以是另一个URL对象，浏览器会使用参数URL对象的地址来构造新的URL对象。如果参数不是合法的 URL，会报错。
+	URL 实例的属性与Location对象的属性基本一致，返回当前 URL 的信息。包括：href、host、hostname、port等。也只有origin属性
+是只读的，其他属性都可写。
+	URL对象的静态方法：
+		createObjectURL方法用来为上传/下载的文件、流媒体文件生成一个 URL 字符串。这个字符串代表了File对象或Blob对象的 URL。如果
+是从本地加载文件，引用的是一个本地的地址，类似这样：blob:http://localhost/c745ef73-ece9-46da-8f66-ebes574789b1
+		每次使用URL.createObjectURL方法，都会在内存里面生成一个 URL 实例。除非手动释放，否则这个对象会一直存在。
+		revokeObjectURL方法用来释放URL.createObjectURL方法生成的 URL 实例。它的参数就是URL.createObjectURL方法返回的 URL 字符串。
+			var div = document.getElementById('display');
+			function handleFiles(files) {
+			  for (var i = 0; i < files.length; i++) {
+				var img = document.createElement('img');
+				img.src = window.URL.createObjectURL(files[i]);
+				div.appendChild(img);
+				img.onload = function() {
+				  window.URL.revokeObjectURL(this.src);
+				}
+			  }
+			}
+	浏览器提供URLSearchParams对象（构造函数），用来构造、解析和处理 URL 的查询字符串。
+		var params = new URLSearchParams('?foo=1&bar=2');
+		var params = new URLSearchParams([['foo', 1], ['bar', 2]]);
+		var params = new URLSearchParams({'foo' : 1 , 'bar' : 2});
+	URLSearchParams会对查询字符串自动编码。
+	URL实例对象有一个searchParams属性，这个属性返回一个URLSearchParams对象（如果存在的话）。
+	DOM 的a元素节点的searchParams属性，返回一个URLSearchParams实例（如果存在的话）。
+	URLSearchParams实例有遍历器接口，可以用for...of循环遍历。
+	URLSearchParams的实例方法：
+		toString方法返回实例的字符串形式。需要字符串的场合，会自动调用toString方法。
+		append方法用来追加一个查询参数。它接受两个参数，第一个为键名，第二个为键值，没有返回值。这个方法不会检查是否已经存在相同的键名
+		delete方法用来删除指定的查询参数。它接受键名作为参数。
+		has方法返回一个布尔值，表示查询字符串是否包含指定的键名。
+		set方法用来设置查询字符串的键值；它接受两个参数，第一个是键名，第二个是键值。如果是已经存在的键，键值会被改写，否则会被追加。
+		get方法用来读取查询字符串里面的指定键。它接受键名作为参数。如果有多个的同名键，get返回位置最前面的那个键值。它总是返回字符串。
+		getAll方法返回一个数组，成员是指定键的所有键值。它接受键名作为参数（必须提供，否则会报错）。
+		sort方法对查询字符串里面的键进行排序，规则是按照 Unicode 码点从小到大排列。没有返回值，或者说返回值是undefined。如果有两个同名
+的键a，它们之间不会排序，而是保留原始的顺序。
+		keys方法返回键名的遍历器，values方法返回键值的遍历器，entries返回键值对的遍历器。遍历器可以使用for...of循环处理。
+		如果直接对URLSearchParams进行遍历，其实内部调用的就是entries接口。
+			for(var p of params.entries()) {
+			  console.log(p);
+			}

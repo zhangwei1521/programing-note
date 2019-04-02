@@ -30,3 +30,7 @@ nginx.exe -s quit
 nginx.exe -s reload
 查看版本：
 nginx -v
+
+计算下载文件的SHA512哈希值：
+certutil -hashfile .\apache-tomcat-8.5.39-windows-x64.zip SHA512 > SHA512.txt
+certutil支持的算法还有：MD2 MD4 MD5 SHA1 SHA256 SHA384

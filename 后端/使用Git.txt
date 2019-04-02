@@ -126,6 +126,8 @@ git diff --staged，效果是相同的）
 	git log -- path/fileName	指定文件路径（名）
 	查询指定时间后含有指定关键字的提交：
 		git log --grep=报到注册 --since=2018-11-20 -p
+	提交历史统计：
+		git log --author=yourname --since="2014-07-01" --no-merges | grep -e 'commit [a-zA-Z0-9]*' | wc -l
 		
 	使用 git commit --amend 追加提交，这个命令会将暂存区中的文件提交。如果自上次提交以来未做任何
 修改，这个命令就是进行重新编辑提交信息。
@@ -179,6 +181,8 @@ git checkout -b [branch-name] [tag-name]
 	git bash编码配置：修改git安装路径下~/etc/gitbash.bashrc文件，添加：
 		export LANG="zh_CN.UTF-8"
 		export LC_ALL="zh_CN.UTF-8"
+	git status输出乱码：git config --global core.quotepath false
+	
 
 	
 	Git 分支
@@ -238,3 +242,5 @@ git status 查看冲突文件，冲突文件看起来像是这样：
 	解决冲突后也可以使用git cherry-pick --continue命令，继续进行cherry-pick操作。
 	git cherry-pick --abort 前分支恢复到cherry-pick前的状态
 	如果在git cherry-pick后加一个分支名，则表示将该分支顶端提交进cherry-pick
+	
+	
