@@ -140,6 +140,10 @@ git diff --staged，效果是相同的）
 	git remote 查看远程仓库名
 	git remote -v 查看远程仓库名和url
 	添加远程仓库：git remote add origin  https://github.com/zhangwei1521/programing-note.git 
+	创建SSH KEY:
+		ssh-keygen -t rsa -C "youremail@example.com"
+		.ssh目录里找到id_rsa和id_rsa.pub这两个文件 
+		把刚才id_rsa.pub里面的内容复制到Title下面的Key内容框里面
 	从远程仓库中抓取数据：git fetch [remote-name] 这个命令不会自动合并或修改当前的工作，需要手动处理。
 进行合并处理：git merge origin/master
 	从远处仓库中拉取数据：git pull [remote-name] 这个命令会自动的抓取然后合并远程分支到当前分支。
