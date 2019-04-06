@@ -34,3 +34,13 @@ nginx -v
 计算下载文件的SHA512哈希值：
 certutil -hashfile .\apache-tomcat-8.5.39-windows-x64.zip SHA512 > SHA512.txt
 certutil支持的算法还有：MD2 MD4 MD5 SHA1 SHA256 SHA384
+
+（升级或重新安装操作系统会产生一个原系统的恢复分区，如果不需要可以删除）
+使用diskpart删除恢复分区（恢复分区由微软提供，用于恢复系统到特定状态）：
+	1、输入diskpart进入diskpart交互模式；
+	2、输入list disk列出所有磁盘；
+	3、输入select disk 0选择磁盘
+	4、输入list volume列出选择磁盘的所有卷；
+	5、输入select volume 2选择恢复分区对应卷；
+	6、输入delete part override删除选择的卷即恢复分区
+
