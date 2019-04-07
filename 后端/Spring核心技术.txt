@@ -551,16 +551,193 @@ spring框架提供API，具体要做的事由我们自己实现。spring提供5�
 				<target>1.8</target>
 			</configuration>
 		</plugin>
+	
+													第五章
+	Spring提供一个MVC框架用于开发web应用，其目标是实现web组件之间的松耦合。
+	springmvc处理http请求流程：
+	HTTP请求从客户端发出后，到达目标主机后被web服务器如Tomcat接收，然后tomcat根据将请求转交给相应的servlet处理，在
+springmvc中，请求被统一交给DispatcherServlet实例处理，这类servlet被称为前端控制器Servlet。DispatcherServlet实例通过
+查询处理器映射来确定处理该请求的控制器，控制器这类组件通常将处理逻辑交给服务对象完成，然后控制器将处理后的数据保存到
+模型对象中并返回逻辑视图名（也可能返回数据对象），DispatcherServlet实例收到控制器实例返回的逻辑视图名后查找视图解析
+器得到实际的视图实现，视图实现实例使用模型对象的数据来渲染视图，最后渲染后的视图被返回给客户端。
+	传统的web程序开发模式中，使用web.xml文件来配置servlet，servlet3.0开始可以使用基于java类的配置而不再必须使用web.xml
+来定义配置：servlet3.0环境中，servlet容器会在类路径中查找实现了javax.servlet.ServletContainerInitializer接口的类，这个
+实现类将被用来配置servlet容器。spring提供了这个接口的一个实现类：SpringServletContainerInitializer，这个类实例又查找
+WebApplicationInitializer接口的实现，配置内容将由这个实现提供。spring3.2提供了一个这个接口的默认实现：
+AbstractAnnotationConfigDispatcherServletInitializer。所以可以通过继承这个类来配置servlet：
+		public class MinimsgWebAppInitializer
+				extends AbstractAnnotationConfigDispatcherServletInitializer {
+			@Override
+			protected Class<?>[] getRootConfigClasses() {
+				return new Class<?>[]{RootConfig.class};
+			}
 
+			@Override
+			protected Class<?>[] getServletConfigClasses() {
+				return new Class<?>[]{WebConfig.class};
+			}
 
+			@Override
+			protected String[] getServletMappings() {
+				return new String[]{"/"};
+			}
+		}
+	AbstractAnnotationConfigDispatcherServletInitializer实例会同时创建DispatcherServlet实例和一个ContextLoaderListener实例.
+	上面这个扩展AbstractAnnotationConfigDispatcherServletInitializer的配置类不需要添加任何注解，同时覆写了三个方法：
+	getServletMappings方法将（一个或多个）请求路径映射到DispatcherServlet实例上，这里使用"/"表示进入应用的所有请求都会被
+转交给DispatcherServlet实例处理。
+	getServletConfigClasses方法返回一个或多个配置类的class对象，DispatcherServlet创建时会根据这个方法返回的配置类
+class对象来创建一个spring web应用上下文（容器），这个应用上下文将会管理与web相关的组件bean，如控制器、视图解析器和
+处理器映射等。
+	getRootConfigClasses方法返回一个或多个配置类的class对象，ContextLoaderListener创建时根据这个方法返回的配置类
+class对象创建另一个spring应用上下文（容器），这个应用上下文将会管理与业务模型相关的bean。
+	(注：tomcat从7.0开始支持servlet3.0)
+	web配置类：
+		@Configuration
+		@EnableWebMvc
+		@ComponentScan("com.zhangwei.minimsg.web")
+		public class WebConfig extends WebMvcConfigurerAdapter {
 
+			@Override
+			public void configureDefaultServletHandling(DefaultServletHandlerConfigurer configurer){
+				configurer.enable();
+			}
 
+			@Bean
+			public ViewResolver viewResolver(){
+				InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
+				viewResolver.setPrefix("/WEB-INF/views/");
+				viewResolver.setSuffix(".jsp");
+				viewResolver.setExposeContextBeansAsAttributes(true);
+				return viewResolver;
+			}
+		}
+	@EnableWebMvc注解是必须的，用来标记启用springmvc，@ComponentScan标记只扫描web相关的bean。
+	这个配置类配置了一个视图解析器，这个视图解析器将逻辑视图名xxx解析为物理视图：/WEB-INF/views/xxx.jsp
+	这个配置类继承了WebMvcConfigurerAdapter并覆写了方法：configureDefaultServletHandling，用来将静态资源交给
+servlet容器默认的servlet处理。
+	非web应用上下文：
+		@Configuration
+		@ComponentScan(basePackages = {"com.zhangwei.minimsg"},
+			excludeFilters = {@ComponentScan.Filter(type= FilterType.ANNOTATION,value = EnableWebMvc.class)})
+		public class RootConfig {
+		}
+	@ComponentScan指定不扫描web组件相关的bean。
+	简单的控制器：
+		@Controller
+		public class HomeController {
+			@RequestMapping(value = "/",method = RequestMethod.GET)
+			public String home(){
+				return "home";
+			}
+		}
+		另一种映射写法：
+		@Controller
+		@RequestMapping({"/","/homePage"})
+		public class HomeController {
+			@RequestMapping(method = RequestMethod.GET)
+			public String home(){
+				return "home";
+			}
+		}
+	@Controller和@Component实际作用是一样的，但是语义上更明确。
+	@RequestMapping定义了路径到方法的映射，value属性用于定义路径，method定义访问方法。
+	使用springmvc提供的测试工具：
+		@Test
+		public void testHomePage() throws Exception{
+			HomeController controller = new HomeController();
+			MockMvc mock = MockMvcBuilders.standaloneSetup(controller).build();
+			mock.perform(MockMvcRequestBuilders.get("/"))
+					.andExpect(MockMvcResultMatchers.view().name("home"));
+		}
+	向模型对象中填充数据：
+	@RequestMapping(value = "/msges",method = RequestMethod.GET)
+    public String getMsgList(Model model){
+        model.addAttribute(repository.findMiniMsgs(Integer.MAX_VALUE,20));
+        return "msges";
+    }
+	Model是spring提供的类，也可以使用Map替换。上面的写法中，model中属性的key通过推断得到：
+		List<MiniMsg> -> miniMsgList	//如果返回单个对象，推断规则：MiniMsg -> miniMsg
+	key也可以手动设置：model.addAttribute("miniMsgList"，repository.findMiniMsgs(Integer.MAX_VALUE,20));
+	另一种写法：
+		@RequestMapping(value = "/msges",method = RequestMethod.GET)
+		public List<MiniMsg> getMsgList(){
+			return repository.findMiniMsgs(Integer.MAX_VALUE,20);
+		}
+	这种写法返回的对象会被放到模型对象中，其key也是通过推断得到，逻辑视图名也通过推断得到（就是请求路径名）
+	
+	springmvc提供3种方式从客户端提交数据到服务器的控制器方法：查询参数、表单参数、路径变量
+	查询参数：
+		@RequestMapping(value = {"/msgpagelist"},method = RequestMethod.GET)
+		public String getPageMsgList(@RequestParam(value="max",defaultValue=MAX_LONG_AS_STRING) long max,
+									 @RequestParam(value="count",defaultValue="20")int count,
+									 Model model){
+			model.addAttribute(repository.findMiniMsgs(max,count));
+			return "msges";
+		}
+	上面的写法中，定义了两个可以从客户端传输数据的参数：max和count，使用：
+		http://localhost:8080/minimsg/msgpagelist?max=88888888888&count=10
+	如果客户端不提供这两个参数将使用defaultValue设置的值：
+		http://localhost:8080/minimsg/msgpagelist
+	注意：Java规则中，当有一个注解的参数期望一个原始类型(例如int)或一个字符串时，这个值必须是一个常量表达式。
+常量表达式是指编译器在编译时能够计算出的值，只有特定类型的操作可以在一个常量表达式中使用。
+	① private static final String MAX_LONG_AS_STRING = Long.toString(Long.MAX_VALUE);
+	上面的写法会报错：Atrribute value must be constant，因为Long.toString()需要在运行时执行，所以结果不是常量。
+	② private static final String MAX_LONG_AS_STRING = Long.MAX_VALUE+"";
+	第二种写法可以在编译期得到值，所以可以实现常量转换
+	@RequestParam还可以设置一个属性：required=true/false 用于设置是否必须提供该参数。
+	访问特定的某个资源时，可以使用两种路径设计：一种是面向资源的：/msg/12；另一种是带有参数的操作：
+/msg/show?msgId=12；第二种方式本质上是通过http发起的RPC。
+	使用面向资源的路径设计：
+		@RequestMapping(value = "/msg/{msgId}",method = RequestMethod.GET)
+		public String getMsg(@PathVariable("msgId") Long id, Map model){
+			model.put("msg",repository.findOne(id));
+			return "miniMsgDetail";
+		}
+	@RequestMapping的value属性中使用占位符{msgId},@PathVariable的value属性需要和这个占位符保持一致，如果方法的参数
+命名和占位符一样，则可以省略@PathVariable的value属性：
+		@RequestMapping(value = "/msg/{msgId}",method = RequestMethod.GET)
+		public String getMsg(@PathVariable Long msgId, Map model){...}
+	处理表单提交：
+		@RequestMapping(value = "/register",method = RequestMethod.GET)
+		public String showRegisteForm(){
+			return "registerForm";
+		}
 
-
-
-
-
-
+		@RequestMapping(value = "/register",method = RequestMethod.POST)
+		public String regist(User user){
+			userRepository.saveOne(user);
+			return "redirect:/user/"+user.getUserName();
+		}
+	上面两个方法映射路径相同，不同的只是提交的方法，第一个方法返回注册的表单：
+		<form method="post">
+            <label>First Name:</label><input name="firstName" type="text"/><br>
+            <label>Last Name:</label><input name="lastName" type="text"/><br>
+            <label>Username:</label><input name="userName" type="text"/><br>
+            <label>Password:</label><input name="password" type="password"/><br>
+            <input type="submit" value="regist"/>
+        </form>
+	表单中只指定了提交方法为post，默认会把表单提交给访问表单页面的路径，也就是/register
+	第二个方法返回的逻辑视图名具有前缀："redirect:"表示将重定向到另一个映射路径。此外可以使用
+"forward:"前缀进行转向。
+	校验参数：使用JSR 303的API和hibernate提供的实现：Hibernate Validator
+		@NotNull
+		@Size(min=5,max=16)
+		private String userName;
+		@NotNull
+		@Size(min=5,max=16)
+		private String password;
+	添加校验：
+	@RequestMapping(value = "/register",method = RequestMethod.POST)
+    public String regist(@Valid User user, Errors errors){
+        if(errors.hasErrors()){
+            return "registerForm";
+        }
+        userRepository.saveOne(user);
+        return "redirect:/user/"+user.getUserName();
+    }
+	校验不通过会转到注册表单页面.
+	
 
 
 
