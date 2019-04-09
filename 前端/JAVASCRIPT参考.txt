@@ -2938,7 +2938,7 @@ document.addEventListener('drop', function( event ) {
 	// 恢复目标节点背景色
 	event.target.style.background = '';
 	// 将被拖拉节点插入目标节点
-	dragged.parentNode.                                                      (dragged);
+	dragged.parentNode.removeChild(dragged);
 	event.target.appendChild( dragged );
   }
 }, false);
@@ -3745,3 +3745,77 @@ Location 对象
 			for(var p of params.entries()) {
 			  console.log(p);
 			}
+############################################################################################################################################
+	ES6引入了一个ArrayBuffer对象，表示一段二进制数据，用来模拟内存里面的数据。
+浏览器原生提供ArrayBuffer()构造函数，用来生成实例。它接受一个整数作为参数，表示这段二进制数据占用多少个字节:
+		var buffer = new ArrayBuffer(8);
+	ArrayBuffer实例对象具有属性byteLength表示当前实例占用的内存长度（单位字节）,实例方法slice()，用来复制一部分内存。它接受两个整数参数，分别表示
+复制的开始位置（从0开始）和结束位置（复制时不包括结束位置），如果省略第二个参数，则表示一直复制到结束。
+	Blob 对象表示一个二进制文件的数据内容，比如一个图片文件的内容就可以通过 Blob 对象读写.
+	浏览器原生提供Blob()构造函数，用来生成实例对象:
+		new Blob(array [, options])
+	Blob构造函数接受两个参数。第一个参数是数组，成员是字符串或二进制对象，表示新生成的Blob实例对象的内容；第二个参数是可选的，是一个配置对象，
+目前只有一个属性type，它的值是一个字符串，表示数据的 MIME 类型，默认是空字符串。
+		var htmlFragment = ['<a id="a"><b id="b">hey!</b></a>'];
+		var myBlob = new Blob(htmlFragment, {type : 'text/html'});
+	Blob实例对象具有两个属性：size和type，分别返回数据的大小（字节数）和类型；还有一个实例方法slice，用来拷贝原来的数据，返回一个Blob实例：
+		myBlob.slice(start，end, contentType)	//三个参数，都是可选的
+	使用<input>选择文件：
+		<input type="file" accept="image/*" multiple onchange="fileinfo(this.files)"/>
+	<input type="file" ...>的value属性不能让脚本自动设置。
+	function fileinfo(files) {
+		for (var i = 0; i < files.length; i++) {
+			var f = files[i];
+			console.log(
+			  f.name, // 文件名，不含路径
+			  f.size, // 文件大小，Blob 实例属性
+			  f.type, // 文件类型，Blob 实例属性
+			  f.lastModifiedDate // 文件的最后修改时间
+			);
+		}
+	}
+	<input type="file" ...>选择文件后，会在内存中保存选择的文件，input的files属性将引用内存中的文件（这是一个FileList对象，类似数组）。
+	发送AJAX 请求前，如果指定responseType属性为blob，返回的就是一个 Blob 对象。
+	浏览器允许使用URL.createObjectURL()方法，针对 Blob 对象生成一个临时 URL，以便于某些 API 使用。这个 URL 以blob://开头，表明对应一个 Blob 对象，
+协议头后面是一个识别符，用来唯一对应内存里面的 Blob 对象。
+显示图片预览：
+	<input type="file" accept="image/*" multiple onchange="showImage(this.files)"/>
+    <div id="div1"></div>
+    <script>
+        function showImage(files){
+            var div1 = document.getElementById("div1");
+            for(var i=0;i<files.length;i++){
+                var file = files[i];
+                var img = document.createElement("img");
+                img.src=URL.createObjectURL(file);
+                img.onload=function(e){
+                    this.width=100;
+                    div1.appendChild(this);
+                    URL.revokeObjectURL(this.src);
+                }
+            }
+        }
+    </script>
+	FileReader对象可以读取 Blob 对象的内容，它有四个方法用于以不同格式返回 Blob 对象的内容：
+		readAsText()：返回文本，需要指定文本编码，默认为 UTF-8。
+		readAsArrayBuffer()：返回 ArrayBuffer 对象。
+		readAsDataURL()：返回 Data URL。
+		readAsBinaryString()：返回原始的二进制字符串。
+读取文本文件：
+	<input type="file" accept="text/*" onchange="showText(this.files)"/>
+    <div id="div2"></div>
+	<script>
+		function showText(files){
+            var div2 = document.getElementById("div2");
+            var reader = new FileReader();
+            reader.readAsText(files[0]);
+            reader.onload=function(e){
+                var text = reader.result;
+                var div2 = document.getElementById("div2");
+                div2.textContent=text;
+            }
+            reader.onerror=function(e){
+                console.log('error',e)
+            }
+        }
+	</script>
