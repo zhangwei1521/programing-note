@@ -720,6 +720,27 @@ servlet容器默认的servlet处理。
 	表单中只指定了提交方法为post，默认会把表单提交给访问表单页面的路径，也就是/register
 	第二个方法返回的逻辑视图名具有前缀："redirect:"表示将重定向到另一个映射路径。此外可以使用
 "forward:"前缀进行转向。
+	@RequestMapping(value = "/register",method = RequestMethod.POST)
+	public String regist(User user){...}
+	这种写法中参数对象没有使用任何注解修饰，客户端以url参数、form-data、x-www-form-urlencoded
+都可以提交数据到控制器方法：
+		①
+		POST http://localhost:8080/user/register?id=11&name=sss
+		②
+		POST http://localhost:8080/user/register
+		Content-Type: multipart/form-data; boundary=--------------------------149543072435003070231446
+		
+		id=111&name=sdfsdf
+		③
+		POST http://localhost:8080/user/register
+		Content-Type: application/x-www-form-urlencoded
+
+		id=111&name=sdfsdf
+	客户端使用json格式的参数（Content-Type: application/json），控制器不会报错，但是无法设置参数对象的属性值。
+	@RequestMapping(value = "/register",method = RequestMethod.POST)
+	public String regist(@RequestBody User user){...}
+	@RequestBody 注解用于声明参数的MIME类型为application/json，一旦使用了这个注解，参数就必须是json对象，其他
+格式的参数不能解析，并且spring会抛出异常：HttpMediaTypeNotSupportedException，返回http状态码为415
 	校验参数：使用JSR 303的API和hibernate提供的实现：Hibernate Validator
 		@NotNull
 		@Size(min=5,max=16)

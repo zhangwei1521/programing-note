@@ -297,9 +297,17 @@ springboot项目可以直接import上面的spring-boot-dependencies来控制依�
 		</dependency>
 	
 	②web模块起步依赖：web模块提供了springmvc支持，还提供了一个嵌入式tomcat容器，启动应用后就会创建web应用上下文，
-静态资源默认放在resources/static下，模板文件默认放在resources/templates下，也可以在配置文件中自定义这些文件的位置：
+静态资源默认放在resources/static下，可以在配置文件中自定义静态文件的位置：
 	#自定义静态资源位置
 		spring.resources.static-locations=classpath:/static/
+	根据返回的逻辑视图名返回物理视图，需要使用模板引擎如thymeleaf：
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+	@RestController注解修饰的控制器默认返回json，所以要返回字符串作为视图名，需要返回一个ModelAndView对象：
+		return new ModelAndView("homePage");
+	物理视图（模板文件）默认放在resources/templates下
 	web模块已经默认配置了springMVC需要的组件，如果需要使用自定义的mvc组件，只需要向容器中注入自定义的组件
 实例就可以了。下面是使用fastjson处理json转换：
 		<dependency>
