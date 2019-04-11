@@ -1,4 +1,55 @@
 										Mysql学习
+mysql 5.7.23 压缩版安装：
+将下的压缩包解压到D:\zhangwei\devtools\下：mysql-5.7.23-winx64
+在D:\zhangwei\devtools\mysql-5.7.23-winx64\目录下新建文件：my.ini
+	[mysqld]
+	#设置3306端
+	port = 3306
+	# 设置mysql的安装目录
+	basedir=D:\zhangwei\devtools\mysql-5.7.23-winx64
+	# 设置mysql数据库的数据的存放目录
+	datadir=D:\zhangwei\devtools\mysql-5.7.23-winx64\data
+	# 允许最大连接数
+	max_connections=200
+	# 服务端使用的字符集默认为8比特编码的latin1字符集
+	character-set-server=utf8
+	# 创建新表时将使用的默认存储引擎
+	default-storage-engine=INNODB
+	sql_mode=NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES
+	[mysql]
+	# 设置mysql客户端默认字符集
+	default-character-set=utf8
+
+配置环境变量：
+	MYSQL_HOME		D:\zhangwei\devtools\mysql-5.7.23-winx64\
+	path			%MYSQL_HOME%\bin
+安装MySQL服务：
+	1) 以管理员身份运行cmd，进入mysql根目录E:\Program Files\mysql\mysql-5.7.23-winx64 
+	2) 运行mysqld --install，控制台提示Services successfully installed，运行成功。 
+		① 如果显示已存在，可以使用mysqld --remove后再次执行 
+		② 如果报错，可能是权限不足(没有以管理员身份运行cmd) 
+	3) 运行mysqld --initialize，生成data目录 
+	4) 运行net start mysql启动服务
+可能遇到的问题：
+msvcr120.dll文件缺失，无法安装mysql，需要下载：Visual C++ Redistributable Packages for Visual Studio 2013
+（直接下载msvcr120.dll好像没起作用）地址：https://www.microsoft.com/zh-cn/download/confirmation.aspx?id=40784
+
+修改密码：
+	1) 运行net stop mysql，停止服务 
+	2) 运行mysqld --skip-grant-tables，开启无密码模式的MySQL Server 
+	3) 开启新终端，运行mysql -u root -p，进入MySQL 
+	4) 更新root密码 
+		运行update mysql.user set authentication_string=password("root") where user="root"; 
+	5) 运行flush privileges，刷新权限 
+	6) 运行quit，退出 
+	7) 运行mysql -u root -p进入mysql输入密码root 
+	8) 更改root密码 
+		① SET PASSWORD = PASSWORD('1234') 
+		② ALTER USER 'root'@'localhost' PASSWORD EXPIRE NEVER 
+		③ FLUSH PRIVILEGES
+		
+		
+
 触发器
 	准备：
 	create table goods(
