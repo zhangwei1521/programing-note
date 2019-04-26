@@ -135,6 +135,15 @@ git diff --staged，效果是相同的）
 	使用 git reset --hard f5ee87fa3a019cbf58f80b47fff5d099d6b15eb6 退回指定提交后的版本
 	使用 git checkout -- [file] 撤销修改（工作目录中的该文件将被重置为仓库中正确分支的最新提交版本）
 	
+	恢复已经commit的删除：
+	git log找到commit删除操作的id号54f6g7....
+	git reset --hard id(前面找到的id号54f6g7....的前一次提交id号)
+	如果git reset --hard id之后关闭了当前shell，可以使用git reflog查询以前的操作命令，可以查看每次操作后git 的HEAD位置（提交id号）
+
+	git rm --cached readme1.txt    删除readme1.txt的跟踪，并保留在本地。
+	git rm --f readme1.txt    删除readme1.txt的跟踪，并且删除本地文件。
+
+
 	远程仓库是指托管在因特网或其他网络中的项目版本库。一个本地项目可以有好几个远程仓库。管理远程仓
 库包括了解如何添加远程仓库、移除无效的远程仓库、管理不同的远程分支并定义它们是否被跟踪等等。
 	git remote 查看远程仓库名
@@ -151,7 +160,10 @@ git diff --staged，效果是相同的）
 	查看某一个远程仓库的详细信息：git remote show [remote-name] 
 	重命名远程仓库的本地名称：git remote rename origin myhub
 	移除一个远程仓库：git remote rm myhub
-	
+	git push的标准用法：git push <远程仓库名> <本地分支名>:<远程分支名> 远程分支名不存在就创建分支名指定的分支。
+	git push origin 1.0.0-dev 表示推送本地1.0.0-dev分支到orgin仓库的1.0.0-dev分支，如果origin没有该分支就创建这个分支。
+	具有多个远程仓库时，可以使用git push -u [remote-name]设置默认的远程仓库，以后再使用git push就会把当前分支push到
+默认远程仓库的同名分支。
 	列出所有标签名：git tag
 	按模式查找标签：git tag -l 'v1.8.5*'
 	Git 使用两种主要类型的标签：轻量标签（lightweight）与附注标签（annotated）。
@@ -165,8 +177,9 @@ git diff --staged，效果是相同的）
 git push origin --tags 推送所有标签
 	在 Git 中并不能真的检出一个标签，将工作目录切换到某个标签版本,需要创建一个该标签处的分支：
 git checkout -b [branch-name] [tag-name]
-	
+		
 	git 配置
+	查看config： git config --global/--system/--local  --list
 	可以通过 git config 文件来轻松地为每一个命令设置一个别名:
 		git config --global alias.co checkout
 	添加自己的取消暂存别名:
@@ -174,6 +187,10 @@ git checkout -b [branch-name] [tag-name]
 	在命令前面加入 ! 符号执行外部命令，而不是一个 Git 子命令:
 		git config --global alias.visual '!gitk'
 
+	不同操作系统使用不同的换行符，Unix/Linux使用的是LF，Mac后期也采用了LF，但Windows一直使用CRLF【回车(CR, ASCII 13, \r) 
+换行(LF, ASCII 10, \n)】作为换行符。而git入库的代码采用的是LF格式，它考虑到了跨平台协作的场景，提供了“换行符自动转换”的功能：
+如果在Windows下安装git，在拉取文件时，会自动将LF换行符替换为CRLF；在提交时，又会将CRLF转回LF。但是这个转换是有问题的：
+有时提交时，CRLF转回LF可能会不工作，尤其是文件中出现中文字符后有换行符时。
 	#拒绝提交包含混合换行符的文件
 	git config --global core.safecrlf true
 	#提交时转换为LF，检出时转换为CRLF
@@ -232,6 +249,9 @@ git status 查看冲突文件，冲突文件看起来像是这样：
 	查看每一个分支的最后一次提交：git branch -v 
 	查看哪些分支已经合并到当前分支：git branch --merged  查看未合并到当前分支的分支 --no-merged 
 	git branch -D branch-name 强制删除未合并到其他分支的分支
+	
+	git checkout -b new-br origin/1.0-dev 拉取orgin仓库1.0-dev分支到本地创建新分支new-br并切换到该分支
+	git fetch origin origin:1.0-dev 拉取orgin仓库1.0-dev分支到本地创建新分支new-br但不切换到该分支，需要手动checkout。
 	
 	几种分支工作模式：
 	长期分支：长期分支模式具有一个或多个稳定分支，以及多个开发分支(前沿分支)，稳定分支的指针总是在
