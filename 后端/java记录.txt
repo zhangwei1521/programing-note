@@ -951,7 +951,7 @@ destroy方法回收资源。
 使用new语法创建的对象则没有这个问题。String创建对象时也使用了相同的规则，只是String没有大小限制。Float和Double没有这个问题。
 		比较Integer的值时应该使用equals方法
 		
-对象的序列化和反序列化
+											第十五章 对象的序列化和反序列化
 	对象序列化机制（object serialization）是Java语言内建的一种对象持久化方式，通过对象序列化，可以把对象的状态保存为字节数组，
 并且可以在有需要的时候将这个字节数组通过反序列化的方式再转换成对象。对象序列化可以很容易的在JVM中的活动对象和字节数组（流）之间
 进行转换。
@@ -1032,9 +1032,133 @@ destroy方法回收资源。
 		}
 	虚拟机在反序列化时会检查类路径和序列化ID( private static final long serialVersionUID)，只有两者都能匹配才完成反序列化。
 
+												第十六章 jdbc
+	jdbc是java提供的数据库连接技术，其目的是提供统一的API访问不同的数据库，java以接口的形式定义了这些API，数据库厂商根据自己的
+产品特性是实现这些接口(jdbc驱动)。
+	常用的jdbc接口：DriverManager、Connection、DatabaseMetaData、Statement、PreparedStatement、CallableStatement、
+ResultSet、ResultSetMetaData.
+	jdbc工作过程：
+		1、加载驱动，建立连接；
+		2、创建sql语句对象；
+		3、执行sql语句；
+		4、处理结果集；
+		5、关闭连接。
+	import java.sql.*;
+	public class JdbcDemo1 {
+		public static void main(String[] args){
+			String url="jdbc:mysql://127.0.0.1:3306/network_info";
+			String user="root";
+			String password="root";
 
+			String sql = "select * from account";
+			try {
+				Class.forName("com.mysql.cj.jdbc.Driver");
+				Connection conn = DriverManager.getConnection(url,user,password);
+				Statement stmt = conn.createStatement();
+				ResultSet resultSet = stmt.executeQuery(sql);
+				while (resultSet.next()){
+					Account account = new Account();
+					account.setId(resultSet.getInt("id"));
+					account.setName(resultSet.getString("name"));
+					account.setNum(resultSet.getString("num"));
+					account.setPwd(resultSet.getString("pwd"));
+					System.out.println(account);
+				}
+				resultSet.close();
+				stmt.close();
+				conn.close();
+			} catch (SQLException | ClassNotFoundException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	可以将连接数据库的配置信息放到配置文件中，再提供一个通用的工具类获取连接：
+database.propperties:
+	#mysql
+	driver=com.mysql.cj.jdbc.Driver
+	url=jdbc:mysql://127.0.0.1:3306/network_info
+	#oracle
+	#driver=oracle.jdbc.driver.OracleDriver
+	#url=jdbc:oracle:thin:@127.0.0.1:1521:mydb_info
+	user=root
+	password=root
+DBUtils.java
+	import java.io.IOException;
+	import java.io.InputStream;
+	import java.sql.Connection;
+	import java.sql.DriverManager;
+	import java.sql.SQLException;
+	import java.util.Properties;
 
-
+	public class DBUtils {
+		private static String driver = null;
+		private static String url = null;
+		private static String user = null;
+		private static String password = null;
+		private static BasicDataSource dataSource = new BasicDataSource();
+		
+		static {
+			InputStream inputStream = DBUtils.class.getClassLoader().getResourceAsStream("database.properties");
+			Properties prop = new Properties();
+			try {
+				prop.load(inputStream);
+				driver = prop.getProperty("driver");
+				url = prop.getProperty("url");
+				user = prop.getProperty("user");
+				password = prop.getProperty("password");
+				//使用DBCP连接池
+				dataSource.setDriverClassName(driver);
+				dataSource.setUrl(url);
+				dataSource.setUsername(user);
+				dataSource.setPassword(password);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		public static Connection getConnection() throws ClassNotFoundException, SQLException {
+			//Class.forName("com.mysql.cj.jdbc.Driver");
+			//Connection conn = DriverManager.getConnection(url,user,password);
+			//return conn;
+			return dataSource.getConnection();
+		}
+		public static void closeResource(Connection conn, Statement stmt, ResultSet rs){
+			if(rs != null){
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+			if(stmt != null){
+				try {
+					stmt.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+			if(conn != null){
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	使用连接池时，可以设置一下参数：初始连接数、最大连接数、最小连接数、每次增加连接数、最大空闲连接数、最小空闲连接数、超时时间
+	连接数据库或操作数据库时都可能发生SQLException，这类异常通常是由于sql错误、数据库表或数据错误等造成，这类异常属于必检异常。
+	获取数据库连接也可以使用try(...)语法来自动关闭数据库连接：
+	try(
+		Connection conn = DBUtils.getConnection();
+		Statement stmt = conn.createStatement();
+		ResultSet resultSet = stmt.executeQuery(sql);
+	) {
+		while (resultSet.next()){
+			...
+		}
+	} catch (ClassNotFoundException | SQLException e) {
+		e.printStackTrace();
+	}
 
 
 

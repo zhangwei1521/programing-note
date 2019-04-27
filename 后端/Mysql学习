@@ -50,7 +50,10 @@ msvcr120.dll文件缺失，无法安装mysql，需要下载：Visual C++ Redistr
 		① SET PASSWORD = PASSWORD('1234') 
 		② ALTER USER 'root'@'localhost' PASSWORD EXPIRE NEVER 
 		③ FLUSH PRIVILEGES
-		
+
+非安装版本可能会出现时区问题,设置时区：
+set global time_zone='+8:00';	
+查看时区设置：show variables like '%time_zone%';
 		
 
 触发器

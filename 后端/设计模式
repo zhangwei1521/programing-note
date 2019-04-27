@@ -1,0 +1,73 @@
+                                            设计模式
+    第一章 面向对象编程和设计模式简介
+    随着面向对象编程逐渐成熟和流行，编程的门槛降低了，但是非专业人员开发的程序和专业开发人员的程序在设计上具有很大差距，这通常和开发人员
+的经验密切相关。为了让开发人员能够快速地掌握一些设计技巧，GOF四人在90年代总结归纳出了23条基本的程序设计技巧，称为基本设计模式。
+    面向对象编程将程序组织成互相协作的对象，对象具有封装数据和行为、可继承、可多态式使用的特点。面向对象编程具有简单容易理解、代码容易
+复用、易扩展等优点。
+    模式最早是在70年代由一位建筑师引入用来描述建筑领域的一些设计技巧，比如说特定环境下楼层高度和楼间距离的关系等。
+    模式是什么？模式是一个特定环境下解决某个问题的常用有效解决方案。
+    设计模式的GOF定义：在一个特定上下文环境中，如何定制互相通信的对象和类以解决一个常见设计问题的描述。
+    GOF使用4个要素要描述一个设计模式：模式名称、问题、解决方案和效果。
+    设计模式没有标准形式，只有参考方案。GOF只描述了23种基本的设计模式，实际上新的设计模式也在不断地被提出。
+    软件的核心是模型，为复杂领域问题提取精炼的模型是软件设计的根本。
+    第二章 模板方法模式
+    软件开发中变化是必然的，需求的变化、技术的变化等往往伴随着整个开发过程。重复是软件开发的噩梦，重复通常意味着重复的错误，同一个错误
+将出现在多个地方，修复这样的错误将是麻烦而低效的。所以虽然使用复制的方式可以暂时解决需求变化的问题，但是最终重复反而成为更难缠的麻烦。
+    如果一组类，他们的方法（对外）方法具有相似性，只是具体实现中的某一片段不一样，可以考虑为这些类建立一个父类，对外方法在父类中定义，
+不同的处理逻辑可以使用一个抽象方法代表，这个抽象方法将由子类重写实现自己的逻辑。在使用时，使用父类类型来引用实际的子类对象，这样如果需
+要改变处理逻辑，只需要提供一个新的子类就可以了。
+    父类中提供的对外方法就是模板方法，或者称为框架方法，通常模板方法只定义一个操作中的算法框架，实现将被分散为两部分，通用的部分由父类
+实现，特定的部分由子类实现。子类通过继承父类，获得了父类中定义的框架方法和通用逻辑，但是子类不能也不应该修改继承的部分，即子类不能修改
+对外方法的逻辑顺序和通用处理逻辑（父类中使用final或private实现）。
+    在某些场景下，使用继承可能不能解决问题，比如说jdbc查询，建立数据库连接、发送sql语句这些操作是通用的，可以提出到公共方法中，处理
+结果集则需要单独实现，如果使用子类，那就需要为每一种结果集提供一个子类，这显然是不现实的。对于这类问题，可以使用回调实现，将针对特定
+数据的逻辑定义了一个接口中的方法，然后使用这个接口的匿名类作为回调传递给模板方法.下面以jdbc模板为例：
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+public class SimpleJdbcQueryTemplate {
+    public <T> T query(String sql, ResultSetHandler<T> resultSetHandler) throws SQLException, ClassNotFoundException {
+        Connection conn = DBUtils.getConnection();
+        Statement stmt = conn.createStatement();
+        ResultSet rs = stmt.executeQuery(sql);
+        return resultSetHandler.handle(rs);
+    }
+}
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+public interface ResultSetHandler<T> {
+    T handle(ResultSet rs) throws SQLException;
+}
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+public class TemplateDemo1 {
+    public static void main(String[] args) {
+        try {
+            Account account = new SimpleJdbcQueryTemplate().query("select * from account where id=1",
+                new ResultSetHandler<Account>() {
+                    @Override
+                    public Account handle(ResultSet rs) throws SQLException {
+                        Account account = new Account();
+                        if(rs.next()) {
+                            account.setId(rs.getInt("id"));
+                            account.setName(rs.getString("name"));
+                            account.setNum(rs.getString("num"));
+                            account.setPwd(rs.getString("pwd"));
+                        }
+                        return account;
+                    }
+                });
+            System.out.println(account);
+        } catch (SQLException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+}
+    使用回调传递可以有效的解决子类泛滥的问题。
+
+
+
