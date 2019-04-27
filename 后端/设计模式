@@ -21,7 +21,7 @@
 对外方法的逻辑顺序和通用处理逻辑（父类中使用final或private实现）。
     在某些场景下，使用继承可能不能解决问题，比如说jdbc查询，建立数据库连接、发送sql语句这些操作是通用的，可以提出到公共方法中，处理
 结果集则需要单独实现，如果使用子类，那就需要为每一种结果集提供一个子类，这显然是不现实的。对于这类问题，可以使用回调实现，将针对特定
-数据的逻辑定义了一个接口中的方法，然后使用这个接口的匿名类作为回调传递给模板方法.下面以jdbc模板为例：
+数据的逻辑定义为一个接口中的方法，然后使用这个接口的匿名类作为回调传递给模板方法.下面以jdbc模板为例：
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -68,6 +68,69 @@ public class TemplateDemo1 {
     }
 }
     使用回调传递可以有效的解决子类泛滥的问题。
+
+    第三章 单例模式
+    某些场景下需要保证系统中某些类只有一个实例对象，比如数据库连接池等，可以使用单例模式实现。
+    单例模式都需要将类的构造器私有化，从而可以保证无法在外部直接创建类的实例对象。一种简单实现如下：
+        public class Singleton{
+            private static Singleton instance = new Singleton();
+
+            private Singleton(){}
+
+            public static Singleton getInstance(){
+                return instance;
+            }
+        }
+    这种实现是线程安全的，多个线程同时调用getInstance时，这个类也只会被JVM加载一次（静态的instance只会被初始化一次）。如果初始化实例
+比较复杂，可以在static代码块中进行。获取单例对象通常使用一个方法，虽然使用public修饰实例对象也是可以的，但是这样也造成了外部对实例对象
+名的耦合。
+    有时候由于性能要求，需要延迟实例化单例对象，也就是在第一次使用该类的实例对象时才去实例化单例对象。这可以通过把实例化代码放到获取实
+例的方法中，考虑多线程的安全性，需要同步获取实例的方法或者同步实例的创建过程。
+        private static Singleton instance = null;
+        public static synchronized Singleton getInstance(){
+            if(instance==null){
+                instance = new Singleton();
+            }
+            return instance;
+        }
+        或者：
+        private volatile static Singleton instance = null;
+        public static Singleton getInstance(){
+            if(instance==null){
+                synchronized(Singleton.class){
+                    if(instance==null){
+                        instance = new Singleton();
+                    }
+                }
+            }
+            return instance;
+        }
+    使用 synchronized同步整个方法可能引起性能上的损耗，这种场景下可以使用下面这中double-checked locking模式，使用这种模式需要使用
+volatile修饰实例对象名，这个关键字可以保证线程发现所修饰变量的最新状态。
+    注：java内存模型中，对象共享变量保存在对象的主内存空间，线程使用这个对象时，会复制对象共享变量到线程的本地内存空间中，线程对这个
+共享变量的修改也只是先在本地内存空间进行，不会马上同步到主内存空间，这样某个线程对共享变量的修改对其他线程就不是立即可见的。volatile
+这个关键字可以保证：当写一个volatile变量时，JMM会把该线程对应的本地内存中的变量强制刷新到主内存中去；并且这个写会操作会导致其他线程中
+的缓存（副本）无效。
+    使用静态内部类实现延迟实例化单例对象：
+        public class Singleton{
+            private Singleton(){}
+
+            private static class SingletonHolder{
+                private static final Singleton instance = new Singleton();
+            }
+
+            public Singleton getInstance(){
+                return SingletonHolder.instance;
+            }
+        }
+    加载外部类时，不会加载静态内部类，只有在调用外部类的方法getInstance使用静态内部类时才加载这个内部类，这时才会去创建单例对象。这种
+做法是线程安全的。
+    反序列化时的单例设计：从网络或文件反序列化对象时，每次操作都会得到一个新的对象，如果需要保证反序列化只得到一个实例，可以为实例对象
+提供一个方法：readResolve，这个方法将在反序列化返回对象前调用，这里直接返回已经存在的实例对象就可以了。
+        private Object readResolve(){
+            return singletonInstance;
+        }
+    
 
 
 
