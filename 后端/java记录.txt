@@ -951,9 +951,86 @@ destroy方法回收资源。
 使用new语法创建的对象则没有这个问题。String创建对象时也使用了相同的规则，只是String没有大小限制。Float和Double没有这个问题。
 		比较Integer的值时应该使用equals方法
 		
-	
-	
-		
+对象的序列化和反序列化
+	对象序列化机制（object serialization）是Java语言内建的一种对象持久化方式，通过对象序列化，可以把对象的状态保存为字节数组，
+并且可以在有需要的时候将这个字节数组通过反序列化的方式再转换成对象。对象序列化可以很容易的在JVM中的活动对象和字节数组（流）之间
+进行转换。
+	在Java中，对象的序列化与反序列化被广泛应用到RMI(远程方法调用)及网络传输中。
+	java提供了java.io.Serializable 接口用来启用序列化功能，只有实现了这个接口的类的对象才能序列化，这个接口其实没有任何方法
+需要实现类去实现，只是作为一个标记。
+	对没有实现 Serializable 接口的类的对象序列化，将抛出NotSerializableException。
+	如果要序列化的类有父类，并且需要将继承父类定义的变量持久化，那么父类也应该实现java.io.Serializable接口。
+	通常使用ObjectOutputStream的writeObject方法把一个对象进行持久化。使用ObjectInputStream的readObject从持久化存储中把对象
+读取出来。
+		import java.io.Serializable;
+		public class User implements Serializable {
+			private static User singletonInstance = new User();
+			private String name;
+			private int age;
+
+			private User(){
+			}
+
+			public static User getInstance(){
+				return singletonInstance;
+			}
+
+			private Object readResolve(){
+				return singletonInstance;
+			}
+
+			//省略get/set方法
+		}
+
+		import java.io.*;
+		public class SerializationDemo1 {
+			public static void main(String[] args) {
+				User user = User.getInstance();
+				user.setAge(25);
+				user.setName("zhangwei");
+				System.out.println("--------");
+				System.out.println(user.toString());
+
+				try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("tempfile"))) {
+					oos.writeObject(user);
+				} catch (IOException e){
+					e.printStackTrace();
+				}
+				readObjectFromFile("tempfile");
+				readObjectFromFile("tempfile");
+			}
+
+			private static void readObjectFromFile(String fileName){
+				File file = new File(fileName);
+				try(ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+					User user1 = (User) ois.readObject();
+					//如果这里连续两次调用ois.readObject()，会抛出EOFException，表示第二次读取时已经到了文件末尾了。
+					System.out.println("--------");
+					System.out.println(user1);
+				} catch (IOException | ClassNotFoundException e){
+					e.printStackTrace();
+				}
+			}
+		}
+	每次反序列化得到的都是一个新对象，如果需要在系统中保证多次反序列化得到的是一个单例对象，需要定义readResolve方法，这个方法在反序
+列化返回前执行，在这里可以实现返回单例。
+	Transient 关键字的作用是控制变量的序列化，在变量声明前加上该关键字，可以阻止该变量被序列化到文件中，在被反序列化后，transient 
+变量的值被设为初始值，如 int 型的是 0，对象型的是 null。
+	java提供了一个继承了Serializable接口的Externalizable接口，这个接口定义了两个抽象方法：writeExternal()与readExternal()。
+当使用Externalizable接口来进行序列化与反序列化的时候需要开发人员重写writeExternal()与readExternal()方法。
+	在使用Externalizable进行序列化的时候，在读取对象时，会调用被序列化类的无参构造器去创建一个新的对象，然后再将被保存对象的字段的值
+分别填充到新对象中。所以，实现Externalizable接口的类必须要提供一个public的无参的构造器。
+	writeExternal(ObjectOutput out)的参数就是实际实例化的对象，这个方法就是用来将想要实例化对象的属性填充到这个参数对象中。
+		public void writeExternal(ObjectOutput out) throws IOException {
+			out.writeObject(name);
+			out.writeInt(age);
+		}
+	在使用Externalizable进行反序列化的时候，使用readExternal(ObjectInput in)将实际反序列化得到的对象属性填充到返回的对象中。
+		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+			name = (String) in.readObject();
+			age = in.readInt();
+		}
+	虚拟机在反序列化时会检查类路径和序列化ID( private static final long serialVersionUID)，只有两者都能匹配才完成反序列化。
 
 
 
