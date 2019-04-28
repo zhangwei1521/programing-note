@@ -20,7 +20,11 @@ https://www.oracle.com/technetwork/database/enterprise-edition/downloads/index.h
 	OCI library配置为：plsqldev安装目录\instantclient_10_2\oci.dll
 5、修改 plsqldev安装目录\instantclient_10_2目录下的tnsnames.ora文件，配置相关的数据库链接
 
-
+plsql developer注册码：
+License Number：999
+Password：xs374ca
+Product Code：ljkfuhjpccxt8xq2re37n97595ldmv9kch
+Serial Number：302967
 
 
 
@@ -125,7 +129,11 @@ select department_id,listagg(worker_name,',') within group (order by worker_name
 	REVOKE privileges ON object FROM user;
 	例子：revoke select,insert on table_name from user_name;
 
-
+递归查询：
+	根据职工ID查询职工及职工的所有上层管理者ID
+	select t.managerId id from employee t where t.managerId is not null start with t.id in ('1014714905936932866','1014714905936932882') connect by prior t.managerId=t.id
+	union 
+	select t.id id from employee t where t.id in ('1014714905936932866','1014714905936932882')
 
 
 
