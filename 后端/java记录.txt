@@ -1034,7 +1034,7 @@ destroy方法回收资源。
 
 												第十六章 jdbc
 	jdbc是java提供的数据库连接技术，其目的是提供统一的API访问不同的数据库，java以接口的形式定义了这些API，数据库厂商根据自己的
-产品特性是实现这些接口(jdbc驱动)。
+产品特性实现这些接口(jdbc驱动)。
 	常用的jdbc接口：DriverManager、Connection、DatabaseMetaData、Statement、PreparedStatement、CallableStatement、
 ResultSet、ResultSetMetaData.
 	jdbc工作过程：
@@ -1063,6 +1063,10 @@ ResultSet、ResultSetMetaData.
 					account.setNum(resultSet.getString("num"));
 					account.setPwd(resultSet.getString("pwd"));
 					System.out.println(account);
+				}
+				ResultSetMetaData rsmd = resultSet.getMetaData();
+				for(int i=1; i<=rsmd.getColumnCount(); i++ ){
+					System.out.println(rsmd.getColumnName(i));;
 				}
 				resultSet.close();
 				stmt.close();
@@ -1159,6 +1163,76 @@ DBUtils.java
 	} catch (ClassNotFoundException | SQLException e) {
 		e.printStackTrace();
 	}
+	使用PreparedStatement：
+	Statement及PreparedStatement执行时，一个sql语句执行过程分为以下几个步骤：
+		1、传输SQL给数据库
+		2、数据库验证并解析SQL
+		3、计算Access Plan。数据库会通过检测index，statistics来给出最优的访问计划。
+		4、根据访问计划进行检索，返回数据。
+	第3步非常耗时，为了提高性能，数据库会缓存sql语句以及其Access Plan。这被称为statement cache。在statement cache中，
+sql语句本身为key，access plan为value。当相同的sql语句被发送过来时，数据库会使用缓存中的access plan以节省cpu时间。
+		Statement statement = connection.createStatement();
+		String sql1="Select * from test where id=1";
+		statement.execute(sql1);
+		statement.execute(sql1);
+		statement.execute(sql1);
+	sql1在第一次执行时需要计算执行计划，第二次和第三次将使用缓存的第一次计算得到的执行计划。
+		String sql2="Select * from test where id=";
+		statement.execute(sql2+"2");
+		statement.execute(sql2+"3");
+	sql2每次都不同，所以不能使用缓存执行计划，使用PreparedStatement可以解决这个问题：
+		String sql2="Select * from test where id=?";
+		PreparedStatement pstmt = connection.prepareStatement(sql2);
+		pstmt.setInt(1,2);
+		pstmt.executQuery();
+		pstmt.setInt(1,3);
+		pstmt.executQuery();
+	PreparedStatement在创建后就会将参数化的语句发送给数据库，进行语法检测和执行计划计算。Cache中的key将是参数化的语句。当后面
+preparedstatement在执行的时候，每次均会命中cache，使用已存在的access plan进行检索。
+	PreparedStatement和Statement的生命周期都是在一个数据库连接connection范围内，所以说如果一次连接中对于同一个PreparedStatement
+处理多次（参数不同），那么用PreparedStatement是可以提高效率。
+	很多J2EE服务器的连接池管理器实现了PreparedStatement的缓存，连接池中每一个连接准备过的PreparedStatement将被缓存。当在一个连接
+上调用preparedStatement时，应用服务器会检查这个statement是否曾经准备过。如果是，这个PreparedStatement会被返回给应用程序。如果否，
+调用会被转给JDBC驱动程序，然后将新生成的statement对象存入连接缓存。这样就实现了在不同的connection中使用一个PreparedStatement。
+	PreparedStatement创建后参数化的sql语句被发送给数据库服务器，数据库系统会预编译这条sql，后面发送的匹配这条参数化sql的语句就不
+需要再编译了，只需要把对应位置的参数填充到已编译的sql中去，这也是PreparedStatement可以避免SQL注入的原因(条件不会被编译成sql语句)。
+	获取可前后滚动的结果集需要使用下面的语法创建statement：
+		Statement stmt = conn.createStatement(type,concurrency);
+	type取值：TYPE_FORWARD_ONLY (只能向前移动，默认就是这个值)
+			  TYPE_SCROLL_INSENSITIVE 可滚动，不感知结果集中数据变化
+			  TYPE_SCROLL_SENSITIVE 可滚动，感知结果集中数据变化
+	concurrency取值： CONCUR_READ_ONLY 只读
+					  CONCUR_UPDATABLE 可修改
+	数据库事务的特性：
+		原子性：事务中的修改数据的一组sql语句必须全部成功或者全部失败。
+		一致性：事务提交或回滚后数据保持一致状态，比如转账操作需要保持两个账户的总金额保持不变。
+		隔离性：并发操作时隔离并发事务的修改（隔离同时修改同一条数据）
+		持久性：事务提交后数据被写入数据库中
+	事务的实现是数据库系统提供的。JDBC默认自动提交事务。
+	jdbc手动提交事务：
+		try {
+			Connection conn = DBUtils.getConnection();
+			boolean autoCommit = conn.getAutoCommit();
+			conn.setAutoCommit(false);
+			PreparedStatement ps = conn.prepareStatement("update emp set deptno=30 where empno=?");
+			ps.setInt(1,7902);
+			ps.executeUpdate();
+			ps.setInt(1,7903);
+			ps.executeUpdate();
+			conn.commit();
+			conn.setAutoCommit(autoCommit); 
+		} catch (ClassNotFoundException | SQLException e){
+			e.printStackTrace();
+		}
+	批量更新：
+		PreparedStatement ps = conn.prepareStatement("update emp set deptno=40 where empno=?");
+		for(int i=0;i<3;i++){
+			ps.setInt(1,7902+i);
+			ps.addBatch();
+		}
+		ps.executeBatch();
+	批量操作时如果一次保存的sql语句过多，可能会导致OOM，所以最好是限定多少条sql就executeBatch，然后clearBatch后再继续addBatch
+	
 
 
 

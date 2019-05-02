@@ -181,3 +181,6 @@ delimiter ;
 mysql、oracle都支持
 oracle还可以不写这一条语句，表示一条影响多行的语句只会触发一次触发器中的sql语句
 mysql5.5及之前的版本都必须要写这一条语句
+
+分页查询：
+	select * from table_name order by id limit rownum,pagesize;
