@@ -33,6 +33,7 @@ BOOTPROTO=dhcp 改为static（静态ip），新增：
 Ctrl+Alt+F1切换回图形用户界面。
 	图形用户界面使用 init 3 关闭图形服务并切换到命令行界面。
 	使用 startx 开启图形服务。（最好不使用）
+	http://www.cnblogs.com/guo-rong/p/9621122.html
 	快捷键：Ctrl+D 退出当前终端 Ctrl+C 结束当前命令 Ctrl+Z暂停当前进程，使用fg恢复 Ctrl+A移动光标到行首，Ctrl+E移动
 光标到行尾。
 	关机：shutdown -h now/10   -r（重启） 关机前使用sync将内存中数据写到磁盘。
@@ -346,7 +347,7 @@ defaults 包含rw、exec、auto、nouser、async
 	列出所有的rpm包资源：yum list | head
 	搜索rpm包：yum search vim 也可以使用：yum list | grep 'vim'
 	使用安装yum安装：yum install -y vim-enhanced		//不加-y表示以与用户交互的方式安装
-	卸载：rpm remove name（卸载时最好不使用-y，防止卸载了某些依赖的重要的包）
+	卸载：yum remove name（卸载时最好不使用-y，防止卸载了某些依赖的重要的包）
 	升级：yum update name 
 	使用光盘作为yum源：
 	先挂载光盘：mount /dev/cdroom /mnt
