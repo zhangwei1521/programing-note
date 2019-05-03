@@ -170,3 +170,48 @@ volatile修饰实例对象名，这个关键字可以保证线程发现所修饰
     3、可以减少对外暴露的属性，某些场景下需要使用特定的参数来创建对象，如果直接使用构造函数则难以保证参数的合法性，使用静态方法则可以保证
 系统创建的对象总是合法的。
     
+    第五章 原型模式
+    定义：使用一个原型对象指定要创建的对象的模型，然后通过复制原型对象的方式创建新的对象。
+    原型对象需要提供一个复制自身的方法，复制根据需要，可以是浅拷贝，也可以是深拷贝。
+    拷贝原型对象时，可能需要对拷贝对象进行数据填充或修改，比如置空主键，所以通常不会直接使用原型对象的clone方法。
+    public class PrototypeObj implements Cloneable{
+        private long id;
+        public PrototypeObj clone(){
+            return (PrototypeObj)super.clone();//这里为了简洁没有处理异常
+        }
+        public PrototypeObj cloneCurObj(){
+            PrototypeObj newObj = this.clone();
+            newObj.id=null;
+            return newObj;
+        }
+        public PrototypeObj cloneObj(int id){
+            PrototypeObj oneObj = loadObj(id);  //loadObj可以从数据库、文件等读取数据创建对象，这里没有实现
+            PrototypeObj newObj = oneObj.clone();
+            newObj.id=null;
+            return newObj;
+        }
+        ...
+    }
+    clone方法在Object对象中提供，按理说所有类都可以使用这个方法，但是实际上要在某个类的对象上使用这个方法，这个类需要实现Cloneable
+接口，否则会抛出异常。
+    clone实现的浅拷贝，即原型对象的引用类型属性指向的对象并没有复制，克隆的新对象的引用类型属性指向的对象和原型对象属性指向的是同一个
+对象。深拷贝需要专门递归的去实现。
+    一种适用于实现了Serializable接口的类对象的深拷贝，先序列化对象再反序列化就可以得到一个深拷贝的对象：
+        public class TestBean implements Serializable{
+            private String str;
+            private int id;
+            //...省略get、set方法
+            public TestBean deepClone(){
+                try{
+                    ByteArrayOutputStream buf = new ByteArrayOutputStream();
+                    ObjectOutputStream out = new ObjectOutputStream(buf);
+                    out.writeObject(this);
+                    ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(buf.toByteArray()));
+                    return (TestBean)in.readObject;
+                } catch(IOException | ClassNotFoundException e){
+                    e.printStackTrace();
+                }
+                return null;
+            }
+        }
+    这种方式的问题在于序列化和反序列化比较耗时，所以在实际使用前需要综合考虑。
