@@ -1233,14 +1233,59 @@ preparedstatement在执行的时候，每次均会命中cache，使用已存在�
 		ps.executeBatch();
 	批量操作时如果一次保存的sql语句过多，可能会导致OOM，所以最好是限定多少条sql就executeBatch，然后clearBatch后再继续addBatch
 	
-
-
-
-
-
-
-
-
+	补充：ThreadLocal
+		public class ConnectionFactory{
+			private final ThreadLocal<Connection> connections = new ThreadLocal<>();
+			public getConnection(){
+				Connection conn = connections.get();
+				if(conn==null){
+					conn = DBUtils.getConnection;
+					connections.set(conn);
+				}
+				return conn;
+			}
+		}
+	假设系统中只有一个单例的ConnectionFactory实例对象，那么所有线程通过getConnection方法将拿到绑定自己线程的数据库连接。
+	ThreadLocal原理分析：
+	每个线程都有一个ThreadLocalMap实例对象，可以通过 thread.threadLocals获取，这个对象类似于Map，其key为各个ThreadLocal对象的
+弱引用，value为各ThreadLocal对应得值。
+						 ______________________________
+		 			    |_threadLocal1___|___val1______|
+			thread1---->|_threadLocal2___|___val2______|
+						|_threadLocal3___|___val3______|
+							threadLocals
+ThreadLocal的set方法：
+	public void set(T value) {
+		Thread t = Thread.currentThread();
+		ThreadLocalMap map = getMap(t);
+		if (map != null)
+			map.set(this, value);
+		else
+			createMap(t, value);
+	}
+get方法：
+	public T get() {
+		Thread t = Thread.currentThread();
+		ThreadLocalMap map = getMap(t);
+		if (map != null) {
+			ThreadLocalMap.Entry e = map.getEntry(this);
+			if (e != null) {
+				@SuppressWarnings("unchecked")
+				T result = (T)e.value;
+				return result;
+			}
+		}
+		return setInitialValue();
+	}
+	为什么线程的threadlocals中key保存的是threadlocal的弱引用？
+	弱引用的特点是，不会干扰GC，也就是说如果某个threadlocal对象没有强引用（持有threadlocal的对象已经回收），这里尽管线程的threadlocals
+持有该threadlocal的弱引用，这个threadlocals还是会被GC。
+	引用的4个分级：
+		强引用：普通引用；
+		软引用：只有软引用的对象在内存不足时将被JVM回收；
+		弱引用：每次GC触发时JVM都会回收只有弱引用的对象；
+		幻影引用：幻影引用和没有引用一样，任何时候都可能被回收
+	
 
 
 
