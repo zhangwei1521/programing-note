@@ -1285,7 +1285,18 @@ get方法：
 		软引用：只有软引用的对象在内存不足时将被JVM回收；
 		弱引用：每次GC触发时JVM都会回收只有弱引用的对象；
 		幻影引用：幻影引用和没有引用一样，任何时候都可能被回收
-	
+	打印classpath：
+		public class TestDemo1 {
+			public static void main(String[] args) {
+				System.out.println(Thread.currentThread().getClass().getResource("/").getPath());
+				System.out.println();
+				String classpath = System.getProperty("java.class.path");
+				String [] arr = classpath.split(";");
+				for(String path : arr){
+					System.out.println(path);
+				}
+			}
+		}
 
 
 
