@@ -315,10 +315,16 @@ volatile修饰实例对象名，这个关键字可以保证线程发现所修饰
                 for (Class<?> clazz : beanClasses){
                     Class<?>[] clz = clazz.getInterfaces();
                     if(clz != null){
-                        beanMap.put(clz[0],this.createBean(clazz));
+                        Object bean = this.createBean(clazz);
+                        if(bean != null){
+                            beanMap.put(clz[0],bean);
+                        }
                     }
                     else {
-                        beanMap.put(clazz,this.createBean(clazz));
+                        Object bean = this.createBean(clazz);
+                        if(bean != null){
+                            beanMap.put(clazz,bean);
+                        }
                     }
                 }
             }
