@@ -1,0 +1,128 @@
+                                                    java多线程编程
+                                        (参考书籍：java多线程编程实战指南-核心篇)
+    第一章 线程和多线程编程简介
+    什么是进程？进程是程序的运行实例，运行一个java程序就是启动一个java虚拟机进程。进程是操作系统分配资源（内存空间、文件句柄等）的基本
+单元。
+    linux查看运行中的进程：
+        ps -ef | grep "pname" | grep -v "grep"
+    windows下查看运行中的进程：
+        tasklist | findstr pid/"pname"
+    什么是线程？线程是进程中可独立执行的最小单元，一个进程可以包含多个线程。一个进程中的所有线程共享操作系统分配给该进程的资源。线程用
+于完成实际的计算工作，通常称为线程的任务。
+    什么是多线程编程？多线程编程是一种以线程为基本抽象单元的编程模式，java语言中多线程编程和面向对象编程是相容的。
+    多线程编程不仅仅只是使用多个线程完成计算，还需要考虑多种条件和环境，如果设计不合理，多线程不但不能提高程序运行的效率，反而会降低程
+序的运行效率，甚至影响程序的正确运行。
+    多线程编程的优点：正确且合理的多线程设计可以充分利用现代多核处理器的计算能力，提高程序的效率和使用体验，比如web服务器为每个请求提供
+一个线程，可以实现请求不需要等待其他请求的执行；某些GUI程序使用不同的线程处理界面展示和内部计算，可以保证启动时不需要等待内部计算完成才
+展示程序界面。
+    java提供一个类：java.lang.Thread作为java平台线程的实现。Thread类和其子类的实例对象就是一个线程。
+    Thread类提供一个实例方法：run，这个方法是线程任务处理逻辑的入口方法，所以线程任务处理逻辑可以直接在这个方法中实现，也可以在这个方
+法中调用。线程对象的run方法由JVM在运行线程时直接调用。
+    运行一个线程就是让JVM去执行线程对象的run方法，这需要启动线程。Thread类提供一个实例方法start，调用线程对象的start方法就可以启动这
+个线程。
+    使用start方法启动一个线程只是通知JVM运行线程实例，但是这个线程的实际运行时间由线程调度器（操作系统提供）决定，所以start方法调用后
+并不意味着这个线程已经开始运行。
+    Thread类提供两个构造方法：Thread()和Thread(Runnale task)；因此可以使用两种方式来创建线程。一种是实现一个继承Thread的类，在该类
+中覆写Thread类的run方法，在覆写的run方法中实现或调用任务处理逻辑。第二种是实现一个实现java.lang.Runnale接口的类，并在实现的run方法中
+实现或调用任务处理逻辑，使用第二个构造函数来创建线程对象。
+        public class WelcomApp {
+            public static void main(String[] args) {
+                Thread welcomeThread = new WelcomThread();
+                welcomeThread.start();
+
+                Thread welcomeThread2 = new Thread(new WelcomeTask());
+                welcomeThread2.start();
+
+                System.out.printf("1.Welcome! I'm %s.%n",Thread.currentThread().getName());
+            }
+        }
+
+        class WelcomThread extends Thread{
+            @Override
+            public void run(){
+                System.out.printf("2.Welcome! I'm %s.%n",Thread.currentThread().getName());
+            }
+        }
+
+        class WelcomeTask implements Runnable{
+            @Override
+            public void run() {
+                System.out.printf("3.Welcome! I'm %s.%n",Thread.currentThread().getName());
+            }
+        }
+    第一种创建线程的方式是使用继承模型，第二种是应用组合模式，一般来说，组合模式下，类之间的耦合度更低，所以通常选用这种模式创建线程。
+    run方法执行结束或run方法执行过程中抛出异常，线程的运行就结束了，线程占用的系统资源就会被GC。
+    线程不能重复运行，也就是说线程的start方法只能调用一次，重复调用将会抛出异常：IllegalThreadStateException
+    java创建一个Thread对象实例和普通java对象的不同：JVM会为线程对象分配一块称为调用栈的内存空间（用于跟踪java方法调用关系），此外，
+可能还会关联线程对象和内核线程（由操作系统支持）。所以创建一个线程对象比普通对象成本更高。
+    java代码总是由某个线程来执行的，该线程称为这段代码的执行线程。程序运行时，同一段代码可以被多个线程执行，在这段代码中可以使用
+Thread.currentThread()获取正在执行这段代码的线程。
+    Thread类是Runnable接口的一个实现类，它的run方法如下：
+        public void run(){
+            if(target != null){
+                target.run();
+            }
+        }
+    可见，如果直接new Thread()，这个线程什么也不会做，所以继承Thread类的子类必须覆写run方法。上面的target是一个Runnable的实例，通过
+new Thread(Runnable task)传入的task将被设置为创建线程对象的target。
+    如果使用一个Runnable实例对象去创建多个线程对象，而这个Runnable实例的run方法中使用了自己的对象变量，就有可能出现竞态和线程安全问题。
+    线程对象的属性：编号（ID）、名称（Name）、线程类型（Daemon）、优先级（Priority）.
+    线程编号是一个long型变量，用于标识不同的线程，不可修改，这个编号在线程运行结束后可能被分配给其他新的线程。
+    线程名称是一个String类型的变量，面向人标识线程，可修改，默认格式：Thread-线程编号，java允许把不同的线程名称设置为相同。
+    线程类型是一个boolean类型变量，值为true表示线程为守护线程，值为false表示线程为用户线程，可以修改，默认和创建当前线程的父线程的类型
+相同，如果要修改，需要在启动线程前进行。守护线程不会阻止JVM的正常停止，而用户线程则会，因此重要任务最好不要设置线程类型为守护线程。
+    线程优先级是一个int类型的变量，它是给线程调度器的提示，用于表示希望优先运行哪个线程。java定义了1~10的10个优先级，默认为5，子线程的
+优先级默认和父线程相同。一般不需要修改这个属性。
+    Thread类的常用方法：
+        static Thread currentThread();
+        void run();
+        void start();
+        void join();                        在A线程中调用B线程的join方法后，A线程将会暂停执行，直到B线程执行完成后A线程继续执行。
+        static void yield();                在A线程中调用Thread.yield()后，如果进程存在线程，A线程将被让出处理器使用，等待线程
+                                            调度器再次分配处理器时间，否则线程A将继续执行。
+        static void sleep(long millis);     在A线程中调用Thread.sleep(1000)后，A线程将休眠1s。
+    使用Thread.sleep(n)实现一个定时器：
+        public class SimpleTimer {
+            public static void main(String[] args) throws InterruptedException {
+                for(int i=0; i<60; i++){
+                    System.out.println("remaining "+(60-i)+" seconds");
+                    Thread.sleep(1000);
+                }
+            }
+        }
+    JVM规范的调整使得Thread的一些早期提供的方法不再建议使用（这些方法在早期的JVM上也可能出现问题）：stop、suspend、resume
+    这些方法提供的功能：停止一个线程、暂停线程执行、恢复线程执行，现在通常使用一些其他方式实现（Thread类没有提供新的替代方法）。
+    启动一个java虚拟机进程时会创建一个名称为main的线程（编号为1），这个线程负责执行java程序的入口方法（main方法）。JVM会创建一个垃圾
+回收线程用来进行GC。JVM还会创建一个线程执行JIT编译器的编译任务。
+    java的线程具有逻辑上的层级结构，main线程通常是最上层的线程，可以创建子线程，这些子线程也可以创建自己的子线程。子线程的类型和优先级
+默认和父线程一致。除了子线程由父线程创建外，父线程和子线程的生命周期没有特别的关系，父线程执行结束不影响子线程的执行，子线程的执行也不影
+响父线程（抛出异常除外）。有些父线程创建的用于执行特定任务的线程也被称为工作者线程。
+    线程的生命周期状态：使用Thread.getState()可以获取线程状态，返回值类型是枚举类型Thread.State。
+    线程对象被创建后，在启动（调用start方法）之前处于状态：NEW，一个线程只有一次处于这种状态。
+    线程启动后进入RUNNABLE状态，这个状态具有两个子状态：READY和RUNNING，线程调度器可以对线程调度时线程处于READY状态（称为活跃线程），
+线程执行时处于RUNNING状态。线程执行时调用Thread.yield()可能会使当前线程状态从RUNNING转为READY。
+    当执行中的线程发起阻塞IO请求或请求一个锁住的资源时，线程状态转为BLOCKED，这时该线程不占用处理器，等待请求返回后，线程转回RUNNABLE
+状态（不一定直接转回RUNNING）。
+    线程执行过程中调用了join等方法时，线程状态转为WAITING，处理器被让给其他线程，直到等待的线程执行完成后，线程状态才转回RUNNABLE.
+    线程执行过程中调用Thread.sleep(n)等方法后，线程状态转为TIMED_WAITING，等待指定时间之后线程状态转回RUNNABLE.
+    线程执行结束后状态转为TERMINATED，包括正常结束和抛出异常。
+    使用线程转储监控线程：一个程序的线程转储包含了在获取这个线程转储的那一刻该程序的线程信息，包括程序中具有哪些线程以及各个线程的属性、
+生命周期状态、调用栈、锁的信息。可以使用如下方法获取线程转储：
+    获取线程转储的工具：
+        (oracle/sun)jdk1.6开始提供jstack工具，使用：jstack -l pid （平台无关）
+        oracle jdk提供jvisualvm工具，位于jdk目录/bin/jvisualvm（GUI工具，平台无关）
+        oracle jdk1.8开始提供jmc工具，位于jdk目录/bin/jmc（GUI工具，平台无关）
+        linux系统命令：kill -3 pid 或在启动java进程的shell中：ctrl+\
+    多线程编程的优势：
+        提高系统的吞吐率（单位时间内服务器处理的请求数）；
+        提高响应性（返回响应给请求者的时间不受其他慢请求影响）；
+        充分利用处理器多核资源；
+        最小化使用系统资源（多个线程共享进程的内存空间）；
+        简化程序复杂性。
+    多线程编程的问题和风险：
+        线程共享数据带来的线程安全问题；
+        不合理的设计带来的线程饥饿、死锁等线程活性问题；
+        上下文且切换（线程见切换）带来的性能消耗；
+        线程意外终止可能引起JVM进程终止（多线程比单线程的发生概率更大）。
+        
+

@@ -10,6 +10,7 @@
     GOF使用4个要素要描述一个设计模式：模式名称、问题、解决方案和效果。
     设计模式没有标准形式，只有参考方案。GOF只描述了23种基本的设计模式，实际上新的设计模式也在不断地被提出。
     软件的核心是模型，为复杂领域问题提取精炼的模型是软件设计的根本。
+
     第二章 模板方法模式
     软件开发中变化是必然的，需求的变化、技术的变化等往往伴随着整个开发过程。重复是软件开发的噩梦，重复通常意味着重复的错误，同一个错误
 将出现在多个地方，修复这样的错误将是麻烦而低效的。所以虽然使用复制的方式可以暂时解决需求变化的问题，但是最终重复反而成为更难缠的麻烦。
@@ -131,6 +132,307 @@ volatile修饰实例对象名，这个关键字可以保证线程发现所修饰
             return singletonInstance;
         }
     
+    第四章 工厂方法模式
+    使用new 创建对象是非常的方便，但是也导致了它经常被滥用，随意new 具有有很大的风险，既可能造成性能、内存方面的问题，也会使得代码结构变得混乱。
+    工厂方法用于对象的创建，很多场景下，需要使用某类的实例对象的客户对象不需要了解创建所需对象的细节，甚至可能所需要的只是某个接口或
+父类提供的功能，这时就应该把对象的创建交给专门的工厂对象实现。
+    典型的工厂方法模式实现分为两个部分，对象创建方法在接口中定义，对象的实例化由接口的实现类完成。
+        FactoryInterface: Product createProduct();              
+                |                  ProductA extends Product
+            FactoryImplA: ProductA createProductA(){return new ProductA();}
+    这种分离创建对象方法的对外签名和实现的好处是，如果需要更换创建的对象，只需要提供一个新的工厂接口实现类就可以了，基本上不需要修改客
+户对象。
+    在工厂方法中使用ThreadLocal为线程绑定实例对象：
+        public class ConnectionFactory{
+			private final ThreadLocal<Connection> connections = new ThreadLocal<>();
+			public getConnection(){
+				Connection conn = connections.get();
+				if(conn==null){
+					conn = DBUtils.getConnection;
+					connections.set(conn);
+				}
+				return conn;
+			}
+		}
+    工厂方法的问题：如果需要为每个类都建立对应的工厂类，就会造成工厂类的泛滥。
+    使用静态工厂方法避免工厂类泛滥：
+    静态工厂方法在所创建对象的类中实现：
+        Class Person {
+            public static Person getInstance(){
+                return new Person();
+            }
+        }
+    使用静态工厂方法通常会把构造方法私有化。
+    使用静态工厂方法代替构造函数的好处：
+    1、构造函数的名称固定为类名，在有多个重载的构造函数时，不能反映构造函数之间的区别，如果参数类型、数目相似容易引起混淆。而静态工厂方法
+命名是灵活的，好的命名可以不需要注释就可以表面创建对象的特征。
+    2、使用静态工厂方法可以限制创建对象的过程，比如可以使用缓存的实例（单例模式）等。
+    3、可以减少对外暴露的属性，某些场景下需要使用特定的参数来创建对象，如果直接使用构造函数则难以保证参数的合法性，使用静态方法则可以保证
+系统创建的对象总是合法的。
+    
+    第五章 原型模式
+    定义：使用一个原型对象指定要创建的对象的模型，然后通过复制原型对象的方式创建新的对象。
+    原型对象需要提供一个复制自身的方法，复制根据需要，可以是浅拷贝，也可以是深拷贝。
+    拷贝原型对象时，可能需要对拷贝对象进行数据填充或修改，比如置空主键，所以通常不会直接使用原型对象的clone方法。
+    public class PrototypeObj implements Cloneable{
+        private long id;
+        public PrototypeObj clone(){
+            return (PrototypeObj)super.clone();//这里为了简洁没有处理异常
+        }
+        public PrototypeObj cloneCurObj(){
+            PrototypeObj newObj = this.clone();
+            newObj.id=null;
+            return newObj;
+        }
+        public PrototypeObj cloneObj(int id){
+            PrototypeObj oneObj = loadObj(id);  //loadObj可以从数据库、文件等读取数据创建对象，这里没有实现
+            PrototypeObj newObj = oneObj.clone();
+            newObj.id=null;
+            return newObj;
+        }
+        ...
+    }
+    clone方法在Object对象中提供，按理说所有类都可以使用这个方法，但是实际上要在某个类的对象上使用这个方法，这个类需要实现Cloneable
+接口，否则会抛出异常。
+    clone实现的浅拷贝，即原型对象的引用类型属性指向的对象并没有复制，克隆的新对象的引用类型属性指向的对象和原型对象属性指向的是同一个
+对象。深拷贝需要专门递归的去实现。
+    一种适用于实现了Serializable接口的类对象的深拷贝，先序列化对象再反序列化就可以得到一个深拷贝的对象：
+        public class TestBean implements Serializable{
+            private String str;
+            private int id;
+            //...省略get、set方法
+            public TestBean deepClone(){
+                try{
+                    ByteArrayOutputStream buf = new ByteArrayOutputStream();
+                    ObjectOutputStream out = new ObjectOutputStream(buf);
+                    out.writeObject(this);
+                    ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(buf.toByteArray()));
+                    return (TestBean)in.readObject;
+                } catch(IOException | ClassNotFoundException e){
+                    e.printStackTrace();
+                }
+                return null;
+            }
+        }
+    这种方式的问题在于序列化和反序列化比较耗时，所以在实际使用前需要综合考虑。
 
+    第六章 IOC模式
+    在实际系统中，总是存在很多（至少数百个）业务对象，如果系统需要使用灵活的基于接口依赖的模式，那么静态工厂方法就不适用了，而普通工厂
+方法则需要为这些业务对象（类）都提供一个工厂类，这就造成了工厂类的泛滥，如果这些业务对象（类）之间还有复杂的依赖关系（肯定存在），工厂
+类本身将变得非常复杂。这时工厂方法模式就不适用了。
+    控制反转（IOC）的概念：广义的控制反转类似于委托，例如模板方法里使用回调。狭义的控制反转指的是系统中业务/模型/服务对象的创建由业务
+代码转给框架或IOC容器。
+    框架和工具库的区别：使用工具库时，需要在自己的代码中调用工具类的方法，每次调用只完成特定的工作，调用结束后控制权又返回到自己的代码，
+框架的运行则不需要自己的代码去调用，通常是框架来调用自己的业务方法（也不尽然，更确切地说，框架与工具库最大的区别在于，工具库的某个方法
+通常只是完成单一的处理工作，而框架每次运行时都会进行一系列的工作，比如spring的ioc容器在创建时会去创建系统中需要的大部分对象，同时处理
+对象间的依赖关系）。可见，框架实现了控制反转。
+    一个原始的IOC容器：
+        public interface Service1 {
+            void doService();
+        }
 
+        public interface Service2 {
+            void doCreate(Object obj);
+        }
+
+        public class Service1Impl implements Service1 {
+
+            private Service2 service2;
+
+            public Service1Impl(Service2 service2){
+                this.service2 = service2;
+            }
+
+            @Override
+            public void doService() {
+                System.out.println("start doService!");
+                service2.doCreate("bean$person$zhangwei");
+                System.out.println("doService finished!");
+            }
+        }
+
+        public class Service2Impl implements Service2 {
+            @Override
+            public void doCreate(Object obj) {
+                System.out.println("create object success: "+obj.toString());
+            }
+        }
+
+        import java.util.HashMap;
+        import java.util.Map;
+        //原始IOC容器
+        public class SimpleContainer {
+            private Map<Class,Object> beanMap;
+
+            public SimpleContainer(){
+                beanMap = new HashMap<>();
+                Service2 service2 = new Service2Impl();
+                beanMap.put(Service2.class,service2);
+                beanMap.put(Service1.class, new Service1Impl(service2));
+            }
+
+            public <T> T getBean(Class<T> obj){
+                Object bean = beanMap.get(obj);
+                return (T)bean;
+            }
+        }
+
+        使用：
+        public class IocDemo1 {
+            public static void main(String[] args) {
+                SimpleContainer container = new SimpleContainer();
+                Service1 service1 = container.getBean(Service1.class);
+                service1.doService();
+            }
+        }
+    这个IOC容器的问题在于，业务/服务对象代码侵入到了容器代码中，不具备通用性。从这个容器可以看出，其实这个容器和工厂类的区别只在于工厂
+类只能生产特定类型的对象，而容器则可以提供整个系统中所有的业务/服务对象。
+    分析上面这个容器被业务对象侵入设计的问题，可以得出，避免业务对象侵入，需要从外部获取需要容器创建对象的类型和实现类，以及对象/类之间
+的关系。
+    下面是一个新的IOC容器，这个容器只能用于自己的代码（只在本地源码编译输出classpath中查找bean）：
+        import java.io.IOException;
+        import java.lang.annotation.Annotation;
+        import java.lang.reflect.Constructor;
+        import java.lang.reflect.InvocationTargetException;
+        import java.net.URL;
+        import java.nio.file.DirectoryStream;
+        import java.nio.file.Files;
+        import java.nio.file.Path;
+        import java.nio.file.Paths;
+        import java.util.ArrayList;
+        import java.util.Arrays;
+        import java.util.HashMap;
+        import java.util.List;
+        import java.util.Map;
+
+        public class NewIocContainer {
+            private Map<Class,Object> beanMap;
+            private List<Class<?>> beanClasses;
+
+            public NewIocContainer(){
+                beanMap = new HashMap<>();
+                beanClasses = this.getClassesWithAnnotation(Bean.class);
+                for (Class<?> clazz : beanClasses){
+                    Class<?>[] clz = clazz.getInterfaces();
+                    if(clz != null){
+                        beanMap.put(clz[0],this.createBean(clazz));
+                    }
+                    else {
+                        beanMap.put(clazz,this.createBean(clazz));
+                    }
+                }
+            }
+
+            public <T> T getBean(Class<T> obj){
+                Object bean = beanMap.get(obj);
+                return (T)bean;
+            }
+
+            private List<Class<?>> getClassesWithAnnotation(Class<? extends Annotation> annotation){
+                List<Class<?>> classList = new ArrayList<>();
+                URL classpath = Thread.currentThread().getClass().getResource("/");
+                String path = classpath.getPath().substring(1);
+                this.getClassesWithAnnotation(null,path,annotation,classList);
+
+                return classList;
+            }
+
+            private void getClassesWithAnnotation(String packageName,String filePath,Class<? extends Annotation> annotation,List<Class<?>> classList){
+                Path dir = Paths.get(filePath);
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)){
+                    for(Path path : stream){
+                        String fileName = String.valueOf(path.getFileName());
+                        if(Files.isDirectory(path)){
+                            String npkgName = packageName!=null ? packageName+"."+fileName : fileName;
+                            getClassesWithAnnotation(npkgName,path.toString(),annotation,classList);
+                        }
+                        else {
+                            if(!fileName.endsWith("class")){
+                                continue;
+                            }
+                            String className = fileName.substring(0,fileName.length()-6);
+                            String fullName = packageName+"."+className;
+                            try {
+                                Class<?> clazz = Thread.currentThread().getContextClassLoader().loadClass(fullName);
+                                if(clazz != null && clazz.getAnnotation(annotation) != null){
+                                    classList.add(clazz);
+                                }
+                            } catch (ClassNotFoundException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                } catch (IOException e){
+                    e.printStackTrace();
+                }
+            }
+
+            private <T> T createBean(Class<T> clazz){
+                if(beanMap.get(clazz) != null){
+                    return null;
+                }
+                try {
+                    for(Class item : beanClasses){
+                        if(Arrays.asList(item.getInterfaces()).contains(clazz)){
+                            clazz = item;
+                        }
+                    }
+                    Constructor[] constructors = clazz.getDeclaredConstructors();
+                    for(Constructor<T> constructor : constructors){
+                        if(null != constructor.getAnnotation(Inject.class)){
+                            Class<?> dependClass = constructor.getAnnotation(Inject.class).value();
+                            Object dependBean = createBean(dependClass);
+                            if(dependBean == null){
+                                dependBean = beanMap.get(dependClass);
+                            }
+                            T bean = constructor.newInstance(dependBean);
+                            return bean;
+                        }
+                    }
+                    T bean = clazz.newInstance();
+                    return bean;
+                } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+        }
+
+        @Retention(RetentionPolicy.RUNTIME)
+        public @interface Bean {
+        }
+
+        @Retention(RetentionPolicy.RUNTIME)
+        @Target({ElementType.METHOD,ElementType.CONSTRUCTOR})
+        public @interface Inject {
+            Class value();
+        }
+
+        @Bean
+        public class Service2Impl implements Service2 {
+            @Override
+            public void doCreate(Object obj) {
+                System.out.println("create object success: "+obj.toString());
+            }
+        }
+
+        @Bean
+        public class Service1Impl implements Service1 {
+
+            private Service2 service2;
+
+            @Inject(value = Service2.class)
+            public Service1Impl(Service2 service2){
+                this.service2 = service2;
+            }
+
+            @Override
+            public void doService() {
+                System.out.println("start doService!");
+                service2.doCreate("bean$person$zhangwei");
+                System.out.println("doService finished!");
+            }
+        }
+    很多现代框架提供setter方法注入、构造方法注入、Annotation注入、基于接口的注入，还有参数注入。这些依赖注入的方式实现了对象间的松耦
+合，而且使得编程模型变得简单，IOC容器还提供控制创建对象数量的功能，比如创建单例的对象，这样可以免除手动为各个类创建单例的麻烦。
 

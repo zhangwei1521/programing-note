@@ -54,8 +54,49 @@ msvcr120.dll文件缺失，无法安装mysql，需要下载：Visual C++ Redistr
 非安装版本可能会出现时区问题,设置时区：
 set global time_zone='+8:00';	
 查看时区设置：show variables like '%time_zone%';
-		
 
+mysql数据类型：
+	整数型：
+		tinyint			-- 1个字节
+		smallint 		-- 2个字节
+		mediumint		-- 3个字节
+		int				-- 4个字节
+		bigint			-- 8个字节
+		注：id int(4), 这种写法只是指定在id字段字符位长度小于等于4时使用4个字符位宽显示该字段。	
+	浮点数型：
+		float			-- 4个字节
+		double			-- 8个字节
+		注：sal double(7,2), 这种写法表示总位数为7位，小数位数为2位，如果小数位数超过2位，将执行5舍6入。处理小数位后如果总位数
+超过7位，mysql将抛出错误。小数位数总是会保留2位，如果没有小数位就使用.00占位，所以整数位最多只有5位（不包括符号位）
+	decimal类型：用于保存需要保持精度的数据
+		decimal			-- MySQL分别为整数和小数部分分配存储空间。 MySQL使用二进制格式存储DECIMAL值。使用4个字节存储9位数字（
+不足9位使用4个字节，超出部分规则：剩余1-2位使用1个字节保存，超出3-4位使用2个字节保存，超出5-6位使用3个字节保存，超出7-9个字节使用
+4个字节保存）。对于decimal(19,9)，小数部分9位使用4个字节保存，整数部分10使用4+1=5个字节保存。decimal使用4舍5入。
+	日期、时间类型：
+		year			-- 1个字节，1901 ~ 2155
+		time			-- 3个字节，-838:59:59 ~ 838:59:59
+		date			-- 3个字节，1000-01-01 ~ 9999-12-3
+		datetime		-- 8个字节,yyyy-mm-dd hh:mm:ss
+		timestamp		-- 4个字节，1970-01-01 00:00:00 ~ 2038-01-19 03:14:07
+	字符串：
+		char			-- char(M)，定长M位(字符)，这里的位数和英文、中文无关，所以这个M位不是指的字节，但是char最多只能存256个字节
+		varchar			-- varchar(M),变长M位，最多M位，varchar最多可以存65535个字节
+		tinytext		-- 最大255B（字节）
+		text			-- 最大65KB
+		mediumtext		-- 最大16MB
+		longtext		-- 最大4GB
+		enum			-- 只能保存指定枚举值当中的某个，两个隐含值：null、''
+		set				-- 只能保存指定set集合中的某个子集
+	二进制：
+		bit				-- bit(M) M位长
+		binary			-- binary(M) 定长M个字节，最多256个字节
+		varbinary		-- varbinary(M) 变长M个字节，最多65535个字节
+		tinyblob		-- 最大255B（字节）
+		blob			-- 最大65KB
+		mediumblob		-- 最大16MB
+		longblob		-- 最大4GB
+	
+	
 触发器
 	准备：
 	create table goods(
@@ -140,3 +181,6 @@ delimiter ;
 mysql、oracle都支持
 oracle还可以不写这一条语句，表示一条影响多行的语句只会触发一次触发器中的sql语句
 mysql5.5及之前的版本都必须要写这一条语句
+
+分页查询：
+	select * from table_name order by id limit rownum,pagesize;

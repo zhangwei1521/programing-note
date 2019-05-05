@@ -135,7 +135,10 @@ select department_id,listagg(worker_name,',') within group (order by worker_name
 	union 
 	select t.id id from employee t where t.id in ('1014714905936932866','1014714905936932882')
 
-
+分页查询：
+	select * from (select rownum rn,t.* from table_name t ) where rn between beginRownum and endRownum;
+或者：
+	select * from (select * from (select rownum rn,t.* from table_name t ) where rn<=endRownum) where rn>=beginRownum
 
 
 
