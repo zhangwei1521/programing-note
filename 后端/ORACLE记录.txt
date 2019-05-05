@@ -124,7 +124,7 @@ select department_id,listagg(worker_name,',') within group (order by worker_name
 
 授权：
 	GRANT privileges ON object TO user;	
-	例子：grante select,insert on table_name to user_name;
+	例子：grant select,insert on table_name to user_name;
 取消授权：
 	REVOKE privileges ON object FROM user;
 	例子：revoke select,insert on table_name from user_name;
