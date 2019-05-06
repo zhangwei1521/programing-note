@@ -471,6 +471,71 @@ function这个关键字即可以当作语句，也可以当作表达式。
 通常情况下，只对匿名函数使用这种“立即执行的函数表达式”。它的目的有两个：
 一是不必为函数命名，避免了污染全局变量；
 二是 IIFE 内部形成了一个单独的作用域，可以封装一些外部无法读取的私有变量。
+一个例子：
+// 自执行函数
+(function(modules) {
+
+    // 用于储存已经加载过的模块
+    var installedModules = {};
+
+    function require(moduleName) {
+
+        if (installedModules[moduleName]) {
+            return installedModules[moduleName].exports;
+        }
+
+        var module = installedModules[moduleName] = {
+            exports: {}
+        };
+
+        modules[moduleName](module, module.exports, require);
+
+        return module.exports;
+    }
+
+    // 加载主模块
+    return require("main");
+
+})({
+    "main": function(module, exports, require) {
+
+        var addModule = require("./add");
+        console.log(addModule.add(1, 1))
+
+        var squareModule = require("./square");
+        console.log(squareModule.square(3));
+
+    },
+    "./add": function(module, exports, require) {
+        console.log('加载了 add 模块');
+
+        module.exports = {
+            add: function(x, y) {
+                return x + y;
+            }
+        };
+    },
+    "./square": function(module, exports, require) {
+        console.log('加载了 square 模块');
+
+        var multiply = require("./multiply");
+        module.exports = {
+            square: function(num) {
+                return multiply.multiply(num, num);
+            }
+        };
+    },
+
+    "./multiply": function(module, exports, require) {
+        console.log('加载了 multiply 模块');
+
+        module.exports = {
+            multiply: function(x, y) {
+                return x * y;
+            }
+        };
+    }
+})
 
 eval命令接受一个字符串作为参数，并将这个字符串当作语句执行。
 
