@@ -98,6 +98,23 @@ long型，有float参与就提升为float型，有double参与就提升为double
 		default:
 			...;
 	}
+	assert: JDK1.4引入，用法：
+		1、assert <boolean表达式>
+			如果<boolean表达式>为true，则程序继续执行；如果为false，则程序抛出AssertionError，并终止执行。
+		2、assert <boolean表达式> : <错误信息表达式>
+			如果<boolean表达式>为true，则程序继续执行；如果为false，则程序抛出java.lang.AssertionError，并输入<错误信息表达式>。
+		public class AssertDemo1 {
+			public static void main(String[] args) {
+				assert true;
+				System.out.println("go ooooo!");
+				assert false : "error eeeeee!";
+				System.out.println("end!");
+			}
+		}
+	assert关键字需要在运行时候显式开启才能生效，否则断言就没有任何意义.
+		命令行执行：java -ea AssertDemo1
+		IDE添加VM参数： -ea
+	assert关键字本意上是为测试 调试程序时使用的，不应该用assert来控制程序的业务流程（不能用来替换if。
 	JDK7之前exp只能是byte、short、int或枚举类型，现在可以是String类型。case后只能是常量表达式，且不能重复。
 	和break、continue连用的标签用来标记代码块，break或continue加标签只能跳到所在的代码块标签处，即break或continue
 后的标签必须是当前代码块或当前代码块的上级代码块。
