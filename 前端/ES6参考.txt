@@ -1,0 +1,103 @@
+													ES6参考
+							(参考书籍：阮一峰:ECMAScript 6 入门: http://es6.ruanyifeng.com/)
+	let和const
+	var命令声明的变量作用域是全局，let和const声明的变量作用域是声明处的代码块：
+		{
+		  var a = 1;
+		  let b = 2;
+		  const c = 3; 
+		}
+		console.log("a = " + a);	//a = 1
+		console.log("b = " + b);	//ReferenceError
+		console.log("c = " + c);	//ReferenceError
+		
+		function f1() {
+			let n = 5;
+			if (true) {
+				let n = 10;
+			}
+			console.log(n);
+		}
+		f1();	// 5
+	使用块级作用域替换IIFE立即执行函数表达式：
+		{
+			{
+				let a = 1;
+				{
+					let a = 2;	//允许覆盖外层作用域的变量声明
+				}
+			}
+			console.log("a is not defined");
+			console.log(a);	//ReferenceError: a is not defined
+		}
+	es6之前的js只有全局作用域的问题：
+		var tmp = new Date();
+		function f() {
+			console.log(tmp);
+			if (false) {
+				var tmp = 'hello world';
+			}
+		}
+		f(); // undefined	--变量声明提升覆盖全局数据tmp,导致tmp为undefined
+	js使用let/const的for循环的特殊之处：
+		每一次循环的i都是一个新的变量：
+			let a = [];
+			for (let i = 0; i < 2; i++) {
+				a[i] = function () {
+					console.log(i);
+				};
+			}
+			a[0]();		//0
+			a[1]();		//1
+		设置循环变量的那部分是一个父作用域，而循环体内部是一个单独的子作用域；
+		循环体内部（块级作用域）内使用let/const声明和外部相同的变量名时，该变量名在代码块内部形成"暂时性死区"，而且没有变量声明提升：
+			for (let i = 0; i < 2; i++) {
+				//console.log(i);	ReferenceError	--没有变量声明提升，形成暂时性死区
+				let i = 'abc';
+				console.log(i);
+			}
+			// abc
+			// abc
+			typeof x; // ReferenceError --没有变量声明提升，typeof不再完全安全
+			let x;
+			let y=y;	// ReferenceError --暂时性死区
+	使用var的for循环：
+		全局只有一个循环变量i:
+			var a = [];
+			for (var i = 0; i < 10; i++) {
+			  a[i] = function () {
+				console.log(i);
+			  };
+			}
+			a[6](); // 10
+	let/const不允许在相同作用域内，重复声明同一个变量。	
+		let a = 'a';
+		var/let/const a = 'b';		//SyntaxError
+	ES5标准规定，函数只能在顶层作用域和函数作用域之中声明，不能在块级作用域声明。
+	但是，浏览器没有遵守这个规定，为了兼容以前的旧代码，还是支持在块级作用域之中声明函数，因此上面两种情况实际都能运行，不会报错。
+	ES6允许在块级作用域之中声明函数。
+	ES5下运行：
+		function f() { console.log('I am outside!'); }
+		(function () {
+		  if (false) {
+			// 重复声明一次函数f
+			function f() { console.log('I am inside!'); }
+		  }
+		  f();
+		}());
+		输出：I am inside! 	//ES5下函数f被提升到外层函数头部
+	ES6下运行上面的代码，理论上应该得到“I am outside!”，但是如果这样就会造成无法兼容旧代码，所以 ES6标准在附录 B里面规定，浏览器的实现
+可以不实现前面的逻辑，允许ES6浏览器像var一样把代码块内的函数声明提升到外层函数作用域头部，所以ES6浏览器实际上执行：
+		输出：Uncaught TypeError: f is not a function	//因为只有函数声明被提升了：var f = undefined;
+	const声明的变量不允许改变（存储变量名的内存地址的值不能修改，即变量名不能再指向其他内存地址）：
+		const a = "a";
+		a = "b";	//TypeError
+		const b;	//SyntaxError	因为不允许在修改b的值，所以必须设置初始化值
+	ES6规定，let命令、const命令、class命令声明的全局变量，不再是属于顶层对象的属性。
+	在 Web浏览器中，可以通过 window、self 或者 frames 取到全局对象；在 Web Workers 中只有 self 可以取到全局对象。在 Node.js 中，必须使用
+global才能取到全局对象。
+	现在有一个新提案，提出引入globalThis作为顶层对象，该提案目前处于Stage 3，Chrome71、Firefox65开始支持这个globalThis作为顶层对象。
+	
+	
+	
+	
