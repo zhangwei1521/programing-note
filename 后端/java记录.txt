@@ -494,8 +494,68 @@ ObjectStreamConstants、Serializable、Externalizable、Flushable
 AutoCloseable接口的扩展接口。目前所有打开流的IO类都实现了AutoCloseable接口，实现了Closeable接口的类也默认实现了AutoCloseable接口.
 AutoCloseable接口定义了close方法，在try(...)语法中使用实现了AutoCloseable接口的流，会在try语句的末尾自动调用该流对象的close方法。
 	Flushable接口定义了方法flush，输出流都实现了这个接口，调用这个方法，通常会将缓存的输出写出到物理设备中。
+	InputStream是一个抽象类，定义了java的字节流输入模型，实现了AutoCloseable接口和Closeable接口，这个类定义了大部分通用的功能方法：
+		int available();			//返回当前可读取的字节数
+		void close();
+		void mark(int num);			//在的当前位置放置标记，在继续读取完num个字节之前，这个标记一直有效
+		boolean markSupported();	//返回当前流是否支持mark或reset方法
+		int read();					//返回一个字节，到达文件末尾时返回-1
+		int read(byte[] buffer);	//尝试读取buffer.length个字节到buffer中，返回实际读取的字节数，文件末尾返回-1
+		int read(byte[] buffer,int offset, int num);	//尝试读取num个字节到buffer中，从buffer[offset]开始保存，返回实际读取
+														  的字节数，文件末尾返回-1
+		void reset();				//将读取指针重置到mark标记的位置
+		long skip(long num);		//跳过num个字节，返回实际跳过的字节数
+	OutputStream是定义java字节流输出模型的抽象类，实现了AutoCloseable、Closeable、Flushable接口，方法：
+		void close();
+		void flush();				//清空输出缓冲区
+		void write(int b);			//写出单个字节（int类型的低8位）
+		void write(byte[] buffer);	//写出字节数组
+		void write(byte[] buffer,int offset,int num);	//写出字节数组buffer从buffer[offset]开始num个字节
+	FileInputStream重写了InputStream的6个方法，可以使用两个构造方法，都会抛出FileNotFoundException：
+		FileInputStream fin1 = new FileInputStream("/tem_file/threadinfo1.txt");
+        File f2 = new File("/tem_file/threadinfo2.txt");
+        FileInputStream fin2 = new FileInputStream(f2);
+	FileInputStream对象不能使用reset()方法，调用这个方法将抛出异常，调用markSupported方法返回false。
+	FileOutputStream可以使用4个构造方法：
+		FileOutputStream fout1 = new FileOutputStream("tem_file/file1");	//如果文件不存在，就会创建该文件，否则会销毁原文件
+																			  后再新建该文件
+		FileOutputStream fout1 = new FileOutputStream("tem_file/file1",true);	//如果文件存在，将内容追加到原文件中
+		File file2 = new File("/tem_file/file2");
+		String str = "FileOutputStream is a model for write data to file";
+        byte [] buffer = str.getBytes();
+        if(!file2.exists()){
+            FileOutputStream fout2 = new FileOutputStream(file2);			//文件不存在
+			fout2.write(buffer);
+            fout2.close();
+        }
+        else {
+            FileOutputStream fout3 = new FileOutputStream(file2,true);		//文件存在时将内容追加到原文件中
+			fout3.write((int)'\n');
+            fout3.write(buffer,0,buffer.length/2);
+			fout3.close();
+        }
+	ByteArrayInputStream使用字节数组作为输入流的数据源，提供两个构造方法：
+		String str = "ByteArrayInputStream is a inputstream which use byte array as datasource";
+        byte [] source = str.getBytes();
+        ByteArrayInputStream baIn1 = new ByteArrayInputStream(source);
+        ByteArrayInputStream baIn2 = new ByteArrayInputStream(source,source.length/2,source.length/2-1);
+    这个输入流不需要调用close来关闭。
+	ByteArrayInputStream可以使用mark方法和reset方法，使用mark方法标记的位置在reset后是read读取的前一个位置，即从这个位置的下一个
+位置处开始读取。
+	ByteArrayOutputStream将数据保存到内存中的某个字节数组中，可以使用2个构造方法：
+		ByteArrayOutputStream baout = new ByteArrayOutputStream();		//字节数组默认32字节
+		ByteArrayOutputStream baout = new ByteArrayOutputStream(100);	//100字节的字节数组
+	保存数据的字节数组的大小是可以调整的（即使在构造这个对象时设置了缓冲区大小），ByteArrayOutputStream对象使用内部变量buf代表保存
+的字节数组，使用内部变量count表示保存数据的字节数量。
+		System.out.println(baout.size());		//返回内部变量count也就是保存数据的字节数量
+		byte [] bytes = baout.toByteArray();	//返回内部变量buf也就是保存数据的字节数组
+	ByteArrayOutputStream重写了toString方法，将会返回字节数组中的数据；提供一个writeTo(OutputStream out)方法将这个流的缓冲区的
+数据输出到其他流;提供一个reset方法将内部变量count置为0（实现重置）。
+		baout.writeTo(new FileOutputStream("tem_file/file3"));
+		baout.reset();
+		for(int i=0;i<3;i++) baout.write('X');
 	
-
+	
 
 
 
