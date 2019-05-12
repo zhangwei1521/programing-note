@@ -404,6 +404,105 @@ hashCode方法。
 		...
 	}
 	try后括号中的资源实际上被隐式声明成final类型，所以不能修改。
+	
+	io包下的类和接口详细介绍：
+	字节输入流：
+		InputStream、BufferedInputStream、ByteArrayInputStream、DataInputStream、FileInputStream、FilterInputStream、
+ObjectInputStream、PipedInputStream、PushbackInputStream、SequenceInputStream
+	字节输出流：
+		OutputStream、BufferedOutputStream、ByteArrayOutputStream、DataOutputStream、FileOutputStream、FilterOutputStream、
+ObjectOutputStream、PipedOutputStream、PrintStream
+	字符输入流：
+		Reader、BufferedReader、CharArrayReader、FileReader、FilterReader、InputStreamReader、LineNumberReader、PipedReader、
+PushbackReader、StringReader
+	字符输出流：
+		Writer、BufferedWriter、CharArrayWriter、FileWriter、FilterWriter、OutputStreamWriter、PipedWriter、PrintWriter、
+StringWriter
+	文件相关类：
+		File、FileDescriptor、FilePermission、RandomAccessFile
+	其他类：
+		Console、ObjectInputStream.GetField、ObjectOutputStream.PutField、ObjectStreamClass、ObjectStreamField、SerializablePermission、
+StreamTockenizer
+	接口：
+		Closeable、DataInput、DataOutput、FileFilter、FilenameFilter、ObjectInput、ObjectOutput、ObjectInputValidation、
+ObjectStreamConstants、Serializable、Externalizable、Flushable
+	
+	File类的实例对象用来抽象目录或文件，构造方法：
+		File f1 = new File("D:/");
+		File f2 = new File("D:/","book");
+		File f3 = new File(f1,"book");
+		File f4 = new File(f2.toURI());
+	在windows下路径分隔符也可以使用\，但是需要转义成：\\	例如：new File("D:\\book");
+	File提供一系列实例方法获取/操作对应文件或目录的属性信息：
+		File f1 = new File("/tem_file/threadinfo.txt");		//windows下默认盘符为代码运行所在的盘符
+        System.out.println("file name: "+f1.getName());
+        System.out.println("file path: "+f1.getPath());
+        System.out.println("file abs path: "+f1.getAbsolutePath());	//windows下包含盘符
+        System.out.println("file parent: "+f1.getParent());
+        System.out.println("file exists ? "+f1.exists());
+        System.out.println("file can write? "+f1.canWrite());
+        System.out.println("file can read? "+f1.canRead());
+        System.out.println("file is directory？ "+f1.isDirectory());
+        System.out.println("file is file? "+f1.isFile());			//某些文件(设备驱动、管道等)返回false
+        System.out.println("file is abs? "+f1.isAbsolute());		//文件是否是以绝对路径创建
+        System.out.println("file last modified: "+f1.lastModified());
+        System.out.println("file size: "+f1.length()+" bytes");
+        System.out.println("---------");
+        boolean result = f1.renameTo(new File("D:/tem_file/threadinfo3.txt"));
+        System.out.println("file rename to success? "+result);
+        System.out.println("file name: "+f1.getName());		//rename后f1还是原来的名字
+        System.out.println("file exists ? "+f1.exists());	//rename后磁盘下原文件被删除
+        result = f1.delete();								//rename后删除原文件失败
+        System.out.println("file delete success? "+result);
+		System.out.println("---------");
+		System.out.println("disk part free space: "+f1.getFreeSpace());		//文件所在分区剩余空间（字节）
+        System.out.println("disk part total space:"+f1.getTotalSpace());
+        System.out.println("disk part usable space:"+f1.getUsableSpace());
+        System.out.println("file is hidden? "+f1.isHidden());
+        System.out.println("file modify lastModifiedTime success? "+f1.setLastModified(new Date().getTime()));
+        System.out.println("file set readOnly success? "+f1.setReadOnly());
+		//System.out.println(f1.setWritable(false));	和setReadOnly方法作用相同
+	获取目录下的文件/目录：
+		File f1 = new File("/tem_file");
+		String[] fs = f1.list();	//获取所有文件、目录名称
+		使用FilenameFilter过滤文件：
+			public class MyFilenameFilter implements FilenameFilter {			
+				@Override
+				public boolean accept(File dir, String name) {	//这里的第一个参数dir是调用list或listFiles方法的目录对象
+					return name.endsWith(".jpg");
+				}
+			}
+			MyFilenameFilter filenameFilter = new MyFilenameFilter();
+			String[] fs = f1.list(filenameFilter);
+		File [] fs = f1.listFiles();
+		File [] fs = f1.listFiles(filenameFilter);
+		使用FileFilter过滤文件：
+			public class MyFileFilter implements FileFilter {
+				@Override
+				public boolean accept(File pathname) {
+					return pathname.getName().endsWith("txt");
+				}
+			}
+			MyFileFilter fileFilter = new MyFileFilter();
+			File [] fs = f1.listFiles(fileFilter);
+	创建目录：
+		File dir1 = new File("/tem_file/dir1");
+        boolean result = dir1.mkdir();	//如果tem_file不存在则创建目录会失败
+		File dir2 = new File("/tem_file/dir0/dir2");
+		result =dir2.mkdirs();	//上层目录不存在就先创建上层目录
+	接口Closeable和Flushable在JDK1.5引入，位于io包下；AutoCloseable接口在JDK1.7引入，位于lang包下，并且把Closeable接口修改为
+AutoCloseable接口的扩展接口。目前所有打开流的IO类都实现了AutoCloseable接口，实现了Closeable接口的类也默认实现了AutoCloseable接口.
+AutoCloseable接口定义了close方法，在try(...)语法中使用实现了AutoCloseable接口的流，会在try语句的末尾自动调用该流对象的close方法。
+	Flushable接口定义了方法flush，输出流都实现了这个接口，调用这个方法，通常会将缓存的输出写出到物理设备中。
+	
+
+
+
+
+
+
+
+
 	Applet简单介绍：所有的Applet需要继承Applet类，需要重写paint方法，大部分Applet没有main方法。
 	开发阶段使用appletViewer查看和测试applet。
 	transient修饰符：用来修饰不需要被永久性存储的实例变量。
