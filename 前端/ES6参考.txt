@@ -1,6 +1,6 @@
 													ES6参考
 							(参考书籍：阮一峰:ECMAScript 6 入门: http://es6.ruanyifeng.com/)
-	let和const
+	第一章 let和const
 	var命令声明的变量作用域是全局或函数作用域，let和const声明的变量作用域是声明处的代码块：
 		{
 		  var a = 1;
@@ -97,7 +97,90 @@
 	在 Web浏览器中，可以通过 window、self 或者 frames 取到全局对象；在 Web Workers 中只有 self 可以取到全局对象。在 Node.js 中，必须使用
 global才能取到全局对象。
 	现在有一个新提案，提出引入globalThis作为顶层对象，该提案目前处于Stage 3，Chrome71、Firefox65开始支持这个globalThis作为顶层对象。
-	
-	
-	
-	
+
+	第二章	解构赋值
+	解构赋值的含义：按照一定模式，从数组和对象中提取值，对变量进行赋值
+		let [a, b, c] = [1, 2, 3];
+		let [x, , y] = [1, 2, 3];						//y:3
+		let [foo, [[bar], baz]] = [1, [[2], 3]];		//bar:2
+		let [head, ...tail] = [1, 2, 3, 4];				//tail:[2,3,4]
+		let [a,b] = ['a'];								//b:undefined	这里不会抛错
+		let [x, y] = [1, 2, 3];
+		let { bar, foo } = { foo: 'aaa', bar: 'bbb' };	//对象的解构赋值是根据属性名称实现的，与顺序无关
+		const { log } = console;
+	解构赋值表达式等号右边的结构必须是可遍历的结构，否则将报错：
+		let [a] = 1;	//报错
+		let {a} = 1;	//不会报错，1会被转成对象
+	解构赋值指定默认值：
+		let [foo = true] = [];
+		let [x, y = 'b'] = ['a'];
+		let [x = 1] = [undefined];		//x:1	ES6 内部使用严格相等运算符（===），判断一个位置是否有值
+		let [x = 1] = [null];			//x:null
+		let [x = 1, y = x] = []; 		//y:1
+		let [x = y, y = 1] = [];     	// ReferenceError: y is not defined
+		var {x = 3} = {};
+		var {x: y = 3} = {};			//y:3
+		var {x = 3} = {x: undefined};	//x:3
+		var {x = 3} = {x: null};		//x:null
+	如果默认值是一个表达式，那么这个表达式是惰性求值的，即只有在用到的时候，才会求值:
+		function f() {
+			console.log('aaa');
+		}
+		let [x = f()] = [1];	//f不会执行
+	对象的解构赋值允许使用不同的属性名：
+		let { foo: baz } = { foo: 'aaa', bar: 'bbb' };		//baz:"aaa"
+	对象的解构赋值的本质：
+		let { foo,bar} = { foo: 'aaa', bar: 'bbb' };	=>
+		let {foo:foo,bar:bar} = { foo: 'aaa', bar: 'bbb' };
+		let {foo: {bar}} = {baz: 'baz'};	//报错，解构对象没有foo属性
+	对象的解构赋值可以取到继承的属性：
+		const obj1 = {};
+		const obj2 = { foo: 'bar' };
+		Object.setPrototypeOf(obj1, obj2);
+		const { foo } = obj1;
+		foo 		// "bar"
+	将一个已经声明的变量用于解构赋值:
+		let x;
+		{x} = {x: 1};		//SyntaxError,这里js引擎将{x}当成了表达式
+		({x} = {x: 1});		//可以实现解构赋值
+	像对象一样对数组进行解构赋值：
+		let {0:a,1:b} = [1,2];	//数组本质是特殊的对象,1、2都是属性名
+	字符串可以解构赋值，字符串会被转换成一个类似数组的对象再进行操作：
+		const [a, b, c, d, e] = 'hello';
+	数字或boolean值可以进行对象的解构赋值:
+		let {toString: s} = 123;
+		s === Number.prototype.toString // true; s虽然是一个函数，但是不能调用，因为函数内部引用了this，但这时的this不是原来的数字
+	解构赋值的规则是，只要等号右边的值不是对象或数组，就先将其转为对象。由于undefined和null无法转为对象，所以对它们进行解构赋值，都会报错。
+		let { prop: x } = undefined; // TypeError
+		let { prop: y } = null; // TypeError
+	函数的参数可以使用解构赋值语法：
+		function func([x=0, y=0]){
+			return x + y;
+		}
+		func([1, 2]); 		// 3
+		function func2({x=0, y=0}={}){
+			return [x,y]
+		}
+		func2(); 			//[0,0]
+		func2({}); 			//[0,0]
+		func2({x:3}); 		//[3,0]
+	不正确的用法：
+		let [(a)] = [1];	//报错，声明变量不允许这样使用()
+		let {x: (c)} = {};	//报错，声明变量不允许这样使用()
+		function f([(z)]) { return z; }		//报错，函数参数不允许这样使用()
+	赋值语句中使用():
+		([a]) = [5];		//报错
+		[(b)] = [3]; 		//b:3 不会报错
+	解构赋值的应用：
+		let x = 1, y =2;
+		[x, y] = [y, x];							//交换x、y
+		let {foo, bar } = example();				//从函数返回的数组或对象中取出需要的值
+		let {id,data:number} = jsonData;			//从json对象中取出需要的值
+		function f({x=0, y=0, z=0}) { ... }			//定义函数参数并设置默认值
+		import {func1,func2} from "./funcModal";	//获取需要的导出对象
+		const map = new Map();
+		map.set('first', 'hello');
+		map.set('second', 'world');
+		for (let [key, value] of map) {				//遍历map结构，使用[key]只遍历key值，使用[,value]只遍历value
+			console.log(key + " is " + value);
+		}
