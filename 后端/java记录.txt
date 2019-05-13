@@ -554,6 +554,27 @@ AutoCloseable接口定义了close方法，在try(...)语法中使用实现了Aut
 		baout.writeTo(new FileOutputStream("tem_file/file3"));
 		baout.reset();
 		for(int i=0;i<3;i++) baout.write('X');
+	java提供具有过滤功能的字节流，这些流封装了底层的通用流，对外提供缓冲、字符转换、原始数据转换等功能。过滤流的父类是FilterInputStream
+和FilterOutputStream，这两个流的构造方法都是protected修饰，所以不能直接创建它们的实例对象，通常应该使用它们的子类：BufferedInputStream
+等。
+	缓冲字节输入流：BufferedInputStream，缓冲字节输出流：BufferedOutputStream
+	上面两个带缓冲的流提供缓冲区，所以可以使用skip、mark、reset方法。
+	BufferedInputStream可以使用两个构造方法：
+		BufferedInputStream bfin = new BufferedInputStream(new FileInputStream("/tem_file/file1"));		//使用默认缓冲区大小（8192字节）
+		BufferedInputStream bfin = new BufferedInputStream(new FileInputStream("/tem_file/file1"),8192);//指定缓冲区大小（字节）
+	BufferedOutputStream通过减少程序写数据的次数提高性能，所以有时需要手动调用flush方法来将缓冲区的数据立即输出。
+		BufferedOutputStream bfout = new BufferedOutputStream(new FileOutputStream("/tem_file/file2"));//使用默认缓冲区大小（8192字节）
+		BufferedOutputStream bfout = new BufferedOutputStream(new FileOutputStream("/tem_file/file2"),8192);//指定缓冲区大小（字节）
+	PushbackInputStream提供将若干字节推入到该输入流中的方法，构造方法：
+		PushbackInputStream pin = new PushbackInputStream(new ByteArrayInputStream("abcdefg".getBytes()));//回推缓冲区默认1个字节
+		PushbackInputStream pin = new PushbackInputStream(new ByteArrayInputStream("abcdefg".getBytes()),32);//指定回推缓冲区大小为32字节
+	回推方法：
+		pin.unread(pin.read());				//将读出的字节回推
+		pin.unread("abc".getBytes());		//回推一个字节数组
+		pin.unread("abc".getBytes(),1,2);	//回推一个字节数组的一部分
+	回推多个字节时，回推的字节数量不能超过设置的回推缓冲区大小，否则将抛出IOException.
+	资料上说，PushbackInputStream的unread方法会造成构造PushbackInputStream对象的原流对象的mark、reset方法失效，但是实际验证却没有这种影响，
+需要进一步了解。确定的是，在使用mark、reset方法时，最好使用markSupported检查后再调用。
 	
 	
 
