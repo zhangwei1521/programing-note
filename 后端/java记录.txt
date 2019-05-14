@@ -575,8 +575,19 @@ AutoCloseable接口定义了close方法，在try(...)语法中使用实现了Aut
 	回推多个字节时，回推的字节数量不能超过设置的回推缓冲区大小，否则将抛出IOException.
 	资料上说，PushbackInputStream的unread方法会造成构造PushbackInputStream对象的原流对象的mark、reset方法失效，但是实际验证却没有这种影响，
 需要进一步了解。确定的是，在使用mark、reset方法时，最好使用markSupported检查后再调用。
-	
-	
+	SequenceInputStream可以将多个输入流(InputStream)连接起来，不要求这些流必须是相同类的对象，提供两种构造方法：
+		SequenceInputStream in = new SequenceInputStream(new FileInputStream("/tem_file/file2"),new ByteArrayInputStream("opqrst.".getBytes()));
+		public class InputStreamEnumeration implements Enumeration<FileInputStream> {...}
+		Vector<String> fileNames = new Vector<>();
+        fileNames.addElement("/tem_file/file1.txt");
+        fileNames.addElement("/tem_file/file2");
+		InputStreamEnumeration streamEnumeration = new InputStreamEnumeration(fileNames);
+		SequenceInputStream in = new SequenceInputStream(streamEnumeration);	//Enumeration接口实例作为参数，如果构造文件输入流的文件
+不存在，将会抛出FileNotFoundException,这个异常没有处理（如果在Enumeration接口实例的nextElement方法中构造文件输入流，这个方法不支持抛出异常），
+在SequenceInputStream读取时将会抛出空指针异常。
+	SequenceInputStream读取时会按照参数设置的顺序读取各个流，每个流（文件输入流）读完后就会被自动关闭，调用SequenceInputStream的close方法会
+关闭这个流内部管理的所有未关闭流。
+
 
 
 
