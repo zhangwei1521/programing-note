@@ -184,3 +184,55 @@ global才能取到全局对象。
 		for (let [key, value] of map) {				//遍历map结构，使用[key]只遍历key值，使用[,value]只遍历value
 			console.log(key + " is " + value);
 		}
+	第三章 字符串的扩展
+	ES6之前的标准提供一种字符(串)的表示方法：\u后面紧跟四个十六进制数（0000到FFFF），代表一个字符。'\u007A'==='z'；
+这种表示法只能表示码点在\u0000~\uFFFF之间的字符。超出这个范围的字符，必须用两个双字节的形式表示。
+		"\uD842\uDFB7" // "𠮷"
+		"\u20BB7" // " 7" js引擎解释：\u20BB+7
+	ES6标准允许把码点(十六进制)放入大括号，实现对码点超出\uFFFF的字符的正确解析：
+		"\u{20BB7}"==="𠮷"，这里"\u{20BB7}".length===2
+		'\u{62}\u{63}'	// "bc"
+	ES6 为字符串添加了遍历器接口,使得字符串可以被for...of循环遍历。
+		for (let codePoint of 'foo') {
+			console.log(codePoint)
+		}
+	对于含有码点大于0xFFFF的字符的字符串，传统的for循环无法获取这样的字符：
+		let text = String.fromCodePoint(0x20BB7);
+		for (let i = 0; i < text.length; i++) {
+			console.log(text[i]);
+		}
+		//打印两次：" "
+	遍历器接口中的for...of循环可以正确获取上面的字符：
+		for (let codePoint of text) {
+			console.log(codePoint)
+		}
+		//打印一次："𠮷"
+	ES2019新提案允许在字符串里直接使用U+2028（行分隔符）和 U+2029（段分隔符）（之前的标准不允许在字符串中直接使用，
+但是JSON标准允许字符串直接使用这两个字符，这样JSON.parse(jsonData)就会报错）（Chrome74已经支持）
+	ES2019 修改了JSON.stringify()的：如果遇到0xD800到0xDFFF之间的单个码点，或者不存在的配对形式，它会返回转义字符串，
+留给应用自己决定下一步的处理（这是为了保证通过JSON.stringify()方法得到的JSON的字符串中的字符都符合UTF-8标准）。
+	模板字符串(使用反引号`表示)可以当作普通字符串使用，也可以用来定义多行字符串，或者在字符串中嵌入变量。
+		`In JavaScript '\n' is a line-feed.`
+		console.log(`a
+		 b`)	//换行、空格将被保留
+		alert(`a
+		 b`)	//换行、空格将被保留
+		let name = "Bob", time = "today";
+		`Hello ${name}, how are you ${time}?`
+		`\`Yo\` World!`		//转义`
+	模板字符串的${}内部还可以使用js表达式:
+		let x = 1, y = 2, obj = {x: 1, y: 2};
+		`${x} + ${y} = ${x + y}`
+		`${obj.x + obj.y}`
+		function fn() {
+			return "Hello World";
+		}
+		`foo ${fn()} bar`	//可以调用函数（引用函数返回值）
+	模板字符串允许嵌套。
+	标签模板：函数调用的一种特殊形式，“标签”指的就是函数，紧跟在后面的模板字符串就是它的参数：
+		alert`123`	==>		alert(123)
+		console.log`abcd`	==>		console.log(['abcd']);
+		let name = "jame";
+		console.log`hello ${name}`	==>		console.log(['hello ',''],jame);
+	
+	
