@@ -141,7 +141,7 @@ long型，有float参与就提升为float型，有double参与就提升为double
 	子类只能继承由 protected 和 public 和无修饰符的的属性，private属性不能被继承。子类跨包则不能继承默认访问控制的属性。
 	静态内部类只能访问外部类的静态属性，非静态内部类可以定义在需要的任意代码块中。
 	静态内部类并不会在主类被加载和初始化时加载，而是在实际使用(引用)时才被加载。类的加载和初始化总是线程安全的。
-	静态内部类可以访问外部类的私有属性和方法。
+	（静态）内部类可以访问外部类的（静态）私有属性和方法。
 	通过外部类的实例对象创建内部类对象：
 	Demo1 demo1 = new Demo1();
     InnerClass inner = demo1.new InnerClass();
@@ -380,6 +380,7 @@ hashCode方法。
 	public void test(){}
 	
 	Annotation anno = m.getAnnotation(MyAnnoContainer.class);m是test方法的反射对象
+
 										第十章 IO基础及其他
 	java使用“流”进行输入输出抽象，“流”是一种对接对象，输入流和输入源对接，提供一系列方法从数据源获取数据，输出流提供一系列
 方法将数据导出到目的地。java提供基于字节操作和字符操作的两类流。
@@ -490,6 +491,15 @@ ObjectStreamConstants、Serializable、Externalizable、Flushable
         boolean result = dir1.mkdir();	//如果tem_file不存在则创建目录会失败
 		File dir2 = new File("/tem_file/dir0/dir2");
 		result =dir2.mkdirs();	//上层目录不存在就先创建上层目录
+	FileDescriptor可以看作是文件（这里的文件是广义的文件）的另一种抽象，实际上从文件或标准输入输入数据是通过FileDescriptor连接文件
+或设备实现的，例如System.in、System.out、System.err都是使用FileDescriptor中的预定义实例in、out、err构造的。
+	FileDescriptor不能直接操作文件，需要配合相应的流使用：
+		FileDescriptor fd = new FileInputStream("/tem_file/file4").getFD();
+		FileInputStream input = new FileInputStream(fd);
+        char c = (char)input.read();
+		//FileOutputStream out = new FileOutputStream(fd);	//这里不能使用FileInputStream对象的FileDescriptor构造FileOutputStream
+        //out.write(5);										//否则这里将会报IOException：拒绝访问
+	通过FileInputStream或FileOutputStream对象拿到的FileDescriptor只能用来构造同类型的输入流或输出流，这是由java的安全管理器控制的。
 	接口Closeable和Flushable在JDK1.5引入，位于io包下；AutoCloseable接口在JDK1.7引入，位于lang包下，并且把Closeable接口修改为
 AutoCloseable接口的扩展接口。目前所有打开流的IO类都实现了AutoCloseable接口，实现了Closeable接口的类也默认实现了AutoCloseable接口.
 AutoCloseable接口定义了close方法，在try(...)语法中使用实现了AutoCloseable接口的流，会在try语句的末尾自动调用该流对象的close方法。
@@ -559,10 +569,11 @@ AutoCloseable接口定义了close方法，在try(...)语法中使用实现了Aut
 等。
 	缓冲字节输入流：BufferedInputStream，缓冲字节输出流：BufferedOutputStream
 	上面两个带缓冲的流提供缓冲区，所以可以使用skip、mark、reset方法。
-	BufferedInputStream可以使用两个构造方法：
+	BufferedInputStream调用read方法实际是从缓冲区读数据。可以使用两个构造方法：
 		BufferedInputStream bfin = new BufferedInputStream(new FileInputStream("/tem_file/file1"));		//使用默认缓冲区大小（8192字节）
 		BufferedInputStream bfin = new BufferedInputStream(new FileInputStream("/tem_file/file1"),8192);//指定缓冲区大小（字节）
-	BufferedOutputStream通过减少程序写数据的次数提高性能，所以有时需要手动调用flush方法来将缓冲区的数据立即输出。
+	BufferedOutputStream通过减少程序写数据的次数提高性能（先把数据写到缓冲区，缓冲区满了后就会自动写出的文件或设备），有时可能需要手
+动调用flush方法来将缓冲区的数据立即输出。
 		BufferedOutputStream bfout = new BufferedOutputStream(new FileOutputStream("/tem_file/file2"));//使用默认缓冲区大小（8192字节）
 		BufferedOutputStream bfout = new BufferedOutputStream(new FileOutputStream("/tem_file/file2"),8192);//指定缓冲区大小（字节）
 	PushbackInputStream提供将若干字节推入到该输入流中的方法，构造方法：
@@ -587,10 +598,80 @@ AutoCloseable接口定义了close方法，在try(...)语法中使用实现了Aut
 在SequenceInputStream读取时将会抛出空指针异常。
 	SequenceInputStream读取时会按照参数设置的顺序读取各个流，每个流（文件输入流）读完后就会被自动关闭，调用SequenceInputStream的close方法会
 关闭这个流内部管理的所有未关闭流。
+	PrintStream实现了Appendable、AutoCloseable、Closeable接口，提供如下的构造方法：
+		PrintStream(OutputStream out);
+		PrintStream(OutputStream out, boolean autoFlush);
+		PrintStream(OutputStream out, boolean autoFlush, String charSet);
+		PrintStream(File file);
+		PrintStream(File file,String charSet);
+		PrintStream(String filename);
+		PrintStream(String filename,String charSet);
+	使用PrintStream连接一个文件，如果原文件存在就会销毁该文件后重新创建一个新文件，所以它的append方法并不能追加数据到文件中。
+PrintStream对象的format方法和printf方法都可以实现格式化后输出。
+		try {
+            PrintStream pts = new PrintStream("/tem_file/file2","GBK");
+            pts.append('\n');
+            pts.append("中文\n");
+			pts.printf(Locale.CHINA,"my chinese name is %s, I'm %d years old.\n","张伟",25);
+            pts.printf(Locale.US,"my english name is %s\n","john");
+			pts.format("hello %s","jenny");
+        } catch (FileNotFoundException | UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+	DataInputStream继承自FilterInputStream，同时实现了DataInput接口，这个接口中声明了一些可以读取char、int、double类型的
+方法，但是这些方法不是用来读取文本文件的，应该用来读取使用DataOutputStream相对应的writeChar等方法写出的数据。DataOutputStream
+继承自FilterOutputStream，实现了DataOutput接口，提供直接写char、int、double等类型的方法。
+		StringBuffer sb = new StringBuffer();
+        try {
+            DataOutputStream dos = new DataOutputStream(new FileOutputStream("/tem_file/file3"));
+            dos.writeInt(5);
+            dos.writeBoolean(true);
+            dos.writeChar(98);
+            dos.writeDouble(12.56);
+            dos.writeFloat(3.14f);
+            dos.writeUTF("a爱");
+            dos.flush();
+            dos.close();
 
-
-
-
+            DataInputStream dis = new DataInputStream(new FileInputStream("/tem_file/file3"));
+            int a = dis.readInt();
+            boolean b = dis.readBoolean();
+            char c = dis.readChar();
+            double d = dis.readDouble();
+            float f = dis.readFloat();
+			String s = dis.readUTF();
+            sb.append(a).append(b).append(c).append(d).append(f).append(s);
+            dis.close();
+            System.out.println("read finished : ");
+            System.out.println(sb.toString());
+        } catch (IOException e) {
+            if(e instanceof EOFException){
+                System.out.println("read finished : ");
+                System.out.println(sb.toString());
+            }
+            else {
+                e.printStackTrace();
+            }
+        }
+	RandomAccessFile类实现了DataInput和DataOutput接口，所以也可以使用readChar、writeUTF等方法操作文件数据，构造方法使用文件名
+或File对象作为参数，还需要传入一个字符串设置打开文件的模式（权限）：
+		"r"		---		只读
+		"rw"	---		读写
+		"rwd"	---		读写执行
+	另外，RandomAccessFile提供一个seek方法可以直接设置下次读取的位置（距离文件开始位置的字节数），这也是类名中随机的含义；
+setLength可以裁剪或扩展文件的大小，扩展的字节其实是未定义的（这部分数据不可靠）。
+		try {
+            RandomAccessFile rf = new RandomAccessFile("/tem_file/file3","rwd");
+            int a = rf.readInt();
+            rf.seek(5);
+            char c = rf.readChar();
+            System.out.println(a+" : "+c);
+            rf.setLength(5);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
 
 
