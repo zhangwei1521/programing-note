@@ -1684,10 +1684,88 @@ get方法：
         System.out.println(0.00012145);								//1.2145E-4
 	对于小数，看起来只能转成字符串形式
 
-
-
-
-
+												第十七章 NIO
+	在JDK1.4的时候，java开始支持一套新的IO系统，被称为NIO，NIO是一套基于缓冲区和通道的系统，在JDK1.7发布时，又对NIO进行了扩展和增强。
+NIO的设计目的并不是替代早期的基于流模型的IO系统。
+	NIO的相关类和接口都定义在nio包及其子包下。
+	缓冲区在nio包下定义，缓冲区的基本属性和功能都在基类Buffer中定义，其他的缓冲区都继承自这个类。Buffer定义的三个缓冲区的核心概念是：
+当前位置、界限和容量。当前位置是下一次读取或写入的位置，界限是最后一个有效位置的下一个索引，容量是缓冲区可以保存的数据的字节数，界限
+的值应该总是小于等于容量。Buffer提供标记和重置功能。
+	Buffer提供的缓冲区通用方法：
+		abstract Object array();	//如果缓冲区使用数组作为存储实现，将返回所使用数组的引用，否则抛出异常，数组只读也会抛出异常
+		abstract int arrayOffset();	//返回基于数组的缓冲区的第一个元素在数组中的索引。抛出异常和array方法相同。
+		final int capacity();		//返回缓冲区容量
+		final Buffer clear();		//清空缓冲区中数据
+		final Buffer flip();		//先将缓冲区的界限设置到当前位置，再修改当前位置为0
+		abstract boolean hasArray();	//返回缓冲区是否使用数组保存数据
+		final boolean hasRemaining();	//返回缓冲区是否还有剩余数据
+		abstract boolean isDirect();	//返回缓冲区是否可以直接进行IO操作
+		abstract boolean isReadOnly();	//返回缓冲区是否只读
+		final int limit();				//返回界限
+		final Buffer limit(int n);		//设置界限
+		final Buffer mark();			//打标记
+		final int position();			//返回当前位置
+		final Buffer position(int n);	//设置当前位置
+		int remaining();				//返回剩余数据量，即界限-当前位置
+		final Buffer reset();			//设置当前位置为标记位置
+		final Buffer rewind();			//设置当前位置为0
+	扩展自Buffer的其他Buffer：
+		ByteBuffer、MappedByteBuffer、ShortBuffer、IntBuffer、LongBuffer、FloatBuffer、DoubleBuffer、CharBuffer
+	这些扩展的缓冲区类都提供多个重载的get和put方法，用于从缓冲区中读取数据或向缓冲区写入数据，比如ByteBuffer提供以下方法：
+		abstract byte get();
+		ByteBuffer get(byte[] bytes);
+		abstract ByteBuffer put(byte b);
+		ByteBuffer put(byte[] bytes);
+		...
+	通道在nio包下的channels子包中定义：表示到IO源或目标的连接。通道的基本功能定义在Channel接口中，这个接口扩展了Closeable接口和
+AutoCloseable接口。
+	获取通道的一种方式是从支持通道的对象中获取：通过getChannel方法：FileInputStream、FileOutputStream、RandomAccessFile、Socket、
+ServerSocket、DatagramSocket都支持通道。
+	上面这些类的getChannel方法返回的通道类型不全一样，文件IO流及RandomAccessFile返回FileChannel，Socket相关类返回SocketChannel
+	获取通道的另一种方式是使用Files类的静态方法，如newByteChannel方法可以返回SeekableByteChannel接口的实例（FileChannel就是这个
+接口的一类实现）。
+	FileChannel和SocketChannel都提供一些重载的read和write方法，用于将数据读取到缓冲区中或从缓冲区中写数据到通道中。
+	FileChannel定义的方法：
+		abstract int read(ByteBuffer b);
+		abstract int write(ByteBuffer b);
+		...
+	FileChannel提供一个静态方法open，可以打开文件并返回连接该文件的通道，还提供要给map方法，可以把文件数据映射到缓冲区。
+	JDK1.7新增了一个Path接口，用来抽象文件路径，这个接口继承了Watchable、Iterable和Comparable接口。
+	Path接口中定义的方法：
+		boolean endsWith(Path/String path);
+		Path getFileName();
+		Path getName(int idx);	//返回Path对象路径下索引为idx的元素
+		int getNameCount();
+		Path getParent();
+		Path getRoot();
+		boolean isAbsolute();
+		Path resolve(Path/String path);	//如果参数为绝对路径就返回参数对应的Path对象，如果是相对路径就将Path对象的路径加到参数路径前
+		boolean startsWith(Path/String path);
+		Path toAbsolutePath();
+		static Path get(String path,String ... parts);
+		static Path get(URI path);
+		File toFile();	//返回对应的File对象
+	File对象也支持一个toPath()方法，可以得到对应的Path对象。
+	Files类提供一些静态方法，以Path对象为参数，可以进行文件操作，比如打开、创建文件、读取文件属性、复制、移动文件等：
+		static Path copy(Path src,Path des,CopyOption ...how);
+		static Path move(Path src,Path des,CopyOption ...how);
+		static Path createDirectory(Path path,FileAttribute<?> ...attrs);
+		static Path createFile(Path path,FileAttribute<?> ...attrs);
+		static void delete(Path path);
+		static boolean isHidden(Path path);
+		static SeekableByteChannel newByteChannel(Path path, OpenOption ...how);
+		static InputStream newInputStream(Path path, OpenOption ...how);
+		static OutputStream newOutStream(Path path, OpenOption ...how);
+		static <A extends BasicFileAttributes> A readAttributes(Path path,Class<A> clazz, LinkOption ...opts);
+	StandardOpenOption是OpenOption的一个实现，这个类定义了一些枚举量：
+		APPEND、CREATE、CREATE_NEW、READ...
+	文件属性抽象是通过nio包下的子包file.attribute包下的类实现的，基本功能定义在BasicFileAttributes接口中：
+		FileTime creationTime();
+		boolean isDirectory();
+		FileTime lastModifiedTime();
+		...
+	两个派生自BasicFileAttributes的接口：DosFileAttributes(用于FAT文件系统)和PosixFileAttributes(posix标准文件系统)。
+	
 
 
 
