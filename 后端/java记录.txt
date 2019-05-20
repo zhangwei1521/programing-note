@@ -491,7 +491,7 @@ ObjectStreamConstants、Serializable、Externalizable、Flushable
         boolean result = dir1.mkdir();	//如果tem_file不存在则创建目录会失败
 		File dir2 = new File("/tem_file/dir0/dir2");
 		result =dir2.mkdirs();	//上层目录不存在就先创建上层目录
-	FileDescriptor可以看作是文件（这里的文件是广义的文件）的另一种抽象，实际上从文件或标准输入输入数据是通过FileDescriptor连接文件
+	FileDescriptor可以看作是文件（这里的文件是广义的文件）的另一种抽象，实际上从文件或标准输入输出数据是通过FileDescriptor连接文件
 或设备实现的，例如System.in、System.out、System.err都是使用FileDescriptor中的预定义实例in、out、err构造的。
 	FileDescriptor不能直接操作文件，需要配合相应的流使用：
 		FileDescriptor fd = new FileInputStream("/tem_file/file4").getFD();
@@ -1671,7 +1671,18 @@ get方法：
 			}
 		}
 
+	将科学计数法表示的数字转为普通格式数字：
+		BigDecimal d = new BigDecimal(12E7);
+		System.out.println(d.toPlainString());						// 120000000（字符串）
+		System.out.println(Integer.parseInt(d.toPlainString()));	// 120000000
+		System.out.println(d.intValue());							// 120000000
+		System.out.println(d.doubleValue());						// 1.2E8
 
+		BigDecimal d = new BigDecimal(12E-5);
+		System.out.println(d.toPlainString());						//0.000120000000000000003040102891649354432956897653639316558837890625
+		System.out.println(d.doubleValue());						//1.2E-4
+        System.out.println(0.00012145);								//1.2145E-4
+	对于小数，看起来只能转成字符串形式
 
 
 
