@@ -1766,13 +1766,118 @@ ServerSocket、DatagramSocket都支持通道。
 		...
 	两个派生自BasicFileAttributes的接口：DosFileAttributes(用于FAT文件系统)和PosixFileAttributes(posix标准文件系统)。
 	
-
-
-
-
-
-
-
+	使用Cnannel和Buffer读取文件：
+		private static void readFile1(){
+			int count;
+			Path filepath;
+			filepath = Paths.get("/tem_file/file1.txt");
+			try (SeekableByteChannel channel = Files.newByteChannel(filepath)) {
+				ByteBuffer buffer = ByteBuffer.allocate(1024);
+				count = channel.read(buffer);
+				for(;count != -1;){
+					buffer.rewind();	//这里需要将缓冲区的当前位置重置到头部
+					for(int i=0;i<count;i++){
+						System.out.println((char)buffer.get());
+					}
+					count = channel.read(buffer);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	使用FileChannel的map方法直接将数据源映射到缓冲区，这样就不需要手工从通道读取数据到缓冲区：
+		private static void readFile2(){
+			Path filepath;
+			filepath = Paths.get("/tem_file/file1.txt");
+			try (FileChannel channel = (FileChannel) Files.newByteChannel(filepath);){
+				MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY,0,channel.size());
+				for(int i=0;i<buffer.limit();i++){
+					System.out.println((char)buffer.get());
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	手动从缓冲区写文件到通道：
+		private static void writeFile1(){
+			try (FileChannel channel = (FileChannel)Files.newByteChannel(Paths.get("/tem_file/file1.txt"),
+					StandardOpenOption.WRITE,StandardOpenOption.CREATE);){
+				ByteBuffer buffer = ByteBuffer.allocate(26);
+				for(int i=0;i<26;i++){
+					buffer.put((byte) ('A'+i));
+				}
+				buffer.rewind();
+				channel.write(buffer);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+    	}
+	映射文件到缓冲区后，只需要将数据写到缓冲区就可以实现写入数据到文件：
+		private static void writeFile2(){
+			try (FileChannel channel = (FileChannel)Files.newByteChannel(Paths.get("/tem_file/file1.txt"),
+					StandardOpenOption.WRITE,StandardOpenOption.CREATE,StandardOpenOption.READ,
+					StandardOpenOption.TRUNCATE_EXISTING)){
+				ByteBuffer buffer = channel.map(FileChannel.MapMode.READ_WRITE,0,26);
+				for(int i=0;i<26;i++){
+					buffer.put((byte) ('a'+i));
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+    	}
+	打开通道时，设置了打开模式为：StandardOpenOption.TRUNCATE_EXISTING，这样如果原文件存在就会先清空原文件，
+设置StandardOpenOption.READ是因为映射缓冲区需要通道是可读的，或可读可写的。
+	复制文件：
+		private static void copyFile(){
+			Path src = Paths.get("/tem_file/file1.txt");
+			Path des1 = Paths.get("/tem_file/file2.txt");
+			Path des2 = Paths.get("/tem_file/file3.txt");
+			try {
+				Files.copy(src,des1, StandardCopyOption.COPY_ATTRIBUTES,StandardCopyOption.REPLACE_EXISTING);
+				Files.copy(src,des2,StandardCopyOption.COPY_ATTRIBUTES);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	获取文件和路径的属性，可以使用三种方式：
+		Path接口中定义的方法：
+		Path file = Paths.get("/tem_file/file1.txt");
+        Path path = Paths.get("/tem_file/");
+        System.out.println(file.getFileName());
+        System.out.println(file.getParent());
+        System.out.println(file.isAbsolute());
+        System.out.println(file.toAbsolutePath());
+        System.out.println(file.getRoot());
+        System.out.println(file.getFileSystem());
+        System.out.println(path.getNameCount());
+        System.out.println(path.getName(0));
+		Files类定义的静态方法：
+		System.out.println(Files.isDirectory(path));
+        System.out.println(Files.isHidden(file));
+        System.out.println(Files.isReadable(file));
+        System.out.println(Files.isRegularFile(file));
+        System.out.println(Files.isWritable(file));
+        System.out.println(Files.isExecutable(file));
+		Files.readAttributes获取的BasicFileAttributes对象的方法：
+		BasicFileAttributes attributes = Files.readAttributes(file,BasicFileAttributes.class);
+        System.out.println(attributes.isDirectory());
+        System.out.println(attributes.lastModifiedTime());
+        System.out.println(attributes.creationTime());
+        System.out.println(attributes.fileKey());
+	使用DirectoryStream遍历目录下的元素：
+		private static void listDir(){
+			Path dir = Paths.get("/tem_file/");
+			try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(dir)) {
+				for(Path item : directoryStream){
+					System.out.println(Files.isDirectory(item)?"DIR> "+item.getFileName():item.getFileName());
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	Files.newDirectoryStream有3个重载版本，包括一个带文件名过滤规则的字符串参数版本：["*.{txt,jpg}"]，另一个重载版本参数是
+一个DirectoryStream.Filter的实例对象。
+	
 
 
 
