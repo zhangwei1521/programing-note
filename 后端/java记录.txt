@@ -1729,7 +1729,7 @@ ServerSocket、DatagramSocket都支持通道。
 		abstract int read(ByteBuffer b);
 		abstract int write(ByteBuffer b);
 		...
-	FileChannel提供一个静态方法open，可以打开文件并返回连接该文件的通道，还提供要给map方法，可以把文件数据映射到缓冲区。
+	FileChannel提供一个静态方法open，可以打开文件并返回连接该文件的通道，还提供一个map方法，可以把文件数据映射到缓冲区。
 	JDK1.7新增了一个Path接口，用来抽象文件路径，这个接口继承了Watchable、Iterable和Comparable接口。
 	Path接口中定义的方法：
 		boolean endsWith(Path/String path);
