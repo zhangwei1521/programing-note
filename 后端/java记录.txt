@@ -1877,7 +1877,50 @@ ServerSocket、DatagramSocket都支持通道。
 		}
 	Files.newDirectoryStream有3个重载版本，包括一个带文件名过滤规则的字符串参数版本：["*.{txt,jpg}"]，另一个重载版本参数是
 一个DirectoryStream.Filter的实例对象。
-	
+	使用Files.walkFileTree递归遍历目录：
+		class MyFileVisitor extends SimpleFileVisitor<Path>{
+			private Path root;
+			
+			public MyFileVisitor(Path root){
+				this.root = root;
+			}
+
+			@Override
+			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+					throws IOException
+			{
+				System.out.println(dir.getParent()==root);
+				//过滤根目录和非一级子目录
+				if(attrs.isDirectory() && dir!=root && !dir.getParent().getFileName().equals(root.getFileName())){
+					System.out.println("skip directory: "+dir.getFileName());
+					return FileVisitResult.SKIP_SUBTREE;
+				}
+				return FileVisitResult.CONTINUE;
+			}
+
+			@Override
+			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+					throws IOException
+			{
+				System.out.println("file name: "+file.getFileName());
+				return FileVisitResult.CONTINUE;
+			}
+		}
+
+		 private static void walkFileTree(){
+			Path root = Paths.get("/tem_file");
+			try {
+				Files.walkFileTree(root,new MyFileVisitor(root));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	JDK1.7之前，不能使用Path接口来获取通道，那时建立到文件的通道是使用文件输入输出流的方法来打开通道的：
+		FileInputStream fin = new FileInputStream("/tem_file/file1.txt");
+		FileChannel channel = fin.getChannel();
+		FileOutputStream fout = new FileOutputStream("/tem_file/file2.txt");
+		FileChannel channel2 = fout.getChannel();
+	JDK1.7之前还需要手动关闭流（不能使用try(...)语法）。
 
 
 
