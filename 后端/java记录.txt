@@ -64,6 +64,7 @@ Internet上的服务器的硬件设施和操作系统的多样性要求开发的
 无法输入的字符还可以使用转义表示法：如换行符使用'\n'。8进制表示并不常用。
 	汉字：𤭢	unicode码点为：150370 大于65535，因此无法作为java的单个字符输入，可以使用字符串表示：
 String cs = "𤭢";但是cs.length()返回2。
+	byte使用8位，表示范围：-128~127
 	一个奇怪的错误与类型提升：
 	byte b = 50;
 	b = b * 2;
@@ -1921,7 +1922,55 @@ ServerSocket、DatagramSocket都支持通道。
 		FileOutputStream fout = new FileOutputStream("/tem_file/file2.txt");
 		FileChannel channel2 = fout.getChannel();
 	JDK1.7之前还需要手动关闭流（不能使用try(...)语法）。
+	
+												第十八章 网络
+	IP协议定义了IP数据包的格式和如何将IP数据包传输给指定主机的机制（由网络中的路由器提供支持），IP协议本身并不能提供可靠性保证，所以
+传输的IP数据包可以丢失。根据分层设计的思想，数据传输的可靠性保证将由IP协议层的上层协议来提供，TCP协议就是设计用来提供这种保证的，TCP
+协议使用了面向连接、排序传输、检测重传等机制来实现数据的可靠传输。TCP协议保证了可靠传输，但是也不可避免地引入了传输效率降低的问题。
+另一种协议UDP协议被设计出来提供无连接的、不可靠的，但是快速的数据传输。
+	TCP、UDP协议提供的都是端到端的数据通信，即主机到主机，主机应用间的通信则需要使用更高层的协议（应用层协议），这些协议使用指定的端口
+来确定远程主机上的特定应用，从而实现应用间的通信。
+	Socket（套接字）是TCP、UDP协议层和应用层协议层之间的抽象层，可以看成一种特殊的文件，操作系统提供操作Socket文件的接口给应用，应用可
+以从Socket文件读取数据，也可以写数据到Socket文件中；同时操作系统实现网络和Socket文件的交互，即从网络中填充数据到Socket文件中或从Socket
+文件中发送数据到网络。
+	java提供自己的套接字抽象，Java的套接字对操作系统的套接字进行了封装，提供了跨平台的一致的socket模型，这也是Java被广泛应用于网络编程的
+原因。Java的网络连接相关类位于java.net包下。
+	InetAddress对象是网络中的某台主机的抽象，保证主机的IP和域名。通常使用InetAddress提供的静态工厂方法来获取InetAddress实例对象：
+		private static void testInetAddress(){
+			try {
+				InetAddress localAddress = InetAddress.getLocalHost();
+				System.out.println(localAddress);
+				InetAddress address1 = InetAddress.getByName("www.baidu.com");
+				System.out.println(address1);
+				InetAddress[] addresses = InetAddress.getAllByName("www.baidu.com");
+				int i = 0;
+				for(InetAddress address : addresses){
+					if(address.equals(address1)){
+						continue;
+					}
+					System.out.println("address"+ i++ + ": " +address);
+				}
 
+				byte[] address1s = address1.getAddress();
+				StringBuilder adBuilder = new StringBuilder();
+				for(byte ab : address1s){
+					int a = ab;
+					if(a<0){
+						a = 255+a;
+					}
+					adBuilder.append(a).append(".");
+				}
+				System.out.println(adBuilder.substring(0,adBuilder.length()-1));
+				System.out.println(address1.getHostName());
+				System.out.println(address1.getHostAddress());
+				System.out.println(address1.isMulticastAddress());
+				System.out.println(address1.getCanonicalHostName());
+			} catch (UnknownHostException e) {
+				e.printStackTrace();
+			}
+		}
+	InetAddress有两个子类，Inet4Address表示IPv4地址，Inet6Address表示IPv6地址，大多数情况下直接使用InetAddress就足够了。
+	
 
 
 
