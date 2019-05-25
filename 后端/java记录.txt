@@ -1935,7 +1935,7 @@ ServerSocket、DatagramSocket都支持通道。
 文件中发送数据到网络。
 	java提供自己的套接字抽象，Java的套接字对操作系统的套接字进行了封装，提供了跨平台的一致的socket模型，这也是Java被广泛应用于网络编程的
 原因。Java的网络连接相关类位于java.net包下。
-	InetAddress对象是网络中的某台主机的抽象，保证主机的IP和域名。通常使用InetAddress提供的静态工厂方法来获取InetAddress实例对象：
+	InetAddress对象是网络中的某台主机的抽象，包括主机的IP和域名。通常使用InetAddress提供的静态工厂方法来获取InetAddress实例对象：
 		private static void testInetAddress(){
 			try {
 				InetAddress localAddress = InetAddress.getLocalHost();
