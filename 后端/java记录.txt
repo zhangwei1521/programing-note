@@ -1970,8 +1970,222 @@ ServerSocket、DatagramSocket都支持通道。
 			}
 		}
 	InetAddress有两个子类，Inet4Address表示IPv4地址，Inet6Address表示IPv6地址，大多数情况下直接使用InetAddress就足够了。
+	java的TCP/IP套接字可以在Internet主机之间实现可靠的、双向的、持续的、点对点的、基于流的连接，通过套接字打开IO流实现跨网络
+的程序之间通信。
+	java提供一个ServerSocket类作为监听者，用于服务器，等待客户端发起连接。还提供一个Socket类作为客户端，用于发起到服务器的连接。
+	ServerSocket对象创建时需要设置监听的本地端口号，还可以选择设置等待连接的队列的长度（默认为50）。
+		public ServerSocket(int port);
+		public ServerSocket(int port, int maxQueue);
+		public ServerSocket(int port, int maxQueue, InetAddress localAddress);	//多个网卡的主机绑定给定的IP
+	Socket对象提供两个构造函数，在创建了Socket对象后就默认发起连接，不需要手动进行连接：
+		public Socket(String hostName, int port);
+		public Socket(Inetaddress address, int port);
+	Socket对象提供以下实例方法用于获取连接的信息：
+		InetAddress getInetAddress();	//返回服务器的地址，如果没有连接，将返回null
+		int getPort();			//返回连接的服务器的端口，如果没有连接返回0
+		int getLocalPort();		//返回本地端口，没有连接将返回-1
+		InputStream getInputStream();
+		OutputStream getOutputStream();
+		SocketChannel getChannel();
+		connect(SocketAddress address);		//建立新的连接
+	RFC 3912定义了一个非常简单的Internet信息查询协议——WHOIS协议。其基本内容是，先向服务器的TCP端口43建立一个连接，发送查询关键字
+并加上回车换行，然后接收服务器的查询结果。
+	whois.internic.net的43端口提供上面的WHOIS协议支持。
+		private static void testSocketConnect(){
+			int c;
+			try(Socket socket = new Socket("whois.internic.net",43);) {
+				System.out.println("local port: "+socket.getLocalPort());
+				InputStream in = socket.getInputStream();
+				OutputStream out = socket.getOutputStream();
+				String baidu = "baidu.com\n";
+				out.write(baidu.getBytes());
+				while ((c=in.read()) != -1){
+					System.out.print((char)c);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	使用客户端Socket和服务器端ServerSocket通信：
+		public class ServerSocketDemo {
+			public static void main(String[] args) {
+				dealRequest();
+			}
+			private static void dealRequest(){
+				try {
+					ServerSocket serverSocket = new ServerSocket(9999);
+					int count = 0;
+					while (count++<5){
+						System.out.println("no request,waiting...");
+						Socket socket = serverSocket.accept();
+						InputStream in = socket.getInputStream();
+						OutputStream out = socket.getOutputStream();
+						while (true){
+							int len;
+							byte[] buffer = new byte[1024];
+							StringBuffer str = new StringBuffer();
+							len=in.read(buffer);
+							str.append(new String(buffer,0,len, StandardCharsets.UTF_8.toString()));
+							if(str.toString().equals("-1\n")){
+								break;
+							}
+							System.out.println("get request message from "+socket.getInetAddress()+" : "+str.toString());
+							System.out.println("please input message to response:");
+							len = System.in.read(buffer);
+							out.write(new String(buffer,0,len, StandardCharsets.UTF_8.toString()).getBytes(StandardCharsets.UTF_8.toString()));
+						}
+						in.close();
+						out.close();
+						socket.close();
+					}
+					serverSocket.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 	
+		public class ClientSocketDemo {
+			public static void main(String[] args) {
+				contactServer();
+			}
+			private static void contactServer(){
+				try {
+					Socket socket = new Socket("127.0.0.1",9999);
+					OutputStream out = socket.getOutputStream();
+					InputStream in = socket.getInputStream();
 
+					byte [] buffer = new byte[1024];
+					int len;
+					StringBuffer str;
+					System.out.println("please input message to send: ");
+					while ((len = System.in.read(buffer)) != -1){
+						str = new StringBuffer();
+						str.append(new String(buffer,0,len, StandardCharsets.UTF_8.toString()));
+						out.write(str.toString().getBytes(StandardCharsets.UTF_8.toString()));
+						if(str.toString().equals("-1\n")){
+							break;
+						}
+						len = in.read(buffer);
+						str = new StringBuffer();
+						str.append(new String(buffer,0,len, StandardCharsets.UTF_8.toString()));
+						System.out.println("message from server: "+str.toString());
+						System.out.println("please input message to send: ");
+					}
+					out.close();
+					in.close();
+					socket.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	URL(统一资源定位符)用于可靠地标识/定位Internet上的资源/信息。基本结构分为4个部分：
+		http://www.cnblogs.com:80/rexcheny/p/10925464.html
+		协议	主机(域名或IP)	端口	资源路径
+	80端口是http协议的默认端口,如果服务器监听端口是80，在浏览器中可以不写这个部分。实际上访问站点主页可以直接使用cnblogs.com
+这种域名就可以实现。
+	java的URL类构造函数：
+		public URL(String url);
+		public URL(String protocal,String hostName,int port,String path);
+		public URL(String protocal,String hostName,String path);	//这里没有端口号，那么默认为-1
+		public URL(Ulr url,String str);
+	URL对象提供一个openConnection方法，可以返回一个URLConnection对象。
+	URLConnection用于访问远程资源属性，也就是说建立连接后实际传输远程资源对象前，可以使用这个对象获取远程资源对象的属性。（这些
+属性只有HTTP协议支持）。
+		private static void testURLConnection(){
+			try {
+				URL url = new URL("http://www.internic.net");
+				URLConnection urlConnection = url.openConnection();
+				System.out.println(new Date(urlConnection.getDate()));
+				System.out.println(urlConnection.getContentType());
+				System.out.println(urlConnection.getLastModified());
+				long len = urlConnection.getContentLengthLong();
+				int c;
+				if(len>0){
+					InputStream in = urlConnection.getInputStream();	//获得资源的输入流
+					while ((c=in.read()) != -1){
+						System.out.print((char)c);
+					}
+					in.close();
+				}
+			} catch (IOException e){
+				e.printStackTrace();
+			}
+		}
+	HttpURLConnection是URLConnection的子类，如果是使用http协议的URL，可以将openConnection()打开的URLConnection强转为
+HttpURLConnection对象。它提供一些获取http协议相关的信息：getRequestMethod()、setRequestMethod()、getResponseCode()、
+getResponseMessage()、getHeaderFields()等。
+	URI(统一资源标识符)是URL的超集，代表资源定位的标准方式，URL除了描述资源定位，还描述了访问方式。
+	net还提供Cookie类及相关的接口、类，用来创建有状态的会话。
+	java提供DatagramPacket类代表UDP数据包，DatagramSocket代表发射器，使用UDP协议实现无连接的数据传输：
+	创建DatagramSocket对象时可以指定本地端口，也可以不指定本地端口（使用随机的可用端口），还可以直接绑定一个本地IP和
+端口（SocketAddress）。
+	使用DatagramSocket和DatagramPacket实现通信：
+		public class DatagramSocketDemo1 {
+			public static void main(String[] args) {
+				contact();
+			}
+			private static void contact(){
+				try (DatagramSocket socket = new DatagramSocket(9998)){
+					System.out.println(socket.getLocalAddress());
+					System.out.println(socket.getLocalPort());
+					System.out.println(socket.getInetAddress());
+					System.out.println(socket.getPort());
+					while (true){
+						byte[] buffer = new byte[1024];
+						int len = System.in.read(buffer);
+						DatagramPacket packet = new DatagramPacket(buffer,len, InetAddress.getLocalHost(),9997);
+						socket.send(packet);
+						if(new String(buffer,0,len, StandardCharsets.UTF_8.toString()).equals("-1\n")){
+							break;
+						}
+						buffer = new byte[1024];
+						DatagramPacket receivePack = new DatagramPacket(buffer,buffer.length);
+						socket.receive(receivePack);
+						String message = new String(receivePack.getData(),0,receivePack.getLength(), StandardCharsets.UTF_8.toString());
+						if(message.equals("-1\n")){
+							break;
+						}
+						System.out.println(message);
+					}
+
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+		public class DatagramSocketDemo2 {
+			public static void main(String[] args) {
+				contact();
+			}
+			private static void contact() {
+				byte[] buffer = new byte[1024];
+				DatagramPacket packet = new DatagramPacket(buffer,buffer.length);
+				try (DatagramSocket socket = new DatagramSocket(9997);){
+					while (true){
+						socket.receive(packet);
+						String message = new String(packet.getData(),0,packet.getLength(), StandardCharsets.UTF_8.toString());
+						if(message.equals("-1\n")){
+							break;
+						}
+						System.out.println(message);
+						buffer = new byte[1024];
+						int len = System.in.read(buffer);
+						DatagramPacket sendPack = new DatagramPacket(buffer,len, packet.getAddress(),packet.getPort());
+						socket.send(sendPack);
+						if(new String(buffer,0,len, StandardCharsets.UTF_8.toString()).equals("-1\n")){
+							break;
+						}
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+	
 
 
 
