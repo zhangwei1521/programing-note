@@ -1551,7 +1551,7 @@ this绑定到其他对象也是可以的：
 	var counter = {
 	  count: 0,
 	  inc: function () {
-		this.count++;
+			this.count++;
 	  }
 	};
 
