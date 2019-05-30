@@ -555,7 +555,7 @@ spring框架提供API，具体要做的事由我们自己实现。spring提供5�
 													第五章
 	Spring提供一个MVC框架用于开发web应用，其目标是实现web组件之间的松耦合。
 	springmvc处理http请求流程：
-	HTTP请求从客户端发出后，到达目标主机后被web服务器如Tomcat接收，然后tomcat根据将请求转交给相应的servlet处理，在
+	HTTP请求从客户端发出后，到达目标主机后被web服务器如Tomcat接收，然后tomcat根据映射路径将请求转交给相应的servlet处理，在
 springmvc中，请求被统一交给DispatcherServlet实例处理，这类servlet被称为前端控制器Servlet。DispatcherServlet实例通过
 查询处理器映射来确定处理该请求的控制器，控制器这类组件通常将处理逻辑交给服务对象完成，然后控制器将处理后的数据保存到
 模型对象中并返回逻辑视图名（也可能返回数据对象），DispatcherServlet实例收到控制器实例返回的逻辑视图名后查找视图解析
