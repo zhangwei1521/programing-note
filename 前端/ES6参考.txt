@@ -681,5 +681,116 @@ Number.EPSILON实际上是 JavaScript 能够表示的最小精度
 ES6希望将空位当做undefined处理：from方法会将数组的空位转为undefined，扩展运算符（...）也会将空位转为undefined，for...of循环也会遍历空位，entries()类
 方法将空位当做undefined处理。
 	
-	
+	第八章 对象的扩展
+	ES6之前不允许直接在对象中写变量或函数，ES6开始允许这种写法：
+		const obj = 'bar';
+		const func = v=> v**v;
+		const newObj = {obj,func};
+		newObj.obj;	// "bar"
+		newObj.func(2);	// 4
+	在使用字面量方式定义对象（使用大括号）时，ES5不能使用 [表达式] 来表示键名，只支持标准写法：
+		var obj = {
+			foo: true
+		};
+	ES6开始支持这种 [表达式] 来表示键名：
+		let propKey = 'foo';
+		let obj = {
+			[propKey]: true,
+			['a' + 'bc']: 123,
+			['h' + 'ello']() {
+				return 'hi';
+			}
+		};
+	错误的用法：
+		let obj = {[propKey]}	//这种写法会报错
+	属性名表达式如果是一个对象，默认情况下会自动将对象转为字符串[object Object]：
+		const keyA = {a: 1};
+		const myObject = {
+			[keyA]: 'valueA'
+		}
+		myObject	// {[object Object]: "valueA"}
+	get和set方法的name属性不是直接通过方法键名获取：
+		const obj = {
+			get foo() {},
+			set foo(x) {}
+		};
+		obj.foo.name	//报错
+		Object.getOwnPropertyDescriptor(obj, 'foo').get.name	// get foo	这里会有一个前置的get
+	bind方法创造的函数，name属性返回bound加上原函数的名字；Function构造函数创造的函数，name属性返回anonymous。
+	如果对象的方法是一个 Symbol 值，那么name属性返回的是这个 Symbol 值的描述。
+	对象属性的描述对象的enumerable属性值规定了，某些操作会忽略当前属性：
+		for...in循环：只遍历对象自身的和继承的可枚举的属性(键名)。
+		Object.keys()：返回对象自身的所有可枚举的属性的键名。
+		JSON.stringify()：只串行化对象自身的可枚举的属性。
+		Object.assign()： 忽略enumerable为false的属性，只拷贝对象自身的可枚举的属性。[ES6新增]
+	ES6规定，所有 Class 的原型的方法都是不可枚举的。
+		Object.getOwnPropertyDescriptor(class {foo() {}}.prototype, 'foo').enumerable
+		// false
+	Reflect.ownKeys返回一个数组，包含对象自身的所有键名，不管键名是 Symbol 或字符串，也不管是否可枚举。
+	使用for...in、Object.keys(obj)、Object.getOwnPropertyNames(obj)、Object.getOwnPropertySymbols(obj)、
+Reflect.ownKeys(obj)遍历对象的键名，都遵守同样的属性遍历的次序规则：
+		首先遍历所有数值键，按照数值升序排列。
+		其次遍历所有字符串键，按照加入时间升序排列。
+		最后遍历所有 Symbol 键，按照加入时间升序排列。
+		Reflect.ownKeys({ [Symbol()]:0, b:0, 10:0, 2:0, a:0 })
+		// ['2', '10', 'b', 'a', Symbol()]
+	ES6 新增一个关键字super，指向当前对象的原型对象,super关键字表示原型对象时，只能用在对象的方法之中，用在其他地方都会报错。
+		const proto = {
+			foo: 'hello'
+		};
+
+		const obj = {
+			foo: 'world',
+			find() {
+				return super.foo;
+			}
+		};
+
+		Object.setPrototypeOf(obj, proto);
+		obj.find() // "hello"
+	对象的方法声明使用下面的写法不能引用this和super：
+		let obj1 = {
+			name: "zw",
+			foo: function(){
+				return this.name	//报错
+			}
+			bar: function(){
+				return super.name	//报错
+			}
+		}
+	对象的解构赋值用于从一个对象取值，相当于将目标对象自身的所有可遍历的、但尚未被读取的属性，分配到指定的对象上面:
+		let { x, y, ...z } = { x: 1, y: 2, a: 3, b: 4 };
+		z	//	{ a: 3, b: 4 }
+		let { ...z } = null; // 运行时错误
+		let { ...z } = undefined; // 运行时错误
+	解构赋值必须是最后一个参数，否则会报错。
+	解构赋值的拷贝是浅拷贝
+	扩展运算符的解构赋值，不能复制继承自原型对象的属性:
+		let o1 = { a: 1 };
+		let o2 = { b: 2 };
+		o2.__proto__ = o1;
+		let { ...o3 } = o2;
+		o3 // { b: 2 }
+	对象的扩展运算符（...）用于取出参数对象的所有可遍历属性，拷贝到当前对象之中:
+		let z = { a: 3, b: 4 };
+		let n = { ...z };
+		n // { a: 3, b: 4 }	
+	数组：
+		let foo = { ...['a', 'b', 'c'] };
+		foo		// {0: "a", 1: "b", 2: "c"}
+	原始类型值：
+		{...1} 			// {}
+		{...undefined} 	// {}
+	字符串：
+		{...'hello'}	// {0: "h", 1: "e", 2: "l", 3: "l", 4: "o"}
+	对象的扩展运算符等同于使用Object.assign()方法。
+		let aClone = { ...a };
+		// 等同于
+		let aClone = Object.assign({}, a);
+	合并两个对象：
+		let ab = { ...a, ...b };
+	复制对象后覆盖原对象的属性：
+		let aWithOverrides = { ...a, x: 1, y: 2 };
+	复制对象时设置属性默认值：
+		let aWithDefaults = { x: 1, y: 2, ...a };	//这里要求原对象没有x、y属性，（x/y为null或undefined都会被继承）
 	

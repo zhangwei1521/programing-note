@@ -924,10 +924,10 @@ set和get是函数：
 另一种写法：
 	var obj = {
 	  get p() {
-		return 'getter';
+			return 'getter';
 	  },
 	  set p(value) {
-		console.log('setter: ' + value);
+			console.log('setter: ' + value);
 	  }
 	};
 	obj.p();	//"getter"
