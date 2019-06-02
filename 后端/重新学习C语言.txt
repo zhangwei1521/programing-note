@@ -36,12 +36,12 @@
 			printf("butler.....");
 		}
 	#include <stdio.h> 是一条C预处理器指令，（C编译器在编译前会对源代码进行一些准备工作，称为预处理），作用是将头文件stuio.h
-中的所有内容复制到当前位置。stuio.h头文件中包含了供编译器使用的输入、输出函数信息，
+中的所有内容复制到当前位置。stuio.h头文件中包含了供编译器使用的输入、输出函数信息(函数原型).
 	int main(void) 是C99和C11确定的main函数的标准形式（对于不需要传入参数的程序），历史上存在main()、void main()这样的写法，
 部分编译器支持这些写法，但是标准不建议这样写。
 	/* xxx */ 是传统的C程序注释格式，C99新增了// xxx 这种单行注释格式
 	C程序的函数体必须使用{}包围。
-	int num; C语言要求变量是使用前必须先声明，不能在声明时为变量赋初值。C99之前的C语言都要求变量声明应该放在块的顶部，C99开始允
+	int num; C语言要求变量是使用前必须先声明，也可以在声明时为变量赋初值。C99之前的C语言都要求变量声明应该放在块的顶部，C99开始允
 许把声明放在块的任意位置，但是还是建议将声明放在块的顶部，这有助于在编写代码前先规划程序需要使用的变量。编译器为声明的变量预分配
 内存空间。
 	int是C语言的保留字之一，不能用作标识符，合法的标识符可以是大小写字母、数字和下划线的组合，但是不能是数字开头。操作系统和C库
@@ -50,7 +50,7 @@
 	num = 1; 通常称为赋值表达式语句。编译时将为变量所在的内存单元设置初始值。
 	printf("My favorite number is %d because it is first.\n",num); 是C语言的一个标准函数，提供格式化输出功能，%d是一个占位符，
 \n是转义的换行符。
-	getchar(); 用于等待用于输入，随意输入一个字符后程序才会继续执行下去，这里用于暂停程序执行。
+	getchar(); 用于等待用于输入，随意输入一个字符并回车后程序才会继续执行下去，这里用于暂停程序执行。
 	return 0; C标准要求main返回0，在某些操作系统中，返回0表示程序正确地执行结束。
 	void butler(void); 是C90开始新增的函数原型，通常称为函数声明，C90之前也有函数声明，但是格式要简单一些：void butler();
 函数原型标明了函数的属性信息，包括返回值类型、参数类型，这样编译器在编译到函数调用那一行时就可以进行校验。头文件（标准include文件）
@@ -58,6 +58,127 @@
 	C11标准规定C语言有6种语句，分别是标号语句（goto标号语句、case标号语句等），复合语句（使用{}包围的多条语句），表达式语句，
 （条件）选择语句，迭代语句（循环语句），跳转语句（break、return、goto等，函数调用语句应该也属于跳转语句）。
 
+	第三章
+	还是从一个例子开始：second.c	//编译 gcc second.c -o second.out
+		#include <stdio.h>
+		int main(void){
+			float weight, value;
 
+			printf("please input your weight: ");
+			scanf("%f",&weight);
+
+			value = 1700.0 * weight * 14.5833;
+			printf("value of your weight is %.2f\n",value);
+			getchar();
+			getchar();
+
+			return 0;
+		}
+	float weight; 声明一个单精度浮点数类型的变量：weight
+	scanf("%f",&weight); 读取键盘输入的单精度浮点数，将输入的数值保存到weight变量中。
+	printf("value of your weight is %.2f\n",value); %.2f表示输出一个单精度数，输出时保留2位小数。
+	这里使用了两个getchar();第一个getchar读取scanf处输入数值后的回车符，第二个getchar等待输入，实现程序暂停执行。
+	常量：程序执行期间不会改变的量，int PI = 3.14;声明的PI如果不被修改就是一个常量，常量也可以是程序中直接使用的数值，
+如前面的 1700.0 和 14.5833
+	变量：程序执行期间会被修改或赋值的量，如weight和value
+	数据类型：
+		K&C						C90新增				C99新增
+		int						signed				_Bool		true或false
+		long					void				_Complex	复数
+		short										_Imaginary	虚数
+		unsigned
+		char	字符
+		float
+		double
+	一般来说C语言的int类型使用机器字长（位数），但是现在64位机器中int类型实际上还是使用32位保存，取值范围为
+-2147483648~+2147483647
+	变量初始化：
+		int a = 10;
+		int b = 20, c = 30;
+	printf函数可以接收多个参数，这样就会导致下面的问题：
+		printf("10 minus %d is %d\n",2);	// 10 minus 2 is 16584652 
+	编译器不能检查出这种参数不匹配的问题，参数不够时会传一个或多个随机值给printf函数补齐参数。
+	前缀0x或0X表示十六进制数：	0x10
+	前缀0表示八进制数：			020
+	打印十六进制和八进制：
+		printf("dec = %d; octal = %o; hex = %x\n",100,100,100);
+		// dec = 100; octal = 144; hex = 64
+		printf("dec = %d; octal = %#o; hex = %#x\n",100,100,100);
+		// dec = 100; octal = 0144; hex = 0x64
+	其他数值类型：
+		shor int 简写：short
+		long int 简写：long
+		long long int 简写：long long //C99加入，至少64位
+		unsigned int 简写 unsigned
+	short、int、long、long long默认都是有符号类型，可以在这些类型前面加上signed强调有符号，也可以加上unsigned得到相应
+的无符号类型，无符号类型的可表示数值范围将扩大一倍。
+	C语言只规定了short类型的位数不能比int多，long类型位数不能比int少，所以可能这三个类型使用同样的位数。
+	对于程序中使用的数值常量如123456，编译器会根据它的值确定使用什么类型来存储它。如果需要自定义这样的数值常量的存储类型，
+可以使用后缀：L表示long，LL表示long long，U表示unsigned
+	C语言没有规定数值的溢出应该怎么处理，通常处理器会从数值范围的另一端开始计算。
+	打印unsigned int、short、long、long long:
+		printf("unsigned : %u \n",45u);
+		short s = 55;
+		printf("short : %hd \n",s);
+		printf("long : %ld \n",55l);
+		printf("long long : %lld \n",55ll);
+	char字符类型使用一个字节保存，最大只能使用255.C90标准允许使用signed和unsigned修饰char，指明char使用有符号数保存还是
+无符号数。不使用前缀修饰，就会由编译器决定使用什么格式保存，gcc默认使用无符号数保存。
+		char c = 'd';
+		printf("char : %c, int : %d \n",c,c);
+	C99提供一个头文件stdint.h，这个头文件提供类型别名： 
+		精确宽度整数类型，如 int32_t，在int为16位，long为32的机器上编译，编译器会将int32_t转为long； 
+		最小宽度类型，如 int_least8_t，如果机器不支持8位整数，最小只支持到16位整数，那么编译器就会把int_least8_t转为机器
+的16整数类型；
+		最快最小宽度类型，如 int_fast8_t，编译器将转换为当前机器运算最快的整数类型；
+		intmax_t类型，表示最大的有符号整数；
+		unitmax_t类型，表示最大的无符号整数。
+	C99开始，头文件inttypes.h定义了一些字符串宏，可以用来代表打印值的合适类型转换。
+		#include <stdio.h>
+		#include <inttypes.h>
+		int main(void){
+			int32_t a = 55;	//这里没有引入stdint.h也可以使用
+			printf("int value : %d\n",a);
+			printf("int32_t value : %" PRId32 "\n",a);
+
+			return 0;
+		}
+	printf("int32_t value : %" PRId32 "\n",a);中PRId32是一个字符串宏，将被替换为"d"，C语言中多个连续的字符串可以组成一个
+新的字符串。
+	C标准规定，float类型至少能表示6位有效数字，取值范围至少为10^-37 ~ 10^37，系统通常使用32位保存float。标准中double和float
+的精度要求相同，但是要求double至少能表示10位有效数字。系统中通常使用64位保存double，并且都支持至少13位有效数字。标准还定义了
+long double类型，但是只要求其精度至少和double相同。
+	4.0这种浮点常量默认被保存为double类型，需要使用4.0f指明使用float保存,4.0L指明使用long double保存。
+	100.0可以写成：100. 0.2可以写成.2
+	C99允许使用十六进制表示浮点数：0xa.1fp10，p10表示2的10次幂。
+	printf函数使用%f表示float和double类型数值，使用%e表示使用浮点数的指数形式，%a表示使用十六进制的浮点格式打印（需要编译器
+支持C99）。
+	计算的数值太大超过float或double等能表示的范围时，产生上溢，过去标准没有定义如何处理这种情况，现在标准规定应该返回一个表示
+无穷大的值，printf函数中打印将先生inf或infinity
+	计算时如果操作数已经是最小的浮点数，那么继续减小这个值就会导致浮点格式的尾数部分即有效数字部分舍去一些位，造成有效位数的损失。
+这称为下溢。
+	C语言还支持NaN，某些函数在特定情况下将返回这个值，printf函数打印先生NaN或nan
+	复数和虚数浮点数类型：
+		float _Complex
+		double _Complex
+		long double _Complex
+		float _Imaginary
+		double _Imaginary
+		long long _Imaginary
+	使用sizeof运算符获取数据类型的字节：（本地64机器），%zd是C99提供的匹配sizeof返回数据类型的占位转换符。
+	 	printf("char size : %zd\n",sizeof(char));				//1
+        printf("int size: %zd\n",sizeof(int));					//4
+        printf("short size: %zd\n",sizeof(short));				//2
+        printf("long size: %zd\n",sizeof(long));				//8
+        printf("float size: %zd\n",sizeof(float));				//4
+        printf("double size: %zd\n",sizeof(double));			//8
+        printf("long double size: %zd\n",sizeof(long double));	//16
+	C语言允许使用下面的写法：
+		int a = 10.5;
+		float b = 3.141592653;
+	这样的写法将会被转为给定数据类型的值，所以会丢失精度。
+	一种命名约定： int i_a = 10; unsigned short us_b = 45;
 	
-	
+
+
+
