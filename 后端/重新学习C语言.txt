@@ -178,6 +178,18 @@ long double类型，但是只要求其精度至少和double相同。
 		float b = 3.141592653;
 	这样的写法将会被转为给定数据类型的值，所以会丢失精度。
 	一种命名约定： int i_a = 10; unsigned short us_b = 45;
+	使用转义字符：
+		#include <stdio.h>
+		int main(void){
+			float a;
+			printf("\aenter your number:");		//蜂鸣
+			printf(" $_____\b\b\b\b\b");		//退格（通常不会覆盖前面的输出）
+			scanf("%f",&a);
+			printf("\t$%.2f is your number",a);	//制表
+			printf("\rGee!\n");					//回车
+			return 0;
+		}
+	printf先把输出数据保存到缓冲区中，当缓冲区填满、遇到换行符或者需要输入数据时，缓冲区的数据就被发送到屏幕。
 	
 
 
