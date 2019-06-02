@@ -14,7 +14,7 @@
 		make hiredis lua jemalloc linenoise
 		cd ..
 	 6、make
-	 7、make prefix=/mytools/redis install
+	 7、make PREFIX=/mytools/redis install
 	Redis的版本号规则：major.minor.patch
 	/mytools/redis/bin目录下的可执行文件：
 		redis-server:	redis服务端

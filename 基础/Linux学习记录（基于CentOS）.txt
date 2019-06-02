@@ -283,7 +283,11 @@ defaults 包含rw、exec、auto、nouser、async
 		:q!			强制退出，不保存修改
 		:set nu		显示行号
 		:set nonu	不显示行号
-	
+	修改tab键缩进字符：
+		vi /etc/vimrc
+		新增一行：
+			set ts=2
+
 	压缩和打包
 	gzip压缩工具：gizp [-d#] filename -d用于解压，-#用于设置压缩级别，1最差，9最好，默认为6
 	gzip压缩完成后会删除原文件，gzip不支持压缩目录，如果压缩的是文本文件，可以使用 zcat filename.gz查看内容
@@ -332,7 +336,7 @@ defaults 包含rw、exec、auto、nouser、async
 	RPM包是预先在Linux上编译并打包的文件，安装起来非常快捷
 	软件为什么需要安装：安装的目的是把执行程序放到执行路径下来，把配置文件放到程序可读位置，把需要的链接库放到可
 找到的位置，以及配置一些需要预先配置的参数等。如果一个程序不需要这些准备就可以执行，就不需要安装了。
-	挂载安装linux的光盘：mount /dev/cdroom /mnt
+	挂载安装linux的光盘：mount /dev/cdrom /mnt
 	查看安装光盘里的npm包：ls /mnt/Packages | head
 	rpm包：	abrt-2.1.11-48.el7.centos.x86_64.rpm
 			包名 版本号  发布版本号	  运行平台
