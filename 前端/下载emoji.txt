@@ -1,0 +1,47 @@
+下载emoji：
+地址：https://www.fileformat.info/info/emoji/list.htm
+
+let row0All = document.querySelectorAll(".row0");
+let row1All = document.querySelectorAll(".row1");
+
+//emoji数组
+let arr = [];
+let count = 0;
+row0All.forEach(item=>{
+    if(item.children[3].children[0]){
+        let codepoint = item.children[3].children[0].text.replace('U+','0x');
+        arr.push(String.fromCodePoint(codepoint));
+        if((count++)%40==0){
+            arr.push('\n','\n');
+        }
+    }
+});
+count = 0;
+row1All.forEach(item=>{
+    if(item.children[3].children[0]){
+        let codepoint = item.children[3].children[0].text.replace('U+','0x');
+        arr.push(String.fromCodePoint(codepoint));
+        if((count++)%40==0){
+            arr.push('\n','\n');
+        }
+    }
+});
+
+//下载函数
+function downloadData(){
+    let myData = new Blob(arr);
+    let dataUrl = URL.createObjectURL(myData);
+    let anchor = document.createElement("a");
+    anchor.style.visibility = false;
+    anchor.href = dataUrl;
+    anchor.name = "emoji.txt";
+    anchor.download = "emoji.txt";
+    console.log("download in anchor ? "+('download' in anchor));
+    document.body.appendChild(anchor);
+    let mevt = document.createEvent("MouseEvents");
+    mevt.initEvent("click",true,true);
+    anchor.dispatchEvent(mevt);
+    document.body.removeChild(anchor);
+}
+
+downloadData();
