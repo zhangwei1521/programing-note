@@ -140,7 +140,9 @@ select department_id,listagg(worker_name,',') within group (order by worker_name
 	select * from (select * from (select rownum rn,t.* from table_name t ) where rn<=endRownum) where rn>=beginRownum
 
 
-
+replace函数：
+	select replace('0123456789','0','a') from dual;--a123456789
+	update table_name t set t.t_code=replace(t.t_code,'num','code') where t.parent_code='t_p_code';
 
 
 
