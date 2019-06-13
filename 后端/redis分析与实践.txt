@@ -201,8 +201,49 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 	获取键对应的数据类型：type key	(使用这个命令就可以看出来geo集合就是有序集合)
 	重命名键：rename key-old key-new
 	使用keys和del都可能导致阻塞，所以对于大数据量的操作建议使用scan和unlink
+
+	位图：
+	位图是一种使用一个比特位代表是或否状态，比如某个用户是否点赞：假如系统中有n个用户，现在要为某一作品
+记录点赞的用户，使用位图：setbit artA 101 1 表示ID为101的用户为作品artA点了赞。如果系统有1000万用户，
+这是使用位图只需要占用1000万个比特位即1220KB空间，如果使用列表记录每个用户的ID则会需要多得多的空间。
+	获取指定位置的比特位的值：getbit artA 101
+	计算值为1的比特位的数量：bitcount artA 
+	操作比特位：
+		按位与：bitop and artAB artA artB	(同时为artA、artB点赞)
+		按位或: bitop or artA/B artA artB	(为artA或artB点赞)
+		按位异或：bitop xor artA|B artA artB	(只为artA或artB之一点赞)
+		按位取反：bitop not art_A artA
+	设置键的过期时间：expire artAB 60	60秒后artAB将过期
+	使用 ttl artAB 检查键距离过期的时间（秒）
+	过期后使用exists artAB 将返回0
+	过期时间实际被存为一个unix时间戳，所以在redis重启后将继续有效，同时当访问已过期的键时，redis才去执行删除。
+实际上redis会定期执行一个概率算法去删除过期的键，因此某个过期的键有可能永远都不会被删除。
+	使用persist名取消过期时间设置：persist artAB
+	将替换或删除键的值时，键的过期时间将被清除，但是修改键的值不会清除过期时间。
+	expireat可以直接指定一个过期时间戳。
+	排序：
+		sadd scores 88 55 89 92 100
+		数字可以直接排序：sort scores	//默认为升序
+		sadd users zhangsan lisi wangwu 
+		字符串排序：sort users alpha
+		倒序：sort scores desc
+		限制返回的数量：sort scores desc limit 0 1 返回最高分
+		根据外部数据排序：
+			sadd user_id 1001 1002 1003
+			set user_score_1001 55
+			set user_score_1002 43 
+			set user_score_1003 78
+			sort user_id by user_score_*
+		排序后返回关联的外部数据：
+			set user_name_1001 zhangsan
+			set user_name_1002 lisi
+			set user_name_1003 wangwu
+			sort user_id by user_score_* get user_name_*
+		保存排序后的数据到列表中：
+			sort user_id by user_score_* get user_name_* store user_ranking_name
+			lrange user_ranking_name 0 -1
 	
-	
+
 		
 		
 		
