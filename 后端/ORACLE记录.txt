@@ -145,6 +145,45 @@ replace函数：
 	update table_name t set t.t_code=replace(t.t_code,'num','code') where t.parent_code='t_p_code';
 
 
+//添加单键或多键联合唯一约束
+alter table table_name add constraint UK_table_Col12 unique (Col1,Col2);
+//删除唯一约束
+alter table table_name drop constraint UK_table_Col12 
+
+in和exists的区别:
+从A表中查询id存在于B表中的记录：
+	in语法：
+		select * from A where id in (select id from B);
+	exists语法：
+		select * from A where exists (select 1 from B where A.id=B.id);
+
+使用in的语句先查询B表，并缓存查询到的结果，然后再遍历A表中的记录去与缓存的B表查询结果比较，相等就把该A表记录加入结果集,
+过程类似于如下代码(实际的DBMS应该会使用更高效的查找算法)：
+	List result = [];
+	List A = (select * from A);
+	List B = (select id from B);
+	for(int i=0;i<A.length;i++) {
+		for(int j=0;j<B.length;j++) {
+			if(A[i].id==B[j].id) {
+				result.push(A[i]);
+				break;
+			}
+		}
+	}
+	return result;
+当B表数据量非常大时，缓存B表结果将会占用较大内存空间，使用高效的查找算法这种查询方法效率应该会较好（内存充足，内存不足则会导致
+性能急剧降低）。总体上，in查询比较适合B表比A表数据小的情况。
+使用exists的查询语句执行时，直接对查询A表的结果的每一条记录执行exists后的查询，exists查询不为null则将对应的A表记录加入结果集，
+类似于如下代码：
+	List result = [];
+	List A = (select * from A);
+	for(int i=0;i<A.length;i++) {
+		if(exists(select 1 from B where B.id=A[i].id) {
+			result.push(A[i]);
+		}
+	}
+	return result;
+exists查询更适合B表数据较大的场景。数据量不大则两种查询方法差别不大。
 
 
 
