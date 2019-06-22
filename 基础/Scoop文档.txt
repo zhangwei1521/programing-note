@@ -1,0 +1,118 @@
+Scoop文档
+    概述
+        啥？
+            你为什么应该了解Scoop？
+            如果你符合以下条件，那么Scoop就是为你设计的：
+                你是一个开发者；
+                你想要初始化你的计算机开发环境，但是不想再去各个站点下载安装程序并一个接一个的点击安装；
+                你喜欢命令行工具，比如Git；
+                你熟悉Unix工具，并且希望Windows有更多这类工具；
+                你阅读黑客头条，并且觉得Windows困住了你，使你错过了很多很酷的东西；
+                你希望以一种简单的方式告诉别人怎么安装软件（可能是你写的软件）；
+                你使用Homebrew/apt-get，而且觉得它们很棒。
+            Scoop能带给我什么？
+                让你可以编写脚本实现开发环境的搭建（脚本可复用）；
+                像在其他平台上安装工具一样方便，而且它们可以很好地工作；
+                让你停留在命令行中，始终高速地工作；
+                扩展powershell使你可以使用支持更好地文本处理程序和交互工具；
+                使你装备源于Linux的工具
+            我正在使用其他工具，为什么要转向Scoop？
+                台面上存在其他一些和Scoop类似的工具，如Chocolatey, Ninite和CoApp.后面有一个地方会深入介绍Scoop和
+                Chocolatey的不同，下面是一些让你可能更喜欢Scoop的理由：
+                    Scoop总是尽可能地避免图形界面，使你专注于命令行；
+                    Scoop默认安装在你的home目录下，从而可以避免其他人弄乱你的Scoop和安装的程序；
+                    Scoop以独立、自包容的方式安装程序，这样可以减少冲突，而且程序卸载后不会影响其他程序；
+                    Scoop安装程序不会污染你的path环境变量；
+                    Scoop使用类似于Git的命令行界面；
+                    Scoop提供便利的命令使用说明，帮助你快速学会新命令和复习忘记的命令；
+                    Scoop让你可以以简洁的方式告诉别人怎么安装你写的程序；
+                    Scoop提供一个精心策划的应用集合；
+                    Scoop让你更轻松地创建你的应用和应用集合；
+                    Scoop不会浪费你的时间和精力；
+                    Scoop提供README文档....
+                还有一些更不客观的理由让你试一试Scoop，或许你想不使用管理员权限安装程序，获取你喜欢Chocolatey但是不喜欢
+                这个名字，或者你觉得输入cinst很怪异，又或者你不是Chocolatey顶呱呱这种说法的粉丝。
+        Scoop和Chocolatey有什么不同？
+            Scoop默认安装目录是~/scoop/，你可以安装你自己的程序而不需要担心干扰到其他人或者被其他人的程序干扰，如果你有
+            管理员权限，你也可以选择全局安装；
+            Scoop安装程序不会出现UAC弹窗，也不需要管理员权限，因为程序仅是为你的个人账号安装，你讲不会被UAC弹窗打扰；
+            Scoop不会污染你的path变量，scoop尽可能地把你的程序放在单独的目录中，再把这个目录加入path变量；
+            Scoop并不适用NuGet，NuGet是一个很棒的处理软件库依赖的解决方案，但是Scoop是完全相反的思路，你使用Scoop安装的
+            每个程序都是独立的；
+            Scoop比包管理工具简单，Scoop不是包管理工具，但是它也使用一个JSON格式的Manifests摘录文件记录安装程序的安装说明和
+            依赖；
+            Scoop使用简单的应用仓库，Scoop使用Git管理应用仓库，你可以创建自己的仓库，或者使用一个简单的文件描述要安装的程序；
+            Scoop不保证总能安装老版本的应用，对于一些程序，Scoop可以安装老版本，命令：scoop install app@version，比如：
+            scoop install curl@7.56.1，这个功能只在那些老版本的应用仍然在仓库中时才可用，一些老版本软件必须指定版本号，如
+             Python 2.7 and Ruby 1.9，这可以通过版本仓库安装，命令：scoop install python27和scoop install ruby19
+             提示：尽管使用Scoop安装Skype很容易，但是这种应用永远不会出现在Scoop的主仓库中，Scoop专注于开源的命令行开发工具，
+             scoop extra仓库则保存那些非开发工具。
+        Scoop和Cygwin以及MSYS有什么不同?
+            对于Cygwin和MSYS的最简介的描述来自于 Mike Zick曾经的一个回答：
+                Cygwin是一个操作系统外壳，Cygwin的目标是提供Windows环境下的Linux编程API；MSYS是一个shell替代品，其目标是提供
+                一个POSIX脚本执行环境
+            这种说法可能不是完全准确，但是容易把握。
+            也可以以上面的方式定义Scoop，Scoop是一个安装工具，目标是让你可以在Windows环境下使用Unix风格的程序。
+            Scoop可以让你实现通过Cygwin或MSYS可以做到的事，但是不需要去学习其他操作系统环境，你只需要做你在做的事，scoop安装的
+            跨平台的工具总是容易使用。
+            其实，很多Scoop安装的程序都是直接来自于 MinGW/MSYS 项目，亦或是使用其他工具构建，Scoop只希望在MinGW/MSYS的优秀工作
+            的基础上实现自己的目标，scoop自己就是基于cygwin实现的。
+    上手
+        马上开始
+            先决条件
+                进入powershell：
+                    "Start" --> (Search) "cmd"
+                    Windows终端窗口输入：powershell
+                你应该安装powershell5.0或更新的版本，如果你使用Windows 10 或者 Windows Server 2012，那么默认已经安装好了，但是
+                你的Windows7和Windows Server 2008可能安装的老版本的powershell。
+                使用如下命令查看powershell版本：
+                    $psversiontable.psversion.major
+                使用如下命令设置允许powershell执行本地脚本：（Windows默认不允许任何脚本运行）
+                    set-executionpolicy remotesigned -scope currentuser
+                使用Unrestricted也行，但是不那么安全，如果你不确定，最好还是使用remotesigned。
+            安装Scoop
+                在powershell控制台中执行命令：
+                    iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
+            自定义scoop安装目录
+                如果要在C:\scoop目录下安装scoop，在命令行中执行：
+                $env:SCOOP='C:\scoop'
+                [environment]::setEnvironmentVariable('SCOOP',$env:SCOOP,'User')
+                iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
+                如果没有报错提示的话，scoop就安装好了
+            设置安装全局共享应用的目录：
+                如果要在C:\apps安装全局共享的应用，需要在具有管理员权限的powershell控制台执行：
+                    $env:SCOOP_GLOBAL='c:\apps'
+                    [environment]::setEnvironmentVariable('SCOOP_GLOBAL',$env:SCOOP_GLOBAL,'Machine')
+                    scoop install -g <app>
+            
+            
+
+        命令帮助
+        FAQ
+        卸载Scoop
+    概念
+        应用（Apps）
+        仓库（Buckets）
+        应用摘记
+            创建应用摘记
+            自动更新
+            持久化数据
+            安装前置及安装后置脚本
+        依赖
+        当前版本别名
+    指南
+        定制powershell主题
+        SSH
+        使用SSH连接GitHub
+        自定义PHP配置
+        使用PHP的Apache
+        java
+        docker以及docker组件
+    杂项
+        全局安装
+        切换ruby和Python的版本
+        为什么使用powershell
+        启动脚本实例
+        为scoop配置代理服务器
+        在bash中使用scoop？
+        powershell模块
