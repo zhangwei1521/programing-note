@@ -84,14 +84,77 @@ Scoop文档
                     $env:SCOOP_GLOBAL='c:\apps'
                     [environment]::setEnvironmentVariable('SCOOP_GLOBAL',$env:SCOOP_GLOBAL,'Machine')
                     scoop install -g <app>
-            
-            
-
+            使用scoop
+                虽然scoop是用powershell编写的，但是它的接口更接近git和Mercurial，而不像其他大多数的powershell应用。
+                使用scoop help可以获取scoop的接口的概览，你将会看到一组带有简短描述的命令，使用scoop help <command>
+                可以查看每个命令的详细信息，例如scoop help install
+                既然你已经大概了解了scoop命令怎么使用了，让我们来试着安装一些东西。
+                    scoop install curl
+                你可能会看到一个丢失hash的警告，但是你会在最后看到一条消息说curl已经安装成功啦。尝试执行：
+                    curl -L https://get.scoop.sh
+                你应该会看到一段HTML，或许是一段文档已转移的消息。注意，你在安装了scoop后，并不需要重新打开新的控制台就
+                可以运行程序。如果你以前手动安装过curl,你可能发现你不会获得一个关于SSL的错误，这是因为scoop已经为你绑定
+                下载了一个证书。
+                查找应用：
+                    假设你想要安装ssh命令，但是不知道在哪里可以找到它，请尝试执行：
+                        scoop search ssh
+                    你应该会看到一个关于openssh的结果，因为应用名字中包含'ssh'，所以这个例子很容易。
+                    你也可以通过安装后的命令文件的名称查找应用。例如：scoop search hg
+                    你将会发现mercurial应用，它包含了hg.exe
+            更新scoop
+                要更新到scoop的最新版本，你需要运行命令：scoop update
+                这个命令会下载scoop的最新版本然后更新本部的应用摘记文件。
+                在你更新scoop后，你可以运行 scoop update curl来更新你自己安装的应用。
+                如果你想要更新所有通过scoop安装的应用，你可以运行： scoop update *
         命令帮助
+            scoop的命令相关信息是内置的，如果你使用过git，你就会发现scoop的帮助界面非常熟悉。
+            查看scoop的所有命令列表，请执行：scoop help
+            查看某个具体的命令的详细说明，请执行：scoop help <command>
+            scoop目前提供的命令有（来源于scoop help）：
+                alias   管理scoop别名
+                bucket  管理scoop仓库
+                cache   显示或清除下载缓存
+                checkup 检查潜在的问题
+                clearup 清除应用的老版本
+                config  查看或设置配置变量的值
+                create  创建一个自定义的应用简介文档
+                depends 列出某个应用的依赖
+                export  导出或导入已安装应用
+                help    显示命令说明信息
+                home    打开应用主页
+                install 安装应用
+                list    列出已安装的应用
+                prefix  返回指定命令的安装路径
+                reset   重置应用以解决冲突
+                search  搜索可用的应用
+                status  显示应用状态并检查新版本
+                uninstall 卸载应用
+                update  更新应用或者更新scoop
+                virustotal 查找应用在virustotal.com上的哈希值
+                which   定位应用或其他文件（类似于Linux中的which命令）
         FAQ
+            如果你在这里没有找到你的问题的答案，请发起一个issue。
+            我要怎么更新我的应用？
+                首先更新scoop以获取最新的仓库应用信息：scoop update
+                然后更新应用，比如更新git：scoop update git
+                如果你想一次更新你的所有应用，你可以使用通配符*：scoop update *
+            我要怎么卸载一个应用？
+                使用命令：scoop uninstall [app]，比如卸载git：scoop uninstall git
+            scoop安装应用时非常慢，CPU占用被锁定，或提示访问被拒绝错误
+                这有可能是你的杀毒软件或反恶意软件程序正在实时扫描被提取的文件，请查看"杀毒软件或反恶意应用相关问题"
+                页面获取更多信息和可用的解决方法。
         卸载Scoop
+            如果你厌倦了scoop或者觉得它不适合你，你可以卸载scoop以及所有通过scoop安装的应用，使用命令：scoop uninstall scoop
+            这个命令将会告知你将会发生什么，并询问是否确定卸载，你只需要输入y以确认卸载。
+            这个命令将会删除目录：~/scoop/persist
+            重装scoop之前，你应该先删除旧的scoop主目录，你需要在powershell中执行：
+                del .\scoop -Force
     概念
         应用（Apps）
+            scoop使用术语"应用"表示可以安装的应用程序，你可能还会看到有时这个词表示的意思是描述怎么安装应用的应用摘记文档。
+            一个应用是一个自包容的、独立的单元，它包含一个或多个可执行文件或脚本，作为说明来说这可能太啰嗦了，通常在你看到
+            某个运行中的应用时你就知道它是什么了。
+            使用这个术语的主要原因可能是它只有两个字母和三次输入。
         仓库（Buckets）
         应用摘记
             创建应用摘记
