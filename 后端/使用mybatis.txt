@@ -16,5 +16,111 @@
 	总体来说，原始的JDBC编程接口使用起来太过繁琐，实际开发中通常很少使用，Hibernate开发效率高，但是对于复杂性高、性能
 要求高的系统来说不太适合，通常用于数据关系不太复杂、性能要求不太高的系统。mybatis则不适合用于需要快速开发的低复杂性系
 统，适合用在数据关系复杂、需要通过优化sql提供高效操作数据库能力的系统。
-	
+	第二章 搭建工程和实例入门
+	使用maven搭建mybatis入门工程，引入mybatis依赖：
+		<dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis</artifactId>
+            <version>3.3.0</version>
+        </dependency>
+	使用mysql数据库需要引入mysql驱动的依赖（mysql5.5及之后版本直接引入8.0的驱动）：
+		<dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.15</version>
+        </dependency>
+	需要注意，引入上面的驱动后，配置驱动名称需要配置为：com.mysql.cj.jdbc.Driver
+	为了写代码方便，这里再引入log4j、lombok和junit的依赖。
+	工程目录结构：
+		mybatis-demo1
+			src
+				main
+					java
+						com.zhangwei.mybatisdemo1
+							entity
+								Employee.java
+							mapper
+								EmployeeMapper.java
+							service
+								EmployeeService.java
+							util
+								SqlSessionFactoryUtil.java
+					resources
+						mybatis-config.xml
+						log4j.properties
+						mapper
+							EmployeeMapper.xml
+				test
+					java
+						com.zhangwei.mybatisdemo1
+							MybatisDemo1Test.java
+			pom.xml
+	在mybatis-config.xml中配置数据库连接信息和引入mapper映射文件：
+		<?xml version="1.0" encoding="utf8" ?>
+		<!DOCTYPE configuration
+			PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+			"http://mybatis.org/dtd/mybatis-3-config.dtd">
+		<configuration>
+			<typeAliases>
+				<typeAlias type="com.zhangwei.mybatisdemo1.entity.Employee" alias="emp"/>
+			</typeAliases>
+			<environments default="dev">
+				<environment id="dev">
+					<transactionManager type="JDBC"></transactionManager>
+					<dataSource type="POOLED">
+						<property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+						<property name="url" value="jdbc:mysql://localhost:3306/jdbc_test"/>
+						<property name="username" value="root"/>
+						<property name="password" value="root"/>
+					</dataSource>
+				</environment>
+			</environments>
+			<mappers>
+				<mapper resource="mapper/EmployeeMapper.xml"/>
+			</mappers>
+		</configuration>
+	在EmployeeMapper.xml文件中配置ORM映射规则：
+		<?xml version="1.0" encoding="utf8" ?>
+		<!DOCTYPE mapper
+			PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+			"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+		<mapper namespace="com.zhangwei.mybatisdemo1.mapper.EmployeeMapper">
+			<select id="getEmpById" parameterType="int" resultType="emp">
+			select * from emp where empno=#{empno}
+			</select>
+		</mapper>
+	工具类SqlSessionFactoryUtil用来获取SqlSession对象，这个对象类似于jdbc中的Connection对象。
+		public class SqlSessionFactoryUtil {
+			private static SqlSessionFactory sqlSessionFactory;
+
+			private SqlSessionFactoryUtil(){}
+
+			public static void initSqlSessionFactory(){
+				if(sqlSessionFactory == null){
+					synchronized (SqlSessionFactoryUtil.class){
+						if(sqlSessionFactory==null){
+							String configFileName = "mybatis-config.xml";
+							try (InputStream input = Resources.getResourceAsStream(configFileName)){
+								sqlSessionFactory = new SqlSessionFactoryBuilder().build(input);
+							} catch (IOException e) {
+								Logger.getLogger(SqlSessionFactoryUtil.class.getName()).log(Level.SEVERE,null,e);
+							}
+						}
+					}
+				}
+			}
+
+			public static SqlSession getSqlSession(){
+				if(sqlSessionFactory==null){
+					initSqlSessionFactory();
+				}
+				return sqlSessionFactory.openSession();
+			}
+		}
+	SqlSession由SqlSessionFactory实例创建，在系统中，应该只为一个数据库创建一个单例的SqlSessionFactory对象，否则就可能
+因为存在过多的SqlSessionFactory对象可能会导致创建出大量的SqlSession对象，造成数据库负担增加。SqlSessionFactory对象是由
+SqlSessionFactoryBuilder通过读取配置文件（即mybatis-config.xml）后创建的（实际上SqlSessionFactoryBuilder是通过一个
+Configuration对象去读取的配置文件）。SqlSessionFactoryBuilder在创建了SqlSessionFactory实例后就可以卸载了。系统运行期间
+SqlSessionFactory始终以单例对象存在，SqlSession对象在开启事务时需要手动提交事务，而且应该在操作数据库结束后关闭连接，这通
+常在finally代码块中完成。
 	
