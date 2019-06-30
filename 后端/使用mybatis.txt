@@ -124,3 +124,158 @@ Configuration对象去读取的配置文件）。SqlSessionFactoryBuilder在创�
 SqlSessionFactory始终以单例对象存在，SqlSession对象在开启事务时需要手动提交事务，而且应该在操作数据库结束后关闭连接，这通
 常在finally代码块中完成。
 	
+	第三章 mybatis配置详解
+	mybatis配置文件中可以使用以下元素，但是需要按照下面的顺序排列，否则将会出错。
+		<?xml version="1.0" encoding="utf8" ?>
+			<!DOCTYPE configuration
+				PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+				"http://mybatis.org/dtd/mybatis-3-config.dtd">
+		<configuration>	
+			<properties />
+			<setting />
+			<typeAliases />
+			<typeHandlers />
+			<objectFactory />
+			<plugins />
+			<environments>
+				<environment>
+					<transactionManager/>
+					<dataSource/>
+				</environment>
+			</environments>
+			<databaseIdProvider />
+			<mappers/>
+		</configuration>
+	<properties>有两种配置方法，第一种是直接在<properties>元素内部配置<property>元素，第二种是使用resource属性引入外部
+properties文件，这两种配置虽然可以混合使用，但是通常不建议这样做。配置了<properties>元素后就可以在后面的配置元素中使用
+${...}来引用配置的值：
+	定义datasource.properties文件：
+		driver=com.mysql.cj.jdbc.Driver
+		url=jdbc:mysql://localhost:3306/jdbc_test
+		username=admin
+		password=admin
+	使用<properties>引用该文件：
+		<properties resource="datasource.properties"/>
+	在<dataSource>元素内引用配置的值：
+		<dataSource type="POOLED">
+			<property name="driver" value="${driver}"/>
+			<property name="url" value="${url}"/>
+			<property name="username" value="${username}"/>
+			<property name="password" value="${password}"/>
+		</dataSource>
+	如果配置文件中的数据库用户名和密码是加密的，需要在代码中解密则可以在创建SqlSessionFactory实例时进行：
+		public static void initSqlSessionFactory(){
+			if(sqlSessionFactory == null){
+				synchronized (SqlSessionFactoryUtil.class){
+					if(sqlSessionFactory==null){
+						String configFileName = "mybatis-config.xml";
+						String datasourceFileName = "datasource.properties";
+						try (InputStream input = Resources.getResourceAsStream(configFileName);
+							Reader cfgReader = new InputStreamReader(input);
+							InputStream input2 = Resources.getResourceAsStream(datasourceFileName);
+							Reader dsReader = new InputStreamReader(input2);
+						){
+							Properties datasource = new Properties();
+							datasource.load(dsReader);
+							datasource.setProperty("username",decode(datasource.getProperty("username")));
+							datasource.setProperty("password",decode(datasource.getProperty("password")));
+							sqlSessionFactory = new SqlSessionFactoryBuilder().build(cfgReader,datasource);
+						} catch (IOException e) {
+							Logger.getLogger(SqlSessionFactoryUtil.class.getName()).log(Level.SEVERE,null,e);
+						}
+					}
+				}
+			}
+		}
+
+		private static String decode(String str){
+			return str.replace("admin","root");
+		}
+	<settings>元素用于配置mybatis的一些行为，尽管mybatis官方提供了很多可以设置的特性，其实实际当中我们很少使用所有的
+这些设置，通常都只涉及很少的几个设置项，如：
+		<settings>
+			<setting name="cacheEnabled" value="true"/><!--缓存全局开关-->
+			<setting name="lazyLoadingEnabled" value="true"/><!--关联对象延迟加载全局开关-->
+			<setting name="useGeneratedKeys" value="false"/><!--驱动自动生成主键-->
+			<setting name="autoMappingBehavior" value="PARTIAL"/><!--如何自动映射属性结果集-->
+			...
+		</settings>
+	<typeAliases>用于配置别名集合，mybatis已经预定义了一批别名，比如int、long、_int、string、map等，使用<typeAlias>
+定义工程中的po等可以避免在映射文件中使用类的全路径名。
+	在<typeAliases>内部还可以使用<package name="com.zhangwei.mybatisdemo1.entity"/>配置包扫描，在该包下的类上使用注
+解@Alias("name")配置类的别名，如果该包下的类没有使用这个注解，mybatis将把类的首字母小写后作为别名。
+	mybatis中带有参数的sql语句都是使用PrepareStatement实现的，同时mybatis也允许在设置参数时和映射返回数据时使用注册的
+TypeHandler进行处理。
+	TypeHandler主要作用是在设置参数时将参数从java类型(javaType)转为JDBC类型(jdbcType)，在映射返回数据时将jdbcType转为
+javaType。
+	mybatis预定义了一批typeHandler，并进行了注册，如IntegerTypeHandler用于将java类型的Integer和int转为jdbcType的
+NUMERIC或INTEGER(和数据库兼容的类型)。
+	自定义typeHandler：
+		@MappedTypes(Integer.class)
+		@MappedJdbcTypes(JdbcType.INTEGER)
+		public class MyIntTypeHandler implements TypeHandler<Integer> {
+
+			private Logger logger = Logger.getLogger(MyIntTypeHandler.class);
+
+			@Override
+			public void setParameter(PreparedStatement preparedStatement, int i, Integer integer, JdbcType jdbcType) throws SQLException {
+				logger.info("MyIntTypeHandler setParameter .....");
+				preparedStatement.setInt(i,integer);
+			}
+
+			@Override
+			public Integer getResult(ResultSet resultSet, String s) throws SQLException {
+				logger.info("MyIntTypeHandler getResult by colName .....");
+				return resultSet.getInt(s);
+			}
+
+			@Override
+			public Integer getResult(ResultSet resultSet, int i) throws SQLException {
+				logger.info("MyIntTypeHandler getResult by index .....");
+				return resultSet.getInt(i);
+			}
+
+			@Override
+			public Integer getResult(CallableStatement callableStatement, int i) throws SQLException {
+				logger.info("MyIntTypeHandler getResult by callableStatement .....");
+				return callableStatement.getInt(i);
+			}
+		}
+	应用自定义类型处理器有两种方式：第一种是在配置文件中注册自定义的typeHandler：
+		<typeHandlers>
+			<typeHandler handler="com.zhangwei.mybatisdemo1.typehandler.MyIntTypeHandler" javaType="int" jdbcType="INTEGER"/>
+		</typeHandlers>
+		或者使用包扫描：
+			<typeHandlers>
+				<package name="com.zhangwei.mybatisdemo1.typehandler"/>
+			</typeHandlers>
+		然后在sql的参数或映射结果集返回值时只需要设置对应的javaType和jdbcType就可以：
+			select * from emp where empno=#{empno javaType=int,jdbcType=INTEGER}
+	第二种是直接在sql的参数或映射结果集返回值时引用自定义的typeHandler（参数也需要设置javaType和jdbcType，但是映射结果的
+resultMap不需要。但是不需要在配置文件中注册自定义的typeHandler）：
+		select * from emp where empno=#{empno javaType=int,jdbcType=INTEGER,typeHandler=com.zhangwei.mybatisdemo1.typehandler.MyIntTypeHandler}
+	看起来第一种方式要更加优雅一些。
+	mybatis提供两个处理枚举类型映射的typeHandler：EnumTypeHandler和EnumOrdinalTypeHandler，EnumTypeHandler使用枚举对象
+的名称去设置参数和映射结果，EnumOrdinalTypeHandler使用枚举的下标去进行映射（枚举对象下标从0开始编号）。映射枚举对象应该在
+配置文件中去配置typeHandler，如果需要自定义typeHandler处理枚举对象，规则和前面的自定义typeHandler一样。
+	mybatis返回一个结果时，使用ObjectFactory接口的一个实例（默认为DefaultObjectFactory实例对象）去创建java对象，然后再设置
+各个字段的值。也可以自定义创建对象的工厂类，需要做的是实现ObjectFactory接口，然后在配置文件中注册它：
+		<objectFactory type="com.zhangwei.mybatisdemo1.util.MyObjectFactory">
+			<property name="name" value="myObjectFactory"/>
+		</objectFactory>
+	大多数情况下是不需要自己去提供这个工厂类的。
+	<environments>元素内部可以定义多个<environment>，这些<environment>通常用于开发、测试和生产环境的配置，<environments>
+的default属性引用某个<environment>的id属性值设置默认的环境。
+	<environment>内部需要配置<transactionManager>，事务管理器可以选择JDBC、MANAGED和自定义。在<transactionManager>内部
+可以使用<property>配置事务管理器的一些属性，例如在JDBC事务管理器内配置：<property name="autoCommit" value="false"/>
+	<environment>内部<datasource>,数据源可以选择UNPOOLED、POOLED和JNDI，也可以自定义数据源。UNPOOLED、POOLED和JNDI都是
+使用mybatis提供的数据源。自定义数据源需要实现mybatis的DataSourceFactory接口。
+	<databaseIdProvider>只有在系统中同时使用多中数据库才有用，在这个元素内部可以配置多个数据库的标识，数据库驱动返回的数据库
+如果和配置的数据库标识匹配，就可以在映射mapper文件中的sql添加一个databaseId属性指定由特定的数据库执行。
+	在配置文件中使用<mappers>和<mapper>引入ORM映射，可以引入mapper文件：
+		<mapper resource="mapper/EmployeeMapper.xml"/>
+		<mapper url="file:///code_lab/mybatisdemo1/target/classes/mapper/EmployeeMapper.xml"/>通常不建议这样引用
+	如果mapper接口和对应的xml映射文件处在相同的路径下,也可以引入java类或者引入包：（这个工程中不能这样使用）
+		<mapper class="com.zhangwei.mybatisdemo1.mapper.EmployeeMapper"/>
+		<package name="com.zhangwei.mybatisdemo1.mapper“/>
+	
