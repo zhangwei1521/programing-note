@@ -866,3 +866,132 @@ JSON.stringify()返回，Object.getOwnPropertySymbols方法可以获取对象的
 	ES6 提供 11 个内置的 Symbol 值，指向语言内部使用的方法。Symbol.hasInstance指向一个内部方法。当其他对象使用instanceof运算符，
 判断是否为该对象的实例时，会调用这个方法。
 	
+	第十章 Set和Map数据结构
+	ES6新增数据结构Set和Map，Set表示集合，特点是不保存重复的值，因为js变量没有静态类型，所以Set可以保存不同类型的变量（值），集合这种
+结构本身不强调内部元素的顺序，但是ES6的Set实现会按照插入的顺序保存元素，所以在遍历时会按照插入顺序遍历。
+	创建Set对象：
+			let mySet = new Set();
+	创建Set对象时使用数组（或任何部署了Iterator接口的类型对象，如字符串）初始化：
+			let theSet = new Set([1,2,2,3]);
+			let strSet = new Set('ababc');
+	添加元素：
+			mySet.add(1);
+	数组去重：
+			let arr = [1,2,2,3];
+			arr = [...new Set(arr)];					//扩展运算符内部使用for...of循环，for...of循环可以遍历Iterator实现
+			或：
+			arr = Array.from(new Set(arr));				//Array.from方法可以把Set转为数组
+	尽管在js中，NaN!==NaN，Set却认为所有的NaN是相同的值：
+			let NaNSet = new Set([NaN,NaN]);
+			NaNSet.size	// 1
+	{}表示空对象，{}!={},Set把每个插入的{}当作不同的元素。
+	Set实例对象的属性：
+		constructor属性返回构造函数：
+			mySet=new mySet.constructor([1,2,3,3,3,4]);	//这里constructor看起来像是函数，但其实是属性
+		size属性返回Set实例保存的元素数量。
+	Set实例对象的方法：
+		add(val)方法插入一个元素，返回集合本身；
+		delete(val)方法删除val元素，返回true表示成功，false表示失败（删除一个不存在于集合中的元素就会返回false）；
+		has(val)方法返回true或false，表示集合中是否存在val元素；
+		clear()方法清空集合，没有返回值。
+	Iterator接口定义了keys方法、values方法、entries方法，这些方法返回遍历器对象，Set部署了Iterator接口，所以Set
+实例对象就具有了这些方法。
+	Set 结构没有键名，只有键值（或者说键名和键值是同一个值），所以keys方法和values方法的行为完全一致。entries方法
+返回的遍历器，同时包括键名和键值，所以每次返回一个数组，它的两个成员完全相等。
+	Set实例默认就是可遍历的(实际是调用了values方法)：
+		for (let x of mySet) {
+			console.log(x);
+		}
+	Set实例具有一个forEach方法，参数为一个处理函数，处理函数的参数是遍历时的键值、键名、集合本身：
+		mySet.forEach((value, key, mySet) => console.log(key + ' : ' + value));	//这里set实例的键值和键名相同
+	求并集、交集、差集：
+		let a = new Set([1, 2, 3]);
+		let b = new Set([4, 3, 2]);
+
+		// 并集
+		let union = new Set([...a, ...b]);
+		// Set {1, 2, 3, 4}
+
+		// 交集
+		let intersect = new Set([...a].filter(x => b.has(x)));
+		// set {2, 3}
+
+		// 差集
+		let difference = new Set([...a].filter(x => !b.has(x)));
+		// Set {1}
+	ES6提供WeakSet 数据结构，与 Set 类似，也是不重复的值的集合，不同在于WeakSet实例只能保存对象（的弱引用），当保存的
+对象不再具有其他非弱引用，垃圾回收器就会回收这个对象（即垃圾回收器不考虑弱引用）。
+	ES6 规定 WeakSet 不可遍历，也没有size属性和clear方法，因为WeakSet实例中的对象弱引用随时可能被回收。
+
+	尽管js的任何对象本身都是一个hash数据结构，但是这种hash结构的键只能是字符串，如果使用其他类型的值作为键，js会进行类型
+转换，这通常不是我们需要的。
+	ES6提供Map数据结构，Map也是一个hash数据结构，和对象的不同在于它允许使用任意类型值作为键：
+		let myMap = new Map();
+		myMap.set({},"{}1");
+		myMap.set({},"{}2");
+		myMap.set(undefined,"{}3");
+		myMap.set(NaN,"{}4");
+		myMap;
+		//{ ...
+			[0: {Object => "{}1"}
+			1: {Object => "{}2"}
+			2: {undefined => "{}3"}
+			3: {NaN => "{}4"}]
+		}
+		myMap.set(NaN,NaN);
+		myMap.get(NaN);	//NaN
+	可见，Map和Set一样，使用NaN作为键时，将所有NaN看成同一个值
+	使用数组作为参数初始化Map实例：
+		let myMap = new Map([[1,"一"],[2:"二"]]);
+		// myMap = new Map([{"a":"A"}]); 这种写法不会报错，但是不能正确识别，会将undefined=>undefined保存到map中
+		// myMap = new Map([[1,"①","一"]]);	这种写法内部数组中的第二个元素后的元素都会被忽略。
+	使用Set实例初始化Map实例：
+		const set = new Set([
+			['foo', 1],
+			['bar', 2]
+		]);
+		const m1 = new Map(set);
+		m1.get('foo') // 1
+	map实例读取一个未知的键，则返回undefined。
+		myMap.get(x);	//undefined
+		myMap.set(['a'], 555);
+		myMap.get(['a']) // undefined	//这里set和get方法的参数中的['a']其实是不同的两个对象
+	Map 的键实际上是跟内存地址绑定的，只要内存地址不一样，就视为两个键。这样看起来不同的值为NaN的变量都是引用了同一个地址（？）。
+	Map实例对象属性和方法：
+		size属性返回map实例中保存的键值对的数量；
+		set方法设置键值对，返回map实例本身
+		get方法根据键获取对应的值
+		has方法用来判断某个键是否存在于map实例中
+		delete方法根据键名删除键值对
+		clear方法清空map中的所有键值对
+	和Set实例一样，Map实例也可以使用keys、values、entries、forEach方法遍历保存的元素，遍历顺序是保存键值对的顺序。
+		for (let [key, value] of map.entries()) {
+			console.log(key, value);
+		}
+		for (let [key, value] of map) {	//这里直接遍历map和使用map.entries()一样
+			console.log(key, value);
+		}
+	使用forEach遍历：
+		const reporter = {
+			report: function(key, value) {
+				console.log("Key: %s, Value: %s", key, value);
+			}
+		};
+
+		map.forEach(function(value, key, map) {
+			this.report(key, value);
+		}, reporter);
+	转为数组：
+		[...map.keys()];
+		[...map];
+	根据键名过滤：
+		map = new Map(
+			[...map].filter(([k, v]) => k < 3)
+		);
+	排序：
+		myMap = new Map([[2,22],[1,11],[3,33]]);
+		myMap = new Map([...myMap].sort(([k1,v1],[k2,v2])=>k1-k2));	//升序
+		myMap = new Map([...myMap].sort(([k1,v1],[k2,v2])=>v2-v1));	//降序
+	如果Map实例的键名都是字符串，可以选择转为对象 JSON。如果Map实例的键名有非字符串，可以选择转为数组 JSON。
+	WeakMap结构与Map结构类似，不同在于WeakMap只接受对象（的弱引用）作为键名（null也不能作为键名），不接受其他类型的值作为键名。
+	WeakMap实例没有遍历操作（即没有keys()、values()和entries()方法），也没有size属性，也不能清空（没有clear方法）。
