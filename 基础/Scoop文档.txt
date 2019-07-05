@@ -163,6 +163,38 @@ Scoop文档
                 另外一个可用的仓库是外部仓库，它收录了那些不满足主仓库收录条件的应用，但是这些应用仍然值得使用。版本仓库是另一个保存部分
                 广为人知的应用包的历史版本的仓库。
                 scoop支持添加其他仓库。任何人都可以建立包含他喜欢的应用的仓库，其他人也可以使用这个仓库，他们只需要知道这个仓库地址就行。
+            知名仓库
+                社区维护了一批仓库，名单保存在buckets.json文件中，可以使用scoop命令查看这些仓库名单：scoop bucket know
+            从其他仓库安装应用
+                如果你想要从主仓库之外的其他仓库安装应用，你需要配置scoop让scoop知道这些仓库，例如配置extras仓库：
+                    scoop bucket add extras
+                extras仓库很特殊，它很知名，scoop已经知道它的地址所以你不需要去配置它的地址。
+                让我们看一下那些不那么知名的仓库，你应该像下面这样添加它到scoop：
+                    scoop bucket add extras https://github.com/lukesampson/scoop-extras.git
+                即：
+                    scoop bucket add <name-of-bucket> <location-of-bucket>
+                你可以执行命令scoop help bucket获得与仓库有关的更多信息。
+            创建你自己的仓库
+                下面是一个你可以使用去创建你自己的仓库的方法，请使用GitHub托管你的仓库。当然你也可以不使用GitHub，任何源码控制仓库都是支持的，甚至
+            本地仓库和网盘都行。
+                1、创建一个GitHub仓库并取名，比如叫my-bucket；
+                2、添加一个应用到你的仓库中。
+                在powershell控制台中执行：
+                    git clone https://github.com/<your-username>/my-bucket
+                    cd my-bucket
+                    '{ version: "1.0", url: "https://gist.github.com/lukesampson/6446238/raw/hello.ps1", bin: "hello.ps1" }' > hello.json
+                    git add .
+                    git commit -m "add hello app"
+                    git push
+                3、配置scoop使用你的仓库：
+                    scoop bucket add my-bucket https://github.com/<your-username>/my-bucket
+                4、检查是否成功：
+                    scoop bucket list # -> 应该可以在输出中找到'my-bucket'
+                    scoop search hello # -> 应该可以看到应用 hello 出现在'my-bucket bucket:'下
+                    scoop install hello
+                    hello # -> 应该输出：'Hello, <windows-username>!'
+                5、如果要分享你的仓库，你应该告诉别人怎么添加你的仓库，就是第三步的操作，如果你想要让scoop收录你的仓库，请到scoop的GitHub主页添加一个
+                    scoop-bucket添加申请。
         应用简录
             创建应用简录
             自动更新

@@ -132,7 +132,7 @@ SqlSessionFactory始终以单例对象存在，SqlSession对象在开启事务�
 				"http://mybatis.org/dtd/mybatis-3-config.dtd">
 		<configuration>	
 			<properties />
-			<setting />
+			<settings />
 			<typeAliases />
 			<typeHandlers />
 			<objectFactory />
@@ -270,7 +270,7 @@ resultMap不需要。但是不需要在配置文件中注册自定义的typeHand
 可以使用<property>配置事务管理器的一些属性，例如在JDBC事务管理器内配置：<property name="autoCommit" value="false"/>
 	<environment>内部<datasource>,数据源可以选择UNPOOLED、POOLED和JNDI，也可以自定义数据源。UNPOOLED、POOLED和JNDI都是
 使用mybatis提供的数据源。自定义数据源需要实现mybatis的DataSourceFactory接口。
-	<databaseIdProvider>只有在系统中同时使用多中数据库才有用，在这个元素内部可以配置多个数据库的标识，数据库驱动返回的数据库
+	<databaseIdProvider>只有在系统中同时使用多种数据库才有用，在这个元素内部可以配置多个数据库的标识，数据库驱动返回的数据库
 如果和配置的数据库标识匹配，就可以在映射mapper文件中的sql添加一个databaseId属性指定由特定的数据库执行。
 	在配置文件中使用<mappers>和<mapper>引入ORM映射，可以引入mapper文件：
 		<mapper resource="mapper/EmployeeMapper.xml"/>
