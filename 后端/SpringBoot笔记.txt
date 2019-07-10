@@ -371,7 +371,84 @@ springboot项目可以直接import上面的spring-boot-dependencies来控制依�
 			}
 		}
 	
-	
+	springboot、mybatis配置多数据源
+	当系统中需要使用多个数据源时，比较简单的做法是按照数据源划分dao（mybatis中的mapper层），可以通过分包来组织不同的数据源dao。例如使用
+com.zhangwei.springboot.dao.master包下的dao类处理master数据源的操作，com.zhangwei.springboot.dao.slave包下的dao类处理slave数据源的操作。
+	application.xml配置数据库连接信息：
+		#master datasource配置
+		spring.datasource.master.url=jdbc:oracle:thin:@192.168.1.101:1521/test12c
+		spring.datasource.master.username= root
+		spring.datasource.master.password= root
+		spring.datasource.master.driver-class-name= oracle.jdbc.driver.OracleDriver
+	#slave datasource配置
+		spring.datasource.slave.url=jdbc:oracle:thin:@192.168.1.102:1521/test12c
+		spring.datasource.slave.username= admin
+		spring.datasource.slave.password= admin
+		spring.datasource.slave.driver-class-name= oracle.jdbc.driver.OracleDriver
+	数据源配置类：
+		@Configuration
+		@MapperScan(basePackages = "com.zhangwei.springboot.dao.master",sqlSessionTemplateRef = "masterSqlSessionTemplate")
+		public class MasterDatasourceConfig {
+
+			@Bean(name = "masterDatasource")
+			@ConfigurationProperties(prefix = "spring.datasource.master")
+			@Primary
+			public DataSource masterDatasource(){
+				return DataSourceBuilder.create().build();
+			}
+
+			@Bean(name = "masterSqlSessionFactory")
+			@Primary
+			public SqlSessionFactory masterSqlSessionFactory(@Qualifier("masterDatasource") DataSource dataSource) throws Exception {
+				SqlSessionFactoryBean sqlSessionFactoryBean = new SqlSessionFactoryBean();
+				sqlSessionFactoryBean.setDataSource(dataSource);
+				sqlSessionFactoryBean.setMapperLocations(new PathMatchingResourcePatternResolver().getResources("classpath:mapper/master/*.xml"));
+				return sqlSessionFactoryBean.getObject();
+			}
+
+
+			@Bean(name = "masterTransactionManager")
+			@Primary
+			public DataSourceTransactionManager masterTransactionManager(@Qualifier("masterDatasource") DataSource dataSource){
+				return new DataSourceTransactionManager(dataSource);
+			}
+
+			@Bean(name = "masterSqlSessionTemplate")
+			@Primary
+			public SqlSessionTemplate masterSqlSessionTemplate(@Qualifier("masterSqlSessionFactory") SqlSessionFactory sqlSessionFactory){
+				return new SqlSessionTemplate(sqlSessionFactory);
+			}
+		}
+	需要注意，在自定义了数据源配置类后，不能再使用注解@mapper修饰com.zhangwei.springboot.dao.master的MasterMapper接口。
+	这里创建了一个名为masterTransactionManager的事务管理器bean，在操作master数据库的方法上加上注解@Transactional("masterTransactionManager")控制
+事务提交和回滚。最好不要同时更新不同数据源的的数据，因为这样事务处理起来很麻烦。如果确实需要在一个事务中操作不同的数据源，需要使用Atomikos：
+		<dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jta-atomikos</artifactId>
+        </dependency>
+	配置DataSource:
+		@Bean(name = "masterDatasource")
+		public DataSource masterDatasource() {
+			Properties properties = new Properties();
+			properties.setProperty("URL", "jdbc:oracle:thin:@192.168.1.101:1521:test12c");
+			properties.setProperty("user", "root");
+			properties.setProperty("password", "root");
+
+			AtomikosDataSourceBean ds = new AtomikosDataSourceBean();
+			ds.setXaProperties(properties);
+			ds.setUniqueResourceName("OracleXADataSource");
+			ds.setXaDataSourceClassName("oracle.jdbc.xa.client.OracleXADataSource");
+			return ds;
+		}
+		事务管理器bean单独创建：
+		@Bean(name = "disTransactionManager")
+		@Primary
+		public JtaTransactionManager disTransactionManager () {
+			UserTransactionManager userTransactionManager = new UserTransactionManager();
+			UserTransaction userTransaction = new UserTransactionImp();
+			return new JtaTransactionManager(userTransaction, userTransactionManager);
+		}
+
 
 
 
