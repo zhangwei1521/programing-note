@@ -1416,3 +1416,68 @@ Promise 对象，因此后面还可以接着调用then方法。
 		//next
 		//later
 	
+	第十四章 Iterator接口
+	ES6中可以使用数组、普通对象、Set对象、Map对象来表示“集合”，ES6使用Iterator接口规范来为这几种“集合”数据结构
+提供统一的访问机制。
+	为某个对象部署Iterator接口，需要这个对象具有一个方法(可以直接定义在对象上，也可以在对象的原型链上)，方法名固定为
+一个内部值：Symbol.Iterator，这个方法应该返回一个对象(遍历器对象)，遍历器对象具有一个next方法，每次遍历时就调用这个
+next方法，这个方法应该返回一个对象，这个返回对象具有两个属性：value和done，value为“集合”中的一个元素，done是一个
+boolean值，true表示遍历结束，这是时value应该为undefined，done为false表示遍历未结束。
+		let obj = {
+			name:"wakaka",
+			[Symbol.iterator] : function () {
+				const self = this;
+				let index = 0;
+				return {
+					next: function () {
+						if(index < self.name.length){
+							let item = {
+								value: self.name[index],
+								done: false
+							};
+							index++;
+							return item;
+						}
+						return {value:undefined, done:true};
+					}
+				};
+			}
+		};
+	ES6中，Array、Map、Set、String、TypedArray、函数的 arguments 对象、NodeList 对象已经部署了Iterator接口。
+	对于类似数组的对象（存在数值键名和length属性），部署 Iterator 接口的一个简便方法是让Symbol.iterator方法直接引用数组的 Iterator 接口：
+		NodeList.prototype[Symbol.iterator] = [][Symbol.iterator];
+		[...document.querySelectorAll('div')] 
+	为普通对象部署数组的Symbol.iterator方法，不能让对象变成可遍历，如果Symbol.iterator方法对应的不是遍历器生成函数（即会返回一个遍历器对象），
+解释引擎将会报错。
+	部署了 Iterator接口的对象可以获取到它的遍历器对象:
+		var $iterator = arr[Symbol.iterator]();
+		var $result = $iterator.next();
+		while (!$result.done) {
+			var x = $result.value;
+			// ...
+			$result = $iterator.next();
+		}
+	解构赋值、扩展运算符、for...of循环、Array.from()方法、Map([['a',1]])构造方法、Set([1,'a'])构造方法、Promise.all()、Promise.race()实际上
+都是使用Iterator的遍历器实现的。
+		let [x,y] = ['a','b','c'];
+		console.log(...'abc');
+	任意一个部署了 Iterator 接口的对象，都可以使用扩展运算符转为数组：
+		let arr = [...'abc'];
+	遍历器对象除了具有next方法，还可以具有return方法和throw方法。return方法的使用场合是，如果for...of循环提前退出（通常是因为出错，或者有break语句），
+就会调用return方法。
+	js的早期版本就提供了for...in循环，用来获得对象的键名，但是不能直接获取键值。js中数组使用数字作为键名，所以可以使用for...in循环获取数组的元素下标。
+但是因为for...in循环来源于对象，所以用于数组时也会遍历得到那些手动绑定到数组的属性（不属于数组的成员），而且在某些场景下，for...in循环不能保证遍历的顺序。
+		let arr = [...'abc'];
+		arr.name = 'arr1';
+		for (let a in arr) {
+			console.log(a); 		// 0 1 2 name
+			console.log(arr[a]);	// a b c arr1
+		}
+	ES6 提供for...of循环，允许直接遍历获得键值。
+	ES6 的数组、Set、Map 部署的entries() 、keys()、values()方法，调用返回值都是遍历器对象，但是这三个方法不是Iterator接口的通用规则。但是可以猜想，这三个
+方法的实现模式应该和Symbol.iterator方法差不多。看起来，Set对象似乎没有必要部署entries()，因为set对象的entries方法返回的数组成员[键名，键值]的键名与键值相同。
+	for...of不能用于遍历没有部署Iterator接口的对象，可以使用Object.keys(obj)方法获取对象自身的可枚举属性名数组后使用for...of遍历：
+		for (var key of Object.keys(someObject)) {
+			console.log(key + ': ' + someObject[key]);
+		}
+	
