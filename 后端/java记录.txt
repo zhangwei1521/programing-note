@@ -222,6 +222,12 @@ long型，有float参与就提升为float型，有double参与就提升为double
 	自定义异常表示的是由于不确定因素（比如网络故障）导致的程序必需元素的缺失或损坏导致程序不能正常执行时进行的情况，
 比如网络故障导致的参数错误或丢失，这类问题不是程序设计上的漏洞，而且发生后会导致程序不能继续执行，对于这类异常通常也是
 不能直接处理的，只能进行日志记录。
+	接口参数校验问题：对外接口的参数校验不通过，不应该抛出异常，这不是程序的错误，而是调用方的问题。但是实际应用中，不管
+是参数缺失、参数类型错误，还是参数不满足业务校验，通常都是抛出自定义的异常，然后在应用的最外层捕获处理。对于http请求接口时，
+参数缺失、类型错误等，应该在捕获异常后返回400错误码和对应的错误提示信息，但是很多web框架并没有这样做，而是直接返回了500
+错误码，个人是不认可这种做法的。http请求中，如果是参数不满足业务校验，捕获异常后最好返回422错误码和相关错误提示信息。
+这样基于http协议的前后端通信才符合http语义。
+
 											第八章 并发编程
 	多线程需要的开销比多进程要小，进程需要自己的地址空间，进程间通信开销大而且限制多，从一个进程上下文切换到另一个
 进程上下文开销很大。多线程共享相同的地址空间，互相通信开销较小，上下文切换开销也很小。
@@ -2185,6 +2191,42 @@ getResponseMessage()、getHeaderFields()等。
 			}
 		}
 
+	补充：java8新增的Optional<T>类：
+	这个类是一个包装类，用来包装一个对象，包装的对象可以是null，包装后的Optional对象提供一些操作/访问包装对象的方法，正确使用这些方法可以优雅地
+避开NullPointerException。
+		String msg = "hello";
+		//Optional<String> msgOp = Optional.empty();
+		//Optional<String> msgOp = Optional.of(null);
+		Optional<String> msgOp = Optional.ofNullable(msg);
+		msgOp.ifPresent(System.out::println);
+		Optional<Integer> msgLenOp = msgOp.map(String::length);
+		msgLenOp.ifPresent(System.out::println);
+		String val = msgOp.orElse("world");
+		System.out.println(val);
+		val = msgOp.orElseGet(()->"world");
+		System.out.println(val);
+		val = msgOp.orElseThrow(()->new RuntimeException("content is null"));
+		msgOp = msgOp.filter(msg1->msg1.equals("hello"));
+		msgOp.ifPresent(System.out::println);
+
+		User user = new User(22,"zhangsan");
+		Optional<User> userOp = Optional.ofNullable(user);
+		String userName = userOp.map(User::getName).map(String::toUpperCase).orElse(null);
+		System.out.println(userName);
+	静态方法：
+		empty()方法使用null作为包装对象创建Optional对象；
+		of(obj)接受一个对象作为参数创建Optional对象，参数对象不能为null，否则创建对象时就会直接抛出异常；
+		ofNullable(msg)方法和of(msg)方法作用相同，但是允许参数为null，通常应该使用这个方法来创建Optional对象。
+	实例方法：
+		ifPresent方法接受一个Consumer函数式接口实例作为参数，Consumer函数式接口提供一个void accept(T val)方法，ifPresent方法没有返回值；
+		isPresent另一个重载版本，没有参数，返回boolean值，如果包装对象为null返回false，否则返回true；
+		map方法接受一个Function函数式接口实例作为参数，Function函数式接口提供一个R apply(T t)方法，map方法使用apply方法返回的对象创建一个新的
+Optional对象返回，所以map方法实际上是做了一个映射；
+		orElse接受一个与包装对象相同类型的对象作为参数，如果包装对象为null则返回这个参数对象；
+		orElseGet方法接受一个Supplier函数式接口实例作为参数，Supplier接口提供一个 T get()方法；orElseGet使用get方法返回的对象作为返回对象；
+		orElseThrow方法也接受一个Supplier函数式接口实例作为参数，但是参数对象里直接new Exception，这里可以抛出需要的任何异常。
+		filter方法接受一个Predicate函数式接口实例作为参数，Predicate接口提供一个boolean test(T t)方法，包装对象为null，直接返回原Optional对象，
+test方法返回true时，filter方法也返回原Optional对象，test方法返回false，filter方法返回一个包装null的Optional对象。
 	
 
 
