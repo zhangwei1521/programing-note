@@ -1,0 +1,5 @@
+                                                ffmpeg使用记录
+    从视频中提取音频：
+        ffmpeg -i sea.flv -vn -y -acodec copy sea.aac
+    转换flv到mp4:
+        ffmpeg -i sea.flv -vcodec copy -acodec copy sea.mp4
