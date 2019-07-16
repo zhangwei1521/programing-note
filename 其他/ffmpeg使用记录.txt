@@ -3,3 +3,11 @@
         ffmpeg -i sea.flv -vn -y -acodec copy sea.aac
     转换flv到mp4:
         ffmpeg -i sea.flv -vcodec copy -acodec copy sea.mp4
+		
+	合并分段视频：
+	先创建一个文本文件filelist.txt：
+		file 'input1.flv'
+		file 'input2.flv'
+		file 'input3.flv'
+	执行命令：
+		ffmpeg -f concat -i filelist.txt -c copy output.flv
