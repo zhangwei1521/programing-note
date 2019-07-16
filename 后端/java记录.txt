@@ -1072,7 +1072,7 @@ lambda表达式作为该函数式的实例。
 			public static void main(String[] args) {
 				HeighTemp[] heighTemps = {new HeighTemp(10),new HeighTemp(20),new HeighTemp(30),new HeighTemp(40),
 					new HeighTemp(50),new HeighTemp(60)};
-				int result = counter(heighTemps,HeighTemp::lessTemp,new HeighTemp(35));
+				int result = counter(heighTemps,HeighTemp::lessTemp,new HeighTemp(25));
 				System.out.println("result: "+result);	// result: 2
 			}
 		}
@@ -2228,6 +2228,197 @@ Optional对象返回，所以map方法实际上是做了一个映射；
 		filter方法接受一个Predicate函数式接口实例作为参数，Predicate接口提供一个boolean test(T t)方法，包装对象为null，直接返回原Optional对象，
 test方法返回true时，filter方法也返回原Optional对象，test方法返回false，filter方法返回一个包装null的Optional对象。
 	
+												第十九章 Stream
+							（参考：https://lw900925.github.io/java/java8-stream-api.html）
+	Stream是Java8开始提供的一套处理集合的API接口，处理模型称为“流式处理”。Stream使用声明式的操作，类似于数据库的查询操作。Stream可以看作是对集合的
+包装，对外提供更方便的操作集合的接口。遍历集合时需要自己的程序获取集合中的元素，这称为外部迭代，Stream遍历集合不需要自己的程序再去手动获取元素，称为
+内部迭代。Stream除了提供一批更方便的API外，还可以选择使用并行处理，这可以极大地提高程序运行效率。Stream的一个特点是只能遍历一次，遍历结束后不能再次
+遍历，否则将抛出异常：IllegalStateException。
+	Stream的API可以分为三类：创建流的API、操作流的API和收集流中元素的API。
+	创建流：
+		静态方法Stream.of()创建流，该方法接收一个变长参数：
+			Stream<Stream> stream = Stream.of("A", "B", "C", "D");
+		静态方法Stream.empty()创建一个空的流：
+			Stream<Stream> stream = Stream.empty();
+		静态方法Arrays.stream()从数组创建一个流：
+			String[] strs = {"A", "B", "C", "D"};
+			Stream<Stream> stream = Arrays.stream(strs);
+		Collection接口中有一个方法stream()可以从具体的集合对象创建流，parallelStream()可以创建一个并行流：
+			Stream<Integer> stream = Arrays.asList(1,2).stream();
+		java.nio.file.Files类中的一些静态方法可以获取流，如Files.lines()方法，该方法接收一个java.nio.file.Path对象，返回一个由文件行构成的字符串流：
+			Stream<String> stream = Files.lines(Paths.get("text.txt"), Charset.defaultCharset());
+		静态方法Stream.generate()和Stream.iterate()可以从函数生成流：
+			Stream.iterate(0, n -> n + 2).limit(51).forEach(System.out::println); //打印0到100的偶数（包括0和100）
+			Stream.generate(() -> "Hello Man!").limit(10).forEach(System.out::println);	//打印10个 Hello Man!
+			这两个方法生成的流都是无限流，即会不断地添加元素到Stream中，所以需要使用limit限定迭代添加次数。
+	操作流：
+		forEach()：对流中的每个元素执行某个操作：
+			Stream.of("abc","ef","ghijk").forEach(System.out::println);
+		filter()：对流的元素过滤：
+			Stream.of(1, 8, 5, 2, 1, 0, 9, 2, 0, 4, 8).filter(n->n>2).forEach(System.out::println);
+		map()：将流的元素映射成另一个元素：	
+			Stream.of("abc","ef","ghijk").map(s->s.length()).forEach(System.out::println);
+		distinct()：去除流中重复的元素:
+			Stream.of(1, 8, 5, 2, 1, 0, 9, 2, 0, 4, 8).distinct().forEach(System.out::println);
+		sorted()：对流的元素排序：（这个方法有一个重载版本，可以接受一个比较器作为参数）
+			Stream.of(1, 8, 5, 2, 1, 0, 9, 2, 0, 4, 8).sorted().forEach(System.out::println);
+		peek()：对流中的每个元素执行某个操作：
+			empStream.peek((emp)-> emp.setAge(30)).forEach(System.out::println);
+		limit()：截取流中前面几个元素:
+			Stream.of(1, 8, 5, 2).limit(2).forEach(System.out::println);
+		skip()：跳过流中前面几个元素:
+			Stream.of(1, 8, 5, 2).skip(2).forEach(System.out::println);
+		toArray()：将流转换为数组：（这个方法有一个重载版本）
+			Object [] arr = Stream.of(1, 8, 5, 2).toArray();
+			Integer [] arr = Stream.of(1, 8, 5, 2).toArray((n)->new Integer[4]);
+	收集元素：
+		reduce()：对流中的元素归并计算:
+			Optional<Integer> result = Stream.of(1, 8, 5, 2).reduce((a, b)->a+b);
+			Integer result = Stream.of(1, 8, 5, 2).reduce(0,Integer::sum);
+		collect()：收集流中的元素：
+			long size = Stream.of(1, 8, 5, 2).collect(Collectors.counting());
+        	List<Integer> list = Stream.of(1, 8, 5, 2).collect(Collectors.toList());
+        	Optional<Integer> max = Stream.of(1, 8, 5, 2).collect(Collectors.maxBy(Comparator.comparing(Integer::valueOf)));
+			Optional<Integer> min = Stream.of(1, 8, 5, 2).collect(Collectors.minBy(Comparator.comparing(Integer::valueOf)));
+			综合统计：
+				public class Employee {
+					private long empId;
+					private long depId;
+					private String name;
+					private double sal;
+					private int level;
+					...
+				}
+				Employee emp1 = new Employee(1L,101L,"jack",8888D,6);
+				Employee emp2 = new Employee(2L,101L,"mike",9999D,7);
+				Employee emp3 = new Employee(3L,102L,"zake",8555D,6);
+				Employee emp4 = new Employee(4L,102L,"cake",9566D,7);
+
+				Stream<Employee> empStream = Stream.of(emp1,emp2,emp3,emp4);
+				DoubleSummaryStatistics salStatis = empStream.collect(Collectors.summarizingDouble(Employee::getSal));
+				System.out.println("count: "+salStatis.getCount());
+				System.out.println("sum: "+salStatis.getSum());
+				System.out.println("average: "+salStatis.getAverage());
+				System.out.println("max: "+salStatis.getMax());
+				System.out.println("min: "+salStatis.getMin());
+			连接字符串：String str = Stream.of("A", "B", "C", "D").collect(Collectors.joining(","));
+			分组：
+				Map<Long,List<Employee>> empMap = empStream.collect(Collectors.groupingBy(Employee::getDepId));
+				Map<String,List<Employee>> newMap = empStream.collect(Collectors.groupingBy(emp->{
+					if(emp.getSal()>9000){
+						return "A";
+					}
+					else if(emp.getSal()>8000){
+						return "B";
+					}
+					else {
+						return "C";
+					}
+				}));
+			多级分组：
+				Map<Long,Map<String,List<Employee>>> mapMap = empStream.collect(Collectors.groupingBy(Employee::getDepId,Collectors.groupingBy(emp->{
+					if(emp.getSal()>9000){
+						return "A";
+					}
+					else if(emp.getSal()>8000){
+						return "B";
+					}
+					else {
+						return "C";
+					}
+				})));
+			分组后统计各个分组的数据量：
+				Map<Long,Long> sizeMap = empStream.collect(Collectors.groupingBy(Employee::getDepId,Collectors.counting()));
+				//统计各个dep的sal最大的Employee
+				Map<Long,Employee> maxMap = empStream.collect(
+					Collectors.groupingBy(
+						Employee::getDepId,
+						Collectors.collectingAndThen(
+							Collectors.maxBy(Comparator.comparingDouble(Employee::getSal)),
+							Optional::get
+						)
+					)
+				);
+			需要注意，不能重复的收集流中的元素。
+			可以看出来，上面的写法太冗长了，不易理解，可以使用静态导入减少类名的引用。
+				import static java.util.stream.Collectors.*;
+				import static java.util.Comparator.*;
+				Map<Long,Employee> maxMap = empStream.collect(
+					groupingBy(
+						Employee::getDepId,
+						collectingAndThen(
+							maxBy(comparingDouble(Employee::getSal)),
+							Optional::get
+						)
+					)
+				);
+	并行处理：
+		并行流使用集合的parallelStream()方法可以获取一个并行流。Java内部会将流的内容分割成若干个子部分，然后将它们交给多个线程并行处理，
+		这样就将工作的负担交给多核CPU的其他内核处理。
+		并行处理测试：（计算从1到n的累加值）（本地机器：i5-7500 3.40GHz, DDR4 2400MHz 16.00GB）
+			定义n：
+				long number = 20000000L;
+			测试方法：
+				重复测试10次，返回执行时间最短的一次的数据：
+				public static long sumTest(Function<Long,Long> func,long number){
+					long maxValue = Long.MAX_VALUE;
+					for(int i=0;i<10;i++){
+						long start = System.nanoTime();
+						long sum = func.apply(number);
+						long end = System.nanoTime();
+						System.out.println("result: "+sum);
+						long time = (end-start)/1000000;
+						if(time<maxValue){
+							maxValue = time;
+						}
+					}
+					return maxValue;
+				}
+			单线程for循环：
+				public static long sumFor(long n){
+					long result = 0;
+					for(long i=1L;i<=n;i++){
+						result += i;
+					}
+					return result;
+				}
+				测试：
+				System.out.println("total time of sumFor with number:"+number+" is: "+sumTest(StreamDemo2::sumFor,number)+" 毫秒");
+				// total time of sumFor with number:20000000 is: 7 毫秒
+			单线程stream(使用iterate迭代)：
+				public static long sumStream(long n){
+					return Stream.iterate(1L,i->i+1).limit(n).reduce(0L,Long::sum);
+				}
+				测试：
+				System.out.println("total time of sumStream with number:"+number+" is: "+sumTest(StreamDemo2::sumStream,number)+" 毫秒");
+				// total time of sumStream with number:20000000 is: 147 毫秒
+			并行stream(使用iterate迭代):
+				public static long sumParallelStream(long n){
+					return Stream.iterate(1L,i->i+1).limit(n).parallel().reduce(0L,Long::sum);
+				}
+				测试：
+				System.out.println("total time of sumParallelStream with number:"+number+" is: "+sumTest(StreamDemo2::sumParallelStream,number)+" 毫秒");
+				// total time of sumParallelStream with number:20000000 is: 432 毫秒
+			单线程stream（不使用iterate迭代）：
+				public static long sumLongStream(long n){
+					return LongStream.rangeClosed(1L,n).reduce(0L,Long::sum);
+				}
+				测试：
+				System.out.println("total time of sumLongStream with number:"+number+" is: "+sumTest(StreamDemo2::sumLongStream,number)+" 毫秒");
+				// total time of sumLongStream with number:20000000 is: 7 毫秒
+			并行stream（不使用iterate迭代）：
+				public static long sumParallelLongStream(long n){
+					return LongStream.rangeClosed(1L,n).parallel().reduce(0L,Long::sum);
+				}
+				测试：
+				System.out.println("total time of sumParallelLongStream with number:"+number+" is: "+sumTest(StreamDemo2::sumParallelLongStream,number)+" 毫秒");
+				// total time of sumParallelLongStream with number:20000000 is: 2 毫秒
+		根据测试结果可以知道，iterate迭代会造成stream处理变慢，这是因为iterate迭代的后一个迭代依赖前一个迭代的结果，在使用iterate迭代时再启用多线程并行处理，需要线程间
+		传递迭代变量，所以变得更慢。使用LongStream.rangeClosed(1L,n)则可以实现分段处理，然后再启用并行处理，就可以实现更快的处理。
+		
+		
+
+
 
 
 
