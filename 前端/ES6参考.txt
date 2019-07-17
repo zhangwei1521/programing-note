@@ -1721,4 +1721,127 @@ Promise 对象(数组)。co函数返回一个Promise对象。
 		});
 	使用Promise对象和Thunk 函数本质上是相同的，都是为了能够在回调函数中能够使用next方法继续Generator函数的执行。
 	
-
+												第十六章 async函数
+	ES2017引入async函数，还是用于增强异步编程，这个函数其实只是Generator函数的语法糖。
+		const fs = require('fs');
+		const readFile = function (fileName) {
+			return new Promise(function (resolve, reject) {
+				fs.readFile(fileName, function(error, data) {
+				if (error) return reject(error);
+				resolve(data);
+				});
+			});
+		};
+		const gen = function* () {
+			const f1 = yield readFile('/etc/fstab');
+			const f2 = yield readFile('/etc/shells');
+			console.log(f1.toString());
+			console.log(f2.toString());
+		};
+	这个Generator函数需要使用一个执行器才能自动执行，可以使用async函数改写：
+		const asyncReadFile = async function () {
+			const f1 = await readFile('/etc/fstab');
+			const f2 = await readFile('/etc/shells');
+			console.log(f1.toString());
+			console.log(f2.toString());
+			return f1;
+		};
+	async函数使用async声明，使用await代替yield，作为异步执行点，当await后的异步操作结束后，async函数就继续执行，而不需要像
+Generator函数那样调用遍历器的next方法才能继续。所以async函数语义更明确。可以认为async函数内置了Generator执行器。
+	async函数返回一个Promise对象，所以可以指定async函数执行完成后的回调函数：
+		asyncReadFile(data).then(()->console.log("finish: "+data));
+	await命令后面的表达式可以是 Promise 对象和原始类型的值（数值、字符串和布尔值，但这时会自动转成立即 resolved 的 Promise 对象）。
+	async函数完全可以看作多个异步操作包装成的一个 Promise 对象，而await命令就是内部then命令的语法糖。
+	async函数的声明形式：
+		async function foo() {}
+		const foo = async function () {};
+		let obj = { async foo() {} };
+		class demo{
+			async getAvatar(name) {
+				const cache = await ...;
+				return cache.match(`/avatars/${name}.jpg`);
+			}
+		}
+	async函数内部抛出错误，会导致返回的 Promise 对象变为reject状态。抛出的错误对象会被catch方法回调函数接收到。
+	async函数里面的return 返回的值将被传递给返回的promise对象的then方法。
+	使用await实现休眠：
+		function sleep(interval){
+			return new Promise(resolve=>{
+				setTimeout(resolve,interval);
+			});
+		}
+		async function gen{
+			for(let i=0;i<5;i++){
+				console.log(i);
+				await sleep(1000);
+			}
+		}
+	await后面的Promise对象变为reject状态后，async函数将抛出异常，由返回的promise对象的catch方法捕获，reject的参数被传递给catch。
+	如果希望在前一个异步操作失败后不要中断后面的异步操作，可以将第一个await放在try...catch结构里面，也可以在await后面的 Promise 
+对象再跟一个catch方法，由这个Promise处理自己可能出现的错误。
+	await是一个异步执行点，而且会在发起异步任务后就阻塞在这里，直到异步任务结束才继续执行后面的任务：
+		let foo = await getFoo();
+		let bar = await getBar();	//需要等待前一个异步任务结束才能执行
+		// await后的异步任务正常结束后的返回值直接被返回。
+	如果后面的任务和前面的异步任务没有依赖关系，则可以选择并发执行异步任务：
+		let [foo,bar] = await Promise.all([getFoo(),getBar()]);
+		// 或
+		let fooPromise = getFoo();
+		let barPromise = getBar();
+		let foo = await fooPromise;
+		let bar = await barPromise;
+	await命令只能用在async函数之中，如果用在普通函数，就会报错。
+	async 函数的实现原理：
+		async function fn(args) {
+			let data1 = await genPromise1();
+			let data2 = await genPromise2();
+			return data1 + data2;
+		}
+		//等同于
+		function fn(args) {
+			return spawn(function* () {
+				let data1 = yield genPromise1();
+				let data2 = yield genPromise2();
+				return data1 + data2;
+			});
+		}
+		function spawn(genF) {
+			return new Promise(function(resolve, reject) {
+				const gen = genF();
+				function step(nextF) {
+					let next;
+					try {
+						next = nextF();
+					} catch(e) {
+						return reject(e);
+					}
+					if(next.done) {
+						return resolve(next.value);
+					}
+					Promise.resolve(next.value).then(function(v) {
+						step(function() { return gen.next(v); });
+					}, function(e) {
+						step(function() { return gen.throw(e); });
+					});
+				}
+				step(function() { return gen.next(undefined); });
+			});
+		}
+	使用async函数实现一组异步任务按顺序执行：
+		async function chainAnimationsAsync(elem, animations) {
+			let ret = null;
+			try {
+				for(let anim of animations) {
+				ret = await anim(elem);
+				}
+			} catch(e) {
+				/* 忽略错误，继续执行 */
+			}
+			return ret;
+		}
+	顶层 await提案：
+		目前的语法规格中 await命令只能出现在 async 函数内部，否则都会报错。
+		顶层 await提案允许在async 函数外使用await命令，主要目的是任何依赖异步操作结果的地方让程序等待异步操作返回后
+再继续执行，避免在异步操作结束前使用了依赖异步操作返回值的地方引用了不正确的值：
+		模块的导出变量依赖异步操作结果的await写法：
+			export const output = someProcess((await dynamic).default, await data);
