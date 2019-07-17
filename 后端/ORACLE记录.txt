@@ -185,6 +185,9 @@ in和exists的区别:
 	return result;
 exists查询更适合B表数据较大的场景。数据量不大则两种查询方法差别不大。
 
+ sys_guid()函数：
+	 sys_guid()函数用于生成32位的唯一主键，如：234E45F0077881AAE0430AA3034681AA
+
 
 
 
