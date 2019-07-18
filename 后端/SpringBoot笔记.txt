@@ -28,18 +28,18 @@ springboot应用起步：
 	----------------------------------------------------------------------------------------------------
 	参考pom:
 	<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	  <modelVersion>4.0.0</modelVersion>
-	  <groupId>com.zhangwei</groupId>
-	  <artifactId>springboot-demo1</artifactId>
-	  <version>0.0.1-SNAPSHOT</version>
-	  
-	  <parent>
+		<modelVersion>4.0.0</modelVersion>
+		<groupId>com.zhangwei</groupId>
+		<artifactId>springboot-demo1</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+		
+		<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>1.5.14.RELEASE</version>
-	  </parent>
-	  
-	  <dependencies>
+		</parent>
+		
+		<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
@@ -53,9 +53,9 @@ springboot应用起步：
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>
 		</dependency>
-	  </dependencies>
-	  
-	  <build>
+		</dependencies>
+		
+		<build>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -66,7 +66,7 @@ springboot应用起步：
 				</configuration>
 			</plugin>
 		</plugins>
-	  </build>
+		</build>
 	</project>
 	
 	使用maven打包可独立部署的jar：mvn clean package
@@ -80,9 +80,9 @@ springboot应用起步：
 			</configuration>
 			<executions>
 				<execution>
-				  <goals>
+					<goals>
 					<goal>repackage</goal>
-				  </goals>
+					</goals>
 				</execution>
 			</executions>
 		</plugin>
@@ -91,13 +91,13 @@ springboot应用起步：
 
 	父级工程pom:
 	<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	  <modelVersion>4.0.0</modelVersion>
-	  <groupId>com.zhangwei</groupId>
-	  <artifactId>springboot-parent</artifactId>
-	  <version>0.0.1-SNAPSHOT</version>
-	  <packaging>pom</packaging>
-	  
-	  <dependencyManagement>
+		<modelVersion>4.0.0</modelVersion>
+		<groupId>com.zhangwei</groupId>
+		<artifactId>springboot-parent</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+		<packaging>pom</packaging>
+		
+		<dependencyManagement>
 		<dependencies>
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
@@ -107,8 +107,8 @@ springboot应用起步：
 				<scope>import</scope>
 			</dependency>
 		</dependencies>
-	  </dependencyManagement>
-	  <build>
+		</dependencyManagement>
+		<build>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -119,23 +119,23 @@ springboot应用起步：
 				</configuration>
 			</plugin>
 		</plugins>
-	  </build>
-	  <modules>
+		</build>
+		<modules>
 		<module>springboot-child1</module>
 		<module>springboot-child2</module>
-	  </modules>
+		</modules>
 	</project>
 	-------------------------------------------------------------------------------------
 	子工程pom:
 	<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	  <modelVersion>4.0.0</modelVersion>
-	  <parent>
+		<modelVersion>4.0.0</modelVersion>
+		<parent>
 		<groupId>com.zhangwei</groupId>
 		<artifactId>springboot-parent</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
-	  </parent>
-	  <artifactId>springboot-child1</artifactId>
-	  <dependencies>
+		</parent>
+		<artifactId>springboot-child1</artifactId>
+		<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
@@ -149,7 +149,7 @@ springboot应用起步：
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
 		</dependency>
-	  </dependencies>
+		</dependencies>
 	</project>
 	------------------------------------------------------------------------------------------------
 
@@ -221,9 +221,9 @@ springboot项目可以直接import上面的spring-boot-dependencies来控制依�
 	
 	①日志模块起步依赖：(spring-boot-starter已经包含了spring-boot-starter-logging)
 	<dependency>
-  		<groupId>org.springframework.boot</groupId>
-  		<artifactId>spring-boot-starter-logging</artifactId>
-  	</dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-logging</artifactId>
+		</dependency>
 	这里使用的日志框架是logback，springboot已经做了大量的默认配置，不需要再做其他配置就可以使用。
 	在application.properties中自定义logback日志配置：
 		#logback日志配置
@@ -423,9 +423,9 @@ com.zhangwei.springboot.dao.master包下的dao类处理master数据源的操作�
 	这里创建了一个名为masterTransactionManager的事务管理器bean，在操作master数据库的方法上加上注解@Transactional("masterTransactionManager")控制
 事务提交和回滚。最好不要同时更新不同数据源的的数据，因为这样事务处理起来很麻烦。如果确实需要在一个事务中操作不同的数据源，需要使用Atomikos：
 		<dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-jta-atomikos</artifactId>
-        </dependency>
+						<groupId>org.springframework.boot</groupId>
+						<artifactId>spring-boot-starter-jta-atomikos</artifactId>
+				</dependency>
 	配置DataSource:
 		@Bean(name = "masterDatasource")
 		public DataSource masterDatasource() {

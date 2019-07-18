@@ -1901,6 +1901,13 @@ Generator函数那样调用遍历器的next方法才能继续。所以async函�
 				//this._proto_.foo = val;
 				Object.getPrototypeOf(this).foo = val;
 			}
+
+			static get foo(){
+				return Bar.prototype.foo;
+			}
+			static set foo(val){
+				Bar.prototype.foo = val;
+			}
 		}
 	class内的属性名可以使用表达式：
 		let funcName = "xx";
@@ -1917,7 +1924,7 @@ Generator函数那样调用遍历器的next方法才能继续。所以async函�
 	class表达式可以立即执行：
 		let myClass = new class{...}('wakaka');
 	类和模块的内部，默认就是严格模式，所以不需要使用use strict指定运行模式。
-	类不存在变量提升（hoist），这一点与 ES5 完全不同。
+	类不存在变量提升，这一点与 ES5 完全不同。
 		new Foo(); // ReferenceError
 		class Foo {}
 	class具有name属性，这个name属性其实是构造函数的名称。
@@ -2001,7 +2008,10 @@ Generator函数那样调用遍历器的next方法才能继续。所以async函�
 	创建父类对象和创建子类对象时采用不同的策略：
 		class Shape {
 			constructor() {
-				if (new.target === Shape) {
+				if (new.target == undefined) {
+					throw new Error('必须使用 new 命令生成实例');
+				} 
+				else if (new.target === Shape) {
 					...
 				}
 				else{
