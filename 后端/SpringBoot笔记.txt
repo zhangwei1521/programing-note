@@ -27,45 +27,46 @@ springboot应用起步：
 		该插件提供maven构建目标：spring-boot:run支持
 	----------------------------------------------------------------------------------------------------
 	参考pom:
-	<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+			xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 		<modelVersion>4.0.0</modelVersion>
 		<groupId>com.zhangwei</groupId>
 		<artifactId>springboot-demo1</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 		
 		<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.5.14.RELEASE</version>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-parent</artifactId>
+			<version>1.5.14.RELEASE</version>
 		</parent>
 		
 		<dependencies>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
-		</dependency>
-		<!-- 开发者模式 -->
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>springloaded</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-devtools</artifactId>
-		</dependency>
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-web</artifactId>
+			</dependency>
+			<!-- 开发者模式 -->
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>springloaded</artifactId>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-devtools</artifactId>
+			</dependency>
 		</dependencies>
 		
 		<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
-				</configuration>
-			</plugin>
-		</plugins>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<configuration>
+						<source>1.8</source>
+						<target>1.8</target>
+					</configuration>
+				</plugin>
+			</plugins>
 		</build>
 	</project>
 	
@@ -81,7 +82,7 @@ springboot应用起步：
 			<executions>
 				<execution>
 					<goals>
-					<goal>repackage</goal>
+						<goal>repackage</goal>
 					</goals>
 				</execution>
 			</executions>
@@ -90,7 +91,8 @@ springboot应用起步：
 	-----------------------------------------------------------------------------------------------
 
 	父级工程pom:
-	<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+			xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 		<modelVersion>4.0.0</modelVersion>
 		<groupId>com.zhangwei</groupId>
 		<artifactId>springboot-parent</artifactId>
@@ -98,57 +100,61 @@ springboot应用起步：
 		<packaging>pom</packaging>
 		
 		<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-dependencies</artifactId>
-				<version>1.5.14.RELEASE</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
+			<dependencies>
+				<dependency>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-dependencies</artifactId>
+					<version>1.5.14.RELEASE</version>
+					<type>pom</type>
+					<scope>import</scope>
+				</dependency>
+			</dependencies>
 		</dependencyManagement>
 		<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
-				</configuration>
-			</plugin>
-		</plugins>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<configuration>
+						<source>1.8</source>
+						<target>1.8</target>
+					</configuration>
+				</plugin>
+			</plugins>
 		</build>
 		<modules>
-		<module>springboot-child1</module>
-		<module>springboot-child2</module>
+			<module>springboot-child1</module>
+			<module>springboot-child2</module>
 		</modules>
 	</project>
 	-------------------------------------------------------------------------------------
 	子工程pom:
-	<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+			xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 		<modelVersion>4.0.0</modelVersion>
+
 		<parent>
-		<groupId>com.zhangwei</groupId>
-		<artifactId>springboot-parent</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+			<groupId>com.zhangwei</groupId>
+			<artifactId>springboot-parent</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
 		</parent>
+
 		<artifactId>springboot-child1</artifactId>
+
 		<dependencies>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<scope>test</scope>
-		</dependency>
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-web</artifactId>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-test</artifactId>
+			</dependency>
+			<dependency>
+				<groupId>junit</groupId>
+				<artifactId>junit</artifactId>
+				<scope>test</scope>
+			</dependency>
 		</dependencies>
 	</project>
 	------------------------------------------------------------------------------------------------
@@ -311,9 +317,9 @@ springboot项目可以直接import上面的spring-boot-dependencies来控制依�
 	web模块已经默认配置了springMVC需要的组件，如果需要使用自定义的mvc组件，只需要向容器中注入自定义的组件
 实例就可以了。下面是使用fastjson处理json转换：
 		<dependency>
-				<groupId>com.alibaba</groupId>
-				<artifactId>fastjson</artifactId>
-				<version>1.2.15</version>
+			<groupId>com.alibaba</groupId>
+			<artifactId>fastjson</artifactId>
+			<version>1.2.15</version>
 		</dependency>
 
 		@Bean
@@ -423,9 +429,9 @@ com.zhangwei.springboot.dao.master包下的dao类处理master数据源的操作�
 	这里创建了一个名为masterTransactionManager的事务管理器bean，在操作master数据库的方法上加上注解@Transactional("masterTransactionManager")控制
 事务提交和回滚。最好不要同时更新不同数据源的的数据，因为这样事务处理起来很麻烦。如果确实需要在一个事务中操作不同的数据源，需要使用Atomikos：
 		<dependency>
-						<groupId>org.springframework.boot</groupId>
-						<artifactId>spring-boot-starter-jta-atomikos</artifactId>
-				</dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-jta-atomikos</artifactId>
+		</dependency>
 	配置DataSource:
 		@Bean(name = "masterDatasource")
 		public DataSource masterDatasource() {
