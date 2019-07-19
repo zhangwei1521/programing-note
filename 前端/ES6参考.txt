@@ -1847,7 +1847,7 @@ Generator函数那样调用遍历器的next方法才能继续。所以async函�
 			export const output = someProcess((await dynamic).default, await data);
 
 												第十七章 Class
-	Class在ES6中引入，主要目的是让基于原型链的JavaScript的语法更加接近传统的基于继承的面向对象语言。但是Class定义的对象模板
+	Class在ES6中引入，主要目的是让基于原型链的JavaScript的语法更加接近传统的基于类的面向对象语言。但是Class定义的对象模板
 （类）并不是新的语言基础元素，只是对JS的构造函数的包装。
 	js的构造函数使用起来确实不如其他面向对象语言的类那么方便，这体现在构造函数在定义时，只包括了创建实例对象的功能，如果要为
 构造函数添加自己的属性，或要为其prototype绑定属性，则需要单独声明：
@@ -1900,13 +1900,6 @@ Generator函数那样调用遍历器的next方法才能继续。所以async函�
 			set foo(val){
 				//this._proto_.foo = val;
 				Object.getPrototypeOf(this).foo = val;
-			}
-
-			static get foo(){
-				return Bar.prototype.foo;
-			}
-			static set foo(val){
-				Bar.prototype.foo = val;
 			}
 		}
 	class内的属性名可以使用表达式：
@@ -2033,6 +2026,126 @@ Generator函数那样调用遍历器的next方法才能继续。所以async函�
 				}
 			}
 		}
+	
+	class的继承：
+	Class 通过extends关键字实现继承，这比ES5 的通过修改原型链实现继承，要清晰和方便很多。
+		class Point {}
+		class ColorPoint extends Point {}
+	子类必须在constructor方法中调用super方法，否则新建实例时会报错，如果子类没有写constructor，ES6默认会添加如下的
+constructor实现：
+		class ColorPoint extends Point {
+			constructor(...args):{
+				super(...args);
+			}
+		}
+	super(...args)在这里用来创建父类的实例，在子类的构造函数中，只有调用super之后，才可以使用this关键字，否则会报错。
+这是因为子类实例的构建，基于父类实例，只有super方法才能调用父类实例。
+		class ColorPoint extends Point {
+			constructor(x, y, color) {
+				this.color = color; // ReferenceError
+				super(x, y);
+				this.color = color; // 正确
+			}
+		}
+	super关键字既可以作为函数调用，代表父类的构造函数，此时super()只能用在子类的构造函数之中，用在其他地方就会报错；
+也可以作为对象使用，在普通方法中，指向父类的prototype属性对象，在静态方法中，指向父类。
+	使用super的时候，必须显式指定是作为函数、还是作为对象使用，否则会报错。
+	super作为对象指向父类的prototype属性对象时，父类的prototype属性中的this指向子类实例对象，这时通过super对某个属性
+赋值，super就是this，但是获取super上的属性却是父类的prototype属性对象的属性，这里很是矛盾：
+		class A {
+			constructor() {
+				this.x = 1;
+			}
+			p() {
+				return this.x;
+			}
+			static myMethod(msg) {
+				console.log('static', msg);
+			}
+		}
+		class B extends A {
+			constructor() {
+				super();
+				this.x = 2;
+				super.x = 3;
+				console.log(super.x); 	// undefined	个人认为，这里的设计不是很好
+				console.log(this.x); 	// 3
+				console.log(super.p()); // 3
+			}
+			static myMethod(msg) {
+				super.myMethod(msg);	
+			}
+		}
+		let b = new B();
+		B.myMethod('hello');		// static hello
+	Object.getPrototypeOf方法可以用来从子类上获取父类，这个方法实际上是获取对象的_proto_指向的对象。
+		Object.getPrototypeOf(ColorPoint) === Point		// true
+	继承的实质：
+		子类的__proto__属性，指向父类，表示构造函数的继承。
+		子类prototype属性的__proto__属性，指向父类的prototype属性对象，表示方法的继承。
+			// B 的实例继承 A 的实例
+			Object.setPrototypeOf(B.prototype, A.prototype);
+			// B 继承 A 的静态属性
+			Object.setPrototypeOf(B, A);
+	ES5中自定义构造函数无法继承原生构造函数，因为原生构造函数会忽略apply方法传入的this，也就是说，原生
+构造函数的this无法绑定，导致拿不到内部属性。
+		function MyArray() {
+			Array.apply(this, arguments);
+		}
+	ES6 允许继承原生构造函数定义子类，因为 ES6 是先新建父类的实例对象this，然后再用子类的构造函数修饰this，
+使得父类的所有行为都可以继承。
+	一个带版本功能的数组:
+		class VersionedArray extends Array {
+			constructor() {
+				super();
+				this.history = [[]];
+			}
+			commit() {
+				this.history.push(this.slice());
+			}
+			revert() {
+				this.splice(0, this.length, ...this.history[this.history.length - 1]);
+			}
+		}
+		var x = new VersionedArray();
+		x.push(1);
+		x.push(2);
+		x // [1, 2]
+		x.history // [[]]
+		x.commit();
+		x.history // [[], [1, 2]]
+		x.push(3);
+		x // [1, 2, 3]
+		x.history // [[], [1, 2]]
+		x.revert();
+		x // [1, 2]		
+	Mixin 指的是多个对象合成一个新的对象，新对象具有各个组成成员的接口。
+		function mix(...mixins) {
+			class Mix {
+				constructor() {
+				for (let mixin of mixins) {
+					copyProperties(this, new mixin()); // 拷贝实例属性
+				}
+				}
+			}
 
-		
+			for (let mixin of mixins) {
+				copyProperties(Mix, mixin); // 拷贝静态属性
+				copyProperties(Mix.prototype, mixin.prototype); // 拷贝原型属性
+			}
+
+			return Mix;
+		}
+
+		function copyProperties(target, source) {
+			for (let key of Reflect.ownKeys(source)) {
+				if ( key !== 'constructor'
+				&& key !== 'prototype'
+				&& key !== 'name'
+				) {
+				let desc = Object.getOwnPropertyDescriptor(source, key);
+				Object.defineProperty(target, key, desc);
+				}
+			}
+		}
 	
