@@ -1,0 +1,91 @@
+												React参考文档
+	React 是一个用于构建用户界面的 JavaScript 库。
+	React可以根据需要进行部分引入，也就是说可以在传统的项目部分页面使用React，也可以创建一个完全基于React的项目。
+	
+	第一章
+	在传统的非单页应用程序中使用React：
+		1、在html页面中创建一个想要包含React组件的容器：（这里使用id属性标记容器，方便后面找到它）
+			<div id="like_button_container"></div>
+		2、引入React支持：
+			<!-- 加载 React。-->
+			<script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
+			<script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
+			<!-- 注意: 部署时，将 "development.js" 替换为 "production.min.js"。-->
+		3、创建一个 React 组件：（like_button.js）
+			'use strict';
+			const e = React.createElement;
+			class LikeButton extends React.Component {
+				constructor(props) {
+					super(props);
+					this.state = { liked: false };
+				}
+
+				render() {
+					if (this.state.liked) {
+						return 'You liked this.';
+					}
+
+					return e(
+						'button',
+						{ onClick: () => this.setState({ liked: true }) },
+						'Like'
+					);
+				}
+			}
+			//将上面的组件添加到页面的容器中，这两行不属于组件，但是在浏览器环境下也只好放在这里。
+			const domContainer = document.querySelector('#like_button_container');
+			ReactDOM.render(e(LikeButton), domContainer);
+		4、加载创建的React组件：
+			<script src="like_button.js"></script>
+	如果要重用一个组件，可以在html页面上创建多个容器，为这些容器添加class属性，最后通过class查找到这些容器，遍历时
+将每个组件添加到每个容器中。
+		document.querySelectorAll('.like_button_container')
+			.forEach(domContainer => {
+				// Read the comment ID from a data-* attribute.
+				const commentID = parseInt(domContainer.dataset.commentid, 10);
+				ReactDOM.render(	//这里commentID不是组件的属性，需要在组件内通过this.props.commentID拿到
+					e(LikeButton, { commentID: commentID }),	
+					domContainer
+				);
+		});
+	压缩组件：
+		1、使用npm初始化项目为npm项目:	npm init -y
+		2、安装terser:	npm install terser
+		3、压缩指定js文件:	npx terser -c -m -o like_button.min.js -- like_button.js
+	使用JSX语法创建组件：
+		return (
+			<button onClick={() => this.setState({ liked: true })}>
+				Like
+			</button>
+		);
+	引入babel脚本转换JSX语句，然后可以在设置了type="text/babel"的<script>标签内使用JSX语法，需要注意，这种方式
+不能引用外部脚本文件：
+		<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+		<script type="text/babel" >
+			ReactDOM.render(
+				<h1>Hello, world!</h1>,
+				document.getElementById('root')
+			);
+		</script>
+		//下面的写法会报错
+		<script src="like_button.js" type="text/babel"></script>
+	使用 JSX 预处理器：
+		如果不是npm项目，需要先初始化项目为npm项目：npm init -y
+		安装babel：npm install babel-cli@6 babel-preset-react-app@3
+		将like_button.js移动到src目录下，修改为使用JSX语法的版本：
+			...
+			return (
+				<button onClick={() => this.setState({ liked: true })}>
+					Like
+				</button>
+			);
+			...
+			ReactDOM.render(<LikeButton name="zhangwei"/>, domContainer);
+		执行命令：npx babel --watch src --out-dir . --presets react-app/prod 
+	这个命令将会监听src目录下js文件的变化，在src目录外层生成一个同名的js文件，这个文件可以在浏览器运行，加载babel
+预处理后的js文件：
+		<script src="like_button.js"></script>
+	这里JSX预处理器还是不能处理ES6的import语句，所以也就不能实现组件的组合了。
+
+
+	
