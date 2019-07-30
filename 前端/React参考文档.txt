@@ -1,6 +1,6 @@
 												React参考文档
 	React 是一个用于构建用户界面的 JavaScript 库。
-	React可以根据需要进行部分引入，也就是说可以在传统的项目部分页面使用React，也可以创建一个完全基于React的项目。
+	React可以根据需要进行部分引入，也就是说可以在传统的项目的部分页面使用React，也可以创建一个完全基于React的项目。
 	
 	第一章
 	在传统的非单页应用程序中使用React：
@@ -172,8 +172,108 @@
 	React DOM 会将元素和它的子元素与它们之前的状态进行比较，并只会进行必要的更新来使 DOM 达到预期的状态。前面的定时器每次
 都会新建一个描述整个 UI 树的元素，React DOM 只会更新实际改变了的内容。
 
+	React将 UI 拆分为独立可复用的代码片段，这些代码片段就是独立设计的组件。组件类似于JavaScript 函数。它接受任意的入参
+（即 “props”），并返回用于描述页面展示内容的 React 元素。
+	可以使用JavaScript 函数作为组件，通常使用函数实现的组件具有如下形式：
+		function Welcome(props) {
+			return <h1>Hello, {props.name}</h1>;
+		}
+	参数名为props，返回一个JSX表达式，前面说过JSX表达式实际上是一个React元素。
+	可以使用 ES6 的 class 来定义组件：
+		class Welcome extends React.Component {
+			render() {
+				return <h1>Hello, {this.props.name}</h1>;
+			}
+		}
+	本质上这两种组件没有什么不同，毕竟class只不过是构造函数的语法糖。
+	React 元素除了可以是 标准的HTML(DOM)标签外，还可以是我们自定义的组件：
+		const element = <Welcome name="Sara" />;
+	使用自定义组件作为React元素时，JSX中的属性将被封装到一个名为"props"的对象中传递给组件。
+	React要求组件名称必须以大写字母开头，小写字母开头的组件视为原生 DOM 标签。
+	组件可以在其输出中引用其他组件：
+		function Welcome(props) {
+			return <h1>Hello, {props.name}</h1>;
+		}
 
+		function App() {
+			return (
+				<div>
+					{/*这里引用了三次Welcome组件*/}
+					<Welcome name="Sara" />					
+					<Welcome name="Cahal" />
+					<Welcome name="Edite" />
+				</div>
+			);
+		}
 
+		ReactDOM.render(
+			<App />,
+			document.getElementById('root')
+		);	
+	通常一个完整的React 应用程序的顶层组件是一个唯一的App组件。
+	多层嵌套的组件通常难以维护，且很难复用它的各个部分，应该考虑把这样的组件细分为多个更细粒度的组件的组合，比如下面的组件：
+		function Comment(props) {
+			return (
+				<div className="Comment">
+					<div className="UserInfo">
+						<img className="Avatar"
+							src={props.author.avatarUrl}
+							alt={props.author.name}
+						/>
+						<div className="UserInfo-name">
+							{props.author.name}
+						</div>
+					</div>
+					<div className="Comment-text">
+						{props.text}
+					</div>
+					<div className="Comment-date">
+						{formatDate(props.date)}
+					</div>
+				</div>
+			);
+		}
+	将图片提取出来构造一个新的可复用的组件：
+	function Avatar(props) {
+		return (
+			<img className="Avatar"
+				src={props.user.avatarUrl}
+				alt={props.user.name}
+			/>
+
+		);
+	}
+	使用上面提取的组件构造新的UserInfo 组件：
+		function UserInfo(props) {
+			return (
+				<div className="UserInfo">
+					<Avatar user={props.user} />
+					<div className="UserInfo-name">
+						{props.user.name}
+					</div>
+				</div>
+			);
+		}
+	最后组合提取的组件为原组件：
+		function Comment(props) {
+			return (
+				<div className="Comment">
+					<UserInfo user={props.author} />
+					<div className="Comment-text">
+						{props.text}
+					</div>
+					<div className="Comment-date">
+						{formatDate(props.date)}
+					</div>
+				</div>
+			);
+		}
+	React要求Props的属性不能更改，意思是不能改变Props的属性的指向，例如不能这样写：
+		props.obj=hello;
+	但是可以修改props属性对象的属性：
+		props.obj.name=hello;
+	不修改入参的函数一般称为纯函数，React就要求所有 React 组件都必须像纯函数一样保护它们的 props 不被更改。
+	
 
 
 
