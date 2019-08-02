@@ -615,7 +615,14 @@ class对象创建另一个spring应用上下文（容器），这个应用上下
 	@EnableWebMvc注解是必须的，用来标记启用springmvc，@ComponentScan标记只扫描web相关的bean。
 	这个配置类配置了一个视图解析器，这个视图解析器将逻辑视图名xxx解析为物理视图：/WEB-INF/views/xxx.jsp
 	这个配置类继承了WebMvcConfigurerAdapter并覆写了方法：configureDefaultServletHandling，用来将静态资源交给
-servlet容器默认的servlet处理。
+servlet容器默认的servlet处理。这里需要注意的是，如果将静态资源放在WEB-INF目录下，那么servlet容器的默认servlet
+是不能访问到的，解决方法就是把静态资源放到WEB-INF目录外，如果需要将静态资源放在WEB-INF下，可以使用spring的资源处
+理器，指明具体的静态资源路径：
+		@Override
+		public void addResourceHandlers(ResourceHandlerRegistry registry) {
+			registry.addResourceHandler("/resources/**")
+					.addResourceLocations("/resources/", "/WEB-INF/resources/");
+		}
 	非web应用上下文：
 		@Configuration
 		@ComponentScan(basePackages = {"com.zhangwei.minimsg"},
