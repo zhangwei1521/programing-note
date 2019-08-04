@@ -724,6 +724,8 @@ servlet容器默认的servlet处理。这里需要注意的是，如果将静态
             <label>Password:</label><input name="password" type="password"/><br>
             <input type="submit" value="regist"/>
         </form>
+        防止中文乱码需要加入编码：
+        <%@ page language="java" import="java.util.*" pageEncoding="UTF-8"%>
 	表单中只指定了提交方法为post，默认会把表单提交给访问表单页面的路径，也就是/register
 	第二个方法返回的逻辑视图名具有前缀："redirect:"表示将重定向到另一个映射路径。此外可以使用
 "forward:"前缀进行转向。
@@ -766,8 +768,149 @@ servlet容器默认的servlet处理。这里需要注意的是，如果将静态
     }
 	校验不通过会转到注册表单页面.
 	
+                                            第六章
+    springmvc实现了控制逻辑和视图渲染的分离，这样就可以避免修改其中某一个时干扰另一个的问题。springmvc使用视图解析器
+根据控制器返回的逻辑视图名查找对应的物理视图实现，然后渲染视图并返回。
+    springmvc定义的视图解析器接口：ViewResolver：
+        public interface ViewResolver{
+            View resolveViewName(String viewName, Locale locale) throw Exception;
+        }
+    视图接口:View
+        public interface View{
+            String getContentType();
+            void render(Map<String,?> model, 
+                    HttpServletRequest request, HttpServletResponse response) throw Exception;
+        }
+    虽然我们可以实现自己的视图解析器和视图，但是通常不需要这么做，因为spring提供了13个视图解析器实现，大多数情况下我
+们只需要选用其中的常用的实现就可以了：
+        BeanNameViewResolver;   将逻辑视图名解析为spring应用上下文中的bean
+        ContentNegotiatingViewResolver; 根据客户端需要的媒体类型选择其他合适的视图解析器
+        InternalResourceViewResolver;   将视图名解析为web应用内部的资源文件（通常为jsp）
+        TilesViewResolver;  将视图解析为apache Tile定义
+        ThymeleafViewResolver;  将视图解析为Thymeleaf模板
+        ...
+    InternalResourceViewResolver根据配置将视图名解析为资源文件，使用bean配置：
+        @Bean
+        public ViewResolver viewResolver(){
+            InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
+            viewResolver.setPrefix("/WEB-INF/views/");
+            viewResolver.setSuffix(".jsp");
+            viewResolver.setExposeContextBeansAsAttributes(true);
+            return viewResolver;
+        }
+    该配置中：
+        home将解析为"WEB-INF/views/home.jsp"
+        books/detail将解析为"WEB-INF/views/books/detail.jsp"
+    InternalResourceViewResolver默认使用InternalResourceView作为处理jsp文件的View实现，如果需要在
+jsp文件中使用jstl的某些特性（如Locale），需要配置JstlView作为视图实现：
+        viewResolver.setViewClass(org.springframework.web.servlet.view.JstlView.class);
+    在jsp中使用sun提供的jstl标签库可以简化很多写法，spring也提供两套标签库来进一步简化基于spring的应用视图开发。一
+个用于表单到模型的绑定，另一个提供通用的工具类特性。
+    在jsp页面中引入spring表单标签库：
+        <%@ taglib uri="http://www.springframework.org/tags/form" prefix="sf" %>
+    spring表单标签库提供14个标签，这些标签可以绑定模型对象的属性：
+        <sf:form method="post" commandName="user">
+            <label>First Name:</label><sf:input path="firstName"/><br>
+            <label>Last Name:</label><sf:input path="lastName"/><br>
+            <label>Username:</label><sf:input path="userName"/><br>
+            <label>Password:</label><sf:password path="password"/><br>
+            <label>Email:</label><sf:input path="email" type="email"/><br>
+            <input type="submit" value="regist"/>
+        </sf:form>
+    上面的表单绑定了一个模型对象，所以在对应的控制器方法中返回的模型中应该提供这样的对象：  
+        @RequestMapping(value = "/register",method = RequestMethod.GET)
+        public String showRegisteForm(Model model){
+            User user = new User();
+            user.setFirstName("zhang");
+            user.setEmail("759109612@qq.com");
+            model.addAttribute(user);
+            return "registerForm";
+        }
+    表单错误回显：
+    指定字段错误回显：<sf:errors path="firstName" cssClass="error"/><br>
+    也可以泛指所有字段：<sf:errors path="*" element="div" cssClass="error"/><br>
+    在Bean中设置错误提示：
+        @Size(min=5,max=16,message="{username.size}")
+    这里引用配置文件的内容，默认文件名为ValidationMessages.properties，放在类根路径下：
+        username.size=username less than {min} or more than {max}
+    配置文件中又引用Bean的注解的内容。
+    使用单独的配置文件来保存错误提示信息可以很方便地进行国际化处理。
+    在jsp中引入spring通用工具标签库：
+        <%@ taglib uri="http://www.springframework.org/tags" prefix="st" %>
+    这个标签库提供一些实用的标签，如<st:message>：
+        <st:message code="minimsg.welcome"/>
+    使用<st:message>需要配置对应的MessageSource接口实现，可以选用spring提供的ResourceBundleMessageSource
+和ReloadableResourceBundleMessageSource，后者可以绑定文件系统中的文件，并且可以在程序运行时重新加载修改的
+文件。
+    @Bean
+	public MessageSource messageSource() {
+		ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
+		messageSource.setBasename("message");
+		return messageSource;
+	}
+    类加载根路径下新增message.properties文件：
+        minimsg.welcome=你好，欢迎光临
+    <st:url>标签可以自动添加web应用上下文，转义显示链接地址，和提供默认参数:
+        <st:url href="/user/register" htmlEscape="true">
+            <st param name="firstName" value="zhangwei"/>
+            register
+        </st:url>
+    <st:escapeBody>用于转义html特殊字符：
+        <st:escapeBody><a>welcome</a></st:escapeBody>
+    Apache提供一种页面布局实现：Apache Tiless，可以将逻辑视图名解析为一个tiles定义，这个tiles定义中
+可以引用多个jsp文件，同时有一个主页面，该主页面中可以引用tiles定义中的其他页面实现布局。这里不再介绍
+具体用法。
+    thymeleaf模板引擎是一种可以替代jsp的页面技术，是在html基础上加入新的名称空间提供更强功能的技术：
+    一个thymeleaf模板文件，实际上就是一个html文件：/WEB-INF/templates/home.html
+        <!DOCTYPE html>
+        <html xmlns="http://www.w3.org/1999/xhtml"
+            xmlns:th="http://thymeleaf.org" >
+        <head>
+            <meta charset="UTF-8"></meta>
+            <title>Insert title here</title>
+            <link rel="stylesheet" type="text/css"
+                th:href="@{/resources/style.css}"></link>
+        </head>
+        <body>
+            <h1>welcome to minimsg!</h1>
+            <a th:href="@{/msglist}">minimsg list</a>
+            <a th:href="@{/user/register}">register</a>
+        </body>
+        </html>
+    配置thymeleaf视图解析器、模板引擎和模板解析器：
+        @Bean
+        public ViewResolver viewResolver(SpringTemplateEngine templateEngine) {
+            ThymeleafViewResolver viewResolver = new ThymeleafViewResolver();
+            viewResolver.setTemplateEngine(templateEngine);
+            return viewResolver;
+        }
+        
+        @Bean
+        public SpringTemplateEngine templateEngine(TemplateResolver templateResolver) {
+            SpringTemplateEngine templateEngine = new SpringTemplateEngine();
+            templateEngine.setTemplateResolver(templateResolver);
+            return templateEngine;
+        }
+        
+        @Bean
+        public TemplateResolver templateResolver() {
+            TemplateResolver templateResolver = new ServletContextTemplateResolver();
+            templateResolver.setPrefix("/WEB-INF/templates/");
+            templateResolver.setSuffix(".html");
+            templateResolver.setTemplateMode("HTML5");
+            return templateResolver;
+        }
+    thymeleaf表单绑定属性：
+        <form method="POST" th:object="${user}">
+            <input type="text" th:field="*{userName}" 
+                    th:class="${#fields.hasErrors('userName')}" ? 'error' : ''
+            />
+        </form>
+    这里的${}是变量表达式，表示后端上下文中的某个对象，*{}是选择表达式，表示选中对象的某个属性。
+    
+    
 
-
+    
 
 
 
