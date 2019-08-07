@@ -125,6 +125,8 @@
 变成了className，而tabindex则变为tabIndex。
 	React DOM 在渲染所有输入内容之前，默认会进行转义。所有的内容在渲染之前都被转换成了字符串。这样可以有效地防止 XSS
 （跨站脚本）攻击。
+
+	react元素：
 	Babel 将JSX表达式转译成一个名为 React.createElement() 函数调用：
 		const element = (
 			<h1 className="greeting">
@@ -156,7 +158,7 @@
 		const element = <h1>Hello, world</h1>;
 		ReactDOM.render(element, document.getElementById('root'));
 	React 元素是不可变对象。一旦被创建，就无法更改它的子元素或者属性。一个元素就像电影的单帧：它代表了某个特定时刻的 UI。
-更新 UI 唯一的方式是创建一个全新的元素，并将其传入 ReactDOM.render()。//存疑.....待确定
+更新 UI 唯一的方式是创建一个全新的元素(对于自定义class组件，就是调用render方法返回的react元素)，并将其传入 ReactDOM.render()。
 	一个计时器：
 		function tick() {
 			const element = (
@@ -172,6 +174,7 @@
 	React DOM 会将元素和它的子元素与它们之前的状态进行比较，并只会进行必要的更新来使 DOM 达到预期的状态。前面的定时器每次
 都会新建一个描述整个 UI 树的元素，React DOM 只会更新实际改变了的内容。
 
+	react组件：
 	React将 UI 拆分为独立可复用的代码片段，这些代码片段就是独立设计的组件。组件类似于JavaScript 函数。它接受任意的入参
 （即 “props”），并返回用于描述页面展示内容的 React 元素。
 	可以使用JavaScript 函数作为组件，通常使用函数实现的组件具有如下形式：
@@ -187,7 +190,7 @@
 		}
 	函数没有状态，但是class具有自己的状态。
 	React 元素除了可以是 标准的HTML(DOM)标签外，还可以是我们自定义的组件：
-		const element = <Welcome name="Sara" />;
+		const element = <Welcome name="Sara" />;	//这里的Welcome实际上是引用Welcome组件的render方法返回的react元素
 	使用自定义组件作为React元素时，JSX中的属性将被封装到一个名为"props"的对象中传递给组件。
 	React要求组件名称必须以大写字母开头，小写字母开头的组件视为原生 DOM 标签。
 	组件可以在其输出中引用其他组件：
@@ -302,7 +305,9 @@
 				</div>)
 			}
 		}
-	组件每次通过setState()方法更新状态后，react将会调用组件的render方法，但是不会调用上层组件的render方法。
+	组件每次通过setState()方法更新状态后，react将会调用组件的render方法，但是不会调用上层组件的render方法。如果render中引用了
+其他组件（子组件），也会继续调用子组件的render方法(先调用子组件的componentWillReceiveProps，然后调用子组件的componentWillUpdate
+方法，最后才调用子组件的render方法)。
 	this.state 可能会异步更新，即React 可能会把多个 setState() 调用合并成一个调用，所以最好不要依赖原值来更新下一个状态：
 		this.setState({counter: this.state.counter});
 	解决方案是让 setState() 接收一个函数而不是一个对象。这个函数用上一个 state 作为第一个参数，将此次更新被应用时的 props 做为第二个参数：
@@ -334,7 +339,7 @@
 			handleClick() {
 				...
 			}
-			//使用箭头函数不需要在constructor中为函数绑定this
+			//使用箭头函数不需要在constructor中为函数绑定this，箭头函数是直接部署在实例对象上，而不是实例的原型对象上。
 			handleClick = () =>{
 				...
 			}
@@ -374,12 +379,12 @@
 	假设：
 		两个不同类型的元素会产生出不同的树；
 		开发者可以通过 key prop 来暗示哪些子元素在不同的渲染下能保持稳定；
-	Diffing 算法是比较React的render()方法创建的树的差异的算法。react的render() 方法会创建一棵由 React 元素组成的树，
+	Diffing 算法是比较React的render()方法创建的(元素)树的差异的算法。react的render() 方法会创建一棵由 React 元素组成的树，
 在下一次 state 或 props 更新时，相同的render()方法会返回一棵不同的树。标准的树比较算法的最好复杂程度为 O(n^3 )，基于
 以上假设的算法可以优化到复杂度降为O(n)。
 	react Diffing算法中，对比两颗树时，React 首先比较两棵树的根节点。当根节点为不同类型的元素时，React 会拆卸原有的树并且建立起新的树。
-这个过程中，如果子树有自定义组件，该组件实例的componentWillMount会先被调用(创建新的react元素)，然后再调用componentWillUnmount(销毁旧的
-react元素)，最后调用componentDidMount(挂载新的react组件元素后调用)。
+这个过程中，如果子树有自定义组件，该组件实例的componentWillMount会先被调用(创建新的react组件实例对象)，然后再调用componentWillUnmount
+(销毁旧的react元素)，最后调用componentDidMount(挂载新的react组件元素后调用)。
 	当比对两个相同类型的 React 元素时，React 会保留 DOM 节点，仅比对及更新有改变的属性。如果子树有自定义组件，子树组件的componentWillReceiveProps
 方法会先被调用，然后是子组件的componentWillUpdate方法被调用。然后调用子组件的render() 方法。
 	当更新 style 属性时，React 仅更新有所更变的属性。
@@ -410,7 +415,228 @@ react元素)，最后调用componentDidMount(挂载新的react组件元素后调
 	根据上面的说明可知，使用随机数作为key值会导致性能损耗，而且如果出现随机数重复，将导致更严重的数据正确性问题，使用索引作为key值，如果
 元素顺序重排，也会导致数据正确性问题。
 
+	受控组件：
+	在React中可以将表单元素的状态(state)保存在组件的state中，而不由表单元素自己维护，这样可以通过组件的setState方法更新表单元素的值。
+这样的表单元素就称为受控组件。使用受控组件的好处是在任何时候都可以知道表单元素的当前状态。
+		class NameForm extends React.Component {
+			constructor(props) {
+				super(props);
+				this.state = {
+					username: 'jack',
+					password: '',
+				};
+			}
 
+			handleChange=(event)=> {
+				//this.setState({value: event.target.value.toUpperCase()});
+				const target = event.target;
+				const name = target.name;
+				this.setState({
+					[name]:target.value,
+				})
+			}
+
+			handleSubmit=(event)=> {
+				alert('提交的名字: ' + this.state.username);
+				event.preventDefault();
+			}
+
+			render() {
+				return (
+					<form onSubmit={this.handleSubmit}>
+						<label>名字:</label>
+						<input name="username" type="text" value={this.state.username} onChange={this.handleChange} /><br/>
+						<label>密码:</label>
+						<input name="password" type="password" value={this.state.password} onChange={this.handleChange} /><br/>
+						<input type="submit" value="提交" />
+					</form>
+				);
+			}
+		}
+	为表单元素绑定固定值后，表单元素就不再响应输入：
+		<input value="hi" />
+	如果上面的value属性的值设置为null或undefined，则可以继续编辑输入：
+		<input value={null} />
+	
+	非受控组件：
+	当我们不关心表单元素的中间状态，而且不想要维护表单元素的状态（手动维护表单元素的状态很繁琐），只想要在需要的时候能获取到表单元素的
+状态值就行的时候，就可以使用非受控组件，非受控组件将真实数据储存在 DOM 节点中。
+	react组件中可以通过refs来从非受控组件拉取值，refs有几种写法，react16.3开始的新写法如下：
+		class NameForm extends React.Component {
+			constructor(props) {
+				super(props);
+				this.handleSubmit = this.handleSubmit.bind(this);
+				this.input = React.createRef();
+			}
+
+			handleSubmit(event) {
+				alert('A name was submitted: ' + this.input.current.value);
+				event.preventDefault();
+			}
+
+			render() {
+				return (
+					<form onSubmit={this.handleSubmit}>
+						<label>Name:</label>
+						<input type="text" ref={this.input} />
+						<input type="submit" value="Submit" />
+					</form>
+				);
+			}
+		}
+	如果希望为非受控组件赋一个初始值，但是不去控制后续的更新，可以指定一个 defaultValue 属性，而不是 value。
+		<input defaultValue="Bob" type="text" ref={this.input} />
+	
+	refs
+	通常父组件和子组件只需要通过props通信就可以了，但是有时候确实需要在父组件中强制访问子组件的内容(状态)，这就是refs的用途，
+refs可以在父组件中获取子组件(自定义组件或html元素组件)(子组件不能是函数组件)的实例。不要使用 refs 来做任何可以通过声明式实现
+完成的事情。
+	react早期使用String 类型的 Refs：
+		<input ref="usernameInput" type="text"/>
+		...
+		this.refs.usernameInput.value;
+	这种refs 存在一些问题，不建议继续使用并可能会在未来的版本被移除。
+	使用回调函数的refs：
+		<input type="text" ref={element => {this.textInput = element}}/>
+		...
+		if (this.textInput) {
+			this.textInput.focus();
+		}
+	React 将在挂载组件时，调用 ref 回调函数并传入 DOM 元素或组件实例，当卸载时调用它并传入 null。在 componentDidMount 或 componentDidUpdate 
+触发前，React 会保证 refs 一定是最新的。
+	传递ref回调函数：
+		function CustomTextInput(props) {
+			return (
+				<div><input ref={props.inputRef} /></div>
+			);
+		}
+
+		class Parent extends React.Component {
+			render() {
+				return (
+					<CustomTextInput inputRef={el => this.inputElement = el} />
+				);
+			}
+		}
+	React 16.3 版本引入React.createRef() API：
+		class MyComponent extends React.Component {
+			constructor(props) {
+				super(props);
+				this.myRef = React.createRef();
+			}
+			render() {
+				return <div ref={this.myRef} />;
+			}
+		}
+	当 ref 被传递给 render 中的元素时，对该节点的引用可以在 ref 的 current 属性中被访问:
+		const node = this.myRef.current;
+	ref引用HTML元素时， 绑定的对象就是底层的DOM元素，ref引用自定义class组件时，绑定的对象是自定义class组件的实例对象。
+	React 会在组件挂载时给 current 属性传入DOM元素或子组件实例，并在组件卸载时传入 null 值。
+
+	状态提升：
+	通常子组件维护自己的状态，而有时候子组件之间需要共享一些状态变量，react的思路是将子组件间需要共享的状态变量提升到公共父组件中，
+而不是去在子组件之间同步各自的状态变量。
+	一个例子：
+		const scaleNames = {
+			c: 'Celsius',
+			f: 'Fahrenheit'
+		};
+
+		//根据华氏温度计算摄氏温度
+		function toCelsius(fahrenheit) {
+			return (fahrenheit - 32) * 5 / 9;
+		}
+		//根据摄氏温度计算华氏温度
+		function toFahrenheit(celsius) {
+			return (celsius * 9 / 5) + 32;
+		}
+		//温度换算
+		function tryConvert(temperature, convert) {
+			const input = parseFloat(temperature);
+			if (Number.isNaN(input)) {
+				return '';
+			}
+			const output = convert(input);
+			const rounded = Math.round(output * 1000) / 1000;
+			return rounded.toString();
+		}
+		//函数组件
+		function BoilingVerdict(props) {
+			if (props.celsius >= 100) {
+				return <p>The water would boil.</p>;
+			}
+			return <p>The water would not boil.</p>;
+		}
+		//温度录入组件
+		class TemperatureInput extends React.Component {
+			constructor(props) {
+				super(props);
+				this.handleChange = this.handleChange.bind(this);
+			}
+
+			handleChange(e) {
+				this.props.onTemperatureChange(e.target.value);
+			}
+
+			render() {
+				const temperature = this.props.temperature;
+				const scale = this.props.scale;
+				return (
+					<fieldset>
+						<legend>Enter temperature in {scaleNames[scale]}:</legend>
+						<input value={temperature} onChange={this.handleChange} />
+					</fieldset>
+				);
+			}
+		}
+		//温度录入父组件
+		class Calculator extends React.Component {
+			constructor(props) {
+				super(props);
+				this.handleCelsiusChange = this.handleCelsiusChange.bind(this);
+				this.handleFahrenheitChange = this.handleFahrenheitChange.bind(this);
+				this.state = {temperature: '', scale: 'c'};
+			}
+
+			handleCelsiusChange(temperature) {
+				this.setState({scale: 'c', temperature});
+			}
+
+			handleFahrenheitChange(temperature) {
+				this.setState({scale: 'f', temperature});
+			}
+
+			render() {
+				const scale = this.state.scale;
+				const temperature = this.state.temperature;
+				const celsius = scale === 'f' ? tryConvert(temperature, toCelsius) : temperature;
+				const fahrenheit = scale === 'c' ? tryConvert(temperature, toFahrenheit) : temperature;
+
+				return (
+					<div>
+						<TemperatureInput
+							scale="c"
+							temperature={celsius}
+							onTemperatureChange={this.handleCelsiusChange} 
+						/>
+						<TemperatureInput
+							scale="f"
+							temperature={fahrenheit}
+							onTemperatureChange={this.handleFahrenheitChange} 
+						/>
+						<BoilingVerdict 
+							celsius={parseFloat(celsius)} 
+						/>
+					</div>
+				);
+			}
+		}
+	上面这个例子使用状态提升实现了类似双向绑定的功能，状态提升的好处是排查和隔离 bug 所需的工作量将会变少。由于“存在”于组件中
+的任何 state，仅有组件自己能够修改它，因此 bug 的排查范围被大大缩减了，另一个好处是可以使用自定义逻辑来拒绝或转换用户的输入。
+但是也可以看出提升 state 方式比双向绑定方式需要编写更多的“样板”代码。
+	组件状态设计的基本原则：如果某些数据可以由 props 或 state 推导得出，那么它就不应该存在于 state 中。
+
+	
 
 
 
