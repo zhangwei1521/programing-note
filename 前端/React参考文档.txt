@@ -94,6 +94,7 @@
 每次修改源代码后，应用将会自动更新到浏览器。可以使用 npm run build 生成一个build 文件夹，内部包括此应用的优化版本，
 这通常用于正式环境中，默认发布路径为/（根路径），可以在package.json配置homepage属性调整发布路径：
 		 "homepage":"e:/tem_file/react2/build"
+	编译后的文件位于项目build目录下，需要复制build目录下的文件到homepage配置的目录下，才能正常访问编译后的应用页面。
 	JSX简介：
 	React 认为渲染逻辑本质上与其他 UI 逻辑内在耦合，比如，在 UI 中需要绑定处理事件、在某些时刻状态发生变化时需要
 通知到 UI，以及需要在 UI 中展示准备好的数据。
@@ -278,8 +279,8 @@
 	不修改入参的函数一般称为纯函数，React就要求所有 React 组件都必须像纯函数一样保护它们的 props 不被更改。
 	
 	组件的状态：
-	使用ES6的class实现的组件可以具有自己的状态，这种有状态的组件可以在更新状态后被react感知，然后react将根据更新后的组件去
-渲染页面（调整DOM）。下面是一个时钟组件：
+	使用ES6的class实现的组件可以具有自己的状态，这种有状态的组件可以在更新状态（调用setState方法）后被react感知，然后react将
+根据更新后的组件去渲染页面（调整DOM）。下面是一个时钟组件：
 		import React,{Component} from "react";
 		export default class Clock extends Component{
 			constructor(props){
@@ -347,6 +348,7 @@
 		}
 	向事件处理函数传递额外的参数：
 		<button onClick={(e) => this.deleteRow(id, e)}>Delete Row</button>
+
 	条件渲染：
 		<div>
 			<h1>Hello!</h1>
@@ -355,6 +357,8 @@
 	由于true && expression 总是返回 expression, 而 false && expression 总是返回 false。所以这种写法如果条件是 true，
 && 右侧的元素就会被渲染，如果是 false，React 会忽略并跳过它。
 	如果 组件的render 方法直接返回 null，组件将不会被渲染，但是这不会影响组件的生命周期。
+	
+	列表元素：
 	JSX允许在{}中引用一个React元素数组：
 		const numbers = [1, 2, 3, 4, 5];
 		const listItems = numbers.map((number) =>
@@ -376,12 +380,13 @@
 		);
 	key 会传递信息给 React ，但不会传递给组件，即在组件内使用this.props.key不能获取设置的key。
 	基于两个假设的react Diffing 算法：
-	假设：
-		两个不同类型的元素会产生出不同的树；
-		开发者可以通过 key prop 来暗示哪些子元素在不同的渲染下能保持稳定；
+	
+	Diffing 算法：
 	Diffing 算法是比较React的render()方法创建的(元素)树的差异的算法。react的render() 方法会创建一棵由 React 元素组成的树，
 在下一次 state 或 props 更新时，相同的render()方法会返回一棵不同的树。标准的树比较算法的最好复杂程度为 O(n^3 )，基于
-以上假设的算法可以优化到复杂度降为O(n)。
+以下两个假设的算法可以优化到复杂度降为O(n)：
+		1、两个不同类型的元素会产生出不同的树；
+		2、开发者可以通过 key prop 来暗示哪些子元素在不同的渲染下能保持稳定；
 	react Diffing算法中，对比两颗树时，React 首先比较两棵树的根节点。当根节点为不同类型的元素时，React 会拆卸原有的树并且建立起新的树。
 这个过程中，如果子树有自定义组件，该组件实例的componentWillMount会先被调用(创建新的react组件实例对象)，然后再调用componentWillUnmount
 (销毁旧的react元素)，最后调用componentDidMount(挂载新的react组件元素后调用)。
@@ -636,8 +641,55 @@ refs可以在父组件中获取子组件(自定义组件或html元素组件)(子
 但是也可以看出提升 state 方式比双向绑定方式需要编写更多的“样板”代码。
 	组件状态设计的基本原则：如果某些数据可以由 props 或 state 推导得出，那么它就不应该存在于 state 中。
 
+	特别的组件组合模式：
+	引入(import)组件后，通常不需要通过继承(extend)来进行扩展，而是直接组合使用。
+	使用 props.children 为容器类组件添加内部结构：
+		function SideBar(props) {
+			return (
+				<div>
+					{props.children}
+				</div>
+			);
+		}
+		function Page() {
+			return (
+				<SideBar>
+					<ul>
+						<li><a href="#">Welcome</a></li>
+						<li><a href="#">Main</a></li>
+					</ul>
+				</SideBar>
+				...
+			);
+		}
+	也可以通过props传递react元素给子组件使用：
+		function SideBar(props) {
+			return (
+				<div>
+					{props.first}
+				</div>
+				<div>
+					{props.second}
+				</div>
+				<div>
+					{props.children}
+				</div>
+			);
+		}
+		function Page() {
+			const firstEl = <div>hello</div>;
+			const secondEl = <div>world</div>;
+			return (
+				<SideBar first={firstEl} second={secondEl}>
+					<ul>
+						<li><a href="#">Welcome</a></li>
+						<li><a href="#">Main</a></li>
+					</ul>
+				</SideBar>
+				...
+			);
+		}
 	
-
 
 
 
