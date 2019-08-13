@@ -877,12 +877,176 @@ refs可以在父组件中获取子组件(自定义组件或html元素组件)(子
 			document.getElementById('container')
 		);
 
+	context的用法：
+	如果外层组件需要传递一些数据给内层组件，但是中间层组件不需要使用这些数据，使用props来进行传递就不太合适，
+context可以实现这样的需求。context实现了非直接引用的组件间的数据传递，但是也破坏了组件的可复用性和独立性。
+	使用组合模式（在外层组件中定义一些组件，然后传递这些组件给子组件渲染）也可以实现跨层数据传递，但是这种做法
+也会带来额外的问题：复杂化了外层组件。
+	创建一个context对象：
+		const defaultValue = "defaultValue"/{name:""};
+		const MyContext = React.createContext(defaultValue);
+	每个 Context 对象都会返回一个 Provider React 组件，它允许消费组件订阅 context 的变化：
+		<MyContext.Provider value={/* 某个值 */}>
+	当 Provider 的 value 值发生变化时，它内部的所有消费组件都会重新渲染。
+	为一个class配置静态属性：contextType，引用一个context对象，在这个class组件中就可以通过 this.context 来
+消费最近的context 上的数据。
+	函数组件需要使用<Context.Consumer>来获取context。
+	一个例子：
+	commonStates.js:
+		import React from "react";
 
+		const AppContext = React.createContext('app');
+		const PageContext = React.createContext('page');
+		const ThemeContext = React.createContext({color:'#fefefe'});
 
+		export {AppContext,PageContext,ThemeContext};
+	App.js
+		import React,{Component} from 'react';
+		import {AppContext,ThemeContext} from './commonStates';
+		import Page from './Page';
 
+		class App extends Component{
+			constructor(props){
+				super(props);
+				this.state={
+					count:1,
+					theme:{
+						color:'green'
+					}
+				}
+			}
+			handleClick=(e)=>{
+				this.setState((state)=>{
+					let color = 'green';
+					if(state.theme.color=='green') color='red';
+					this.setState({
+						count:state.count+1,
+						theme:{
+							color:color
+						}
+					})
+				});
+			}
+			render(){
+				const page = (<ThemeContext.Provider value={this.state.theme}>
+					<Page count={this.state.count}/>
+				</ThemeContext.Provider>);
+				return (<AppContext.Provider value="app1">
+					{page}
+					<hr/>
+					<button onClick={this.handleClick}>点击</button>
+				</AppContext.Provider>);
+			}
+		}
+		export default App;
+	Page.js
+		import React,{Component} from 'react';
+		import SideBar from './SideBar';
+		import MainContent from './MainContent';
+		import {PageContext} from "./commonStates";
 
+		class Page extends Component{
+			render(){
+				return (<PageContext.Provider value="dark">
+				<div>
+					<div>App count: {this.props.count}</div>
+				</div>
+					<div>
+						<SideBar/>
+						<MainContent/>
+					</div>
+				</PageContext.Provider>);
+			}
+		}
+		export default Page;
+	SideBar.js
+		import React,{Component} from 'react';
+		import {AppContext} from './commonStates';
 
+		class SideBar extends Component{
+			render(){
+				return (<div>
+					<div>sidebar</div>
+					<div>
+						AppContext: {this.context}
+					</div>
 
+				</div>)
+			}
+		}
+		SideBar.contextType = AppContext;
+		export default SideBar;
+	MainContent.js
+		import React,{Component} from 'react';
+		import {PageContext} from './commonStates';
+		import AdvSection from './AdvSection';
+
+		export default class MainContent extends Component{
+			static contextType = PageContext;
+			render(){
+				return (<div>
+					<div>main content</div>
+					<div>
+						PageContext: {this.context}
+					</div>
+					<AdvSection/>
+				</div>)
+			}
+		}
+	AdvSection.js
+		import React from "react";
+		import {ThemeContext} from './commonStates';
+
+		function AdvSection(props) {
+			return (<ThemeContext.Consumer>
+				{theme=>(
+					<div style={{backgroundColor:theme.color}}>
+						lalallalallalalallalallalalallalalal
+					</div>
+				)}
+			</ThemeContext.Consumer>)
+		}
+		export default AdvSection
+	
+	错误边界：
+	错误边界是一种 React 组件，这种组件可以捕获并打印发生在其子组件树任何位置的 JavaScript 错误，并且，它会渲染出备用 UI。
+	错误边界捕获在渲染期间、生命周期方法和整个组件树的构造函数中发生的错误。
+	错误边界必须是class组件，而且需要定义 static getDerivedStateFromError() 或 componentDidCatch() 这两个生命周期方法
+中的任意一个（或两个）。
+	当子组件抛出错误后，static getDerivedStateFromError(error) 先被调用，通常使用这个方法设置渲染备用 UI的数据 ，然后
+componentDidCatch(error, errorInfo)方法被调用，可以使用这个方法打印错误信息或者上传错误信息给服务器。（这两个方法功能实质上
+是类似的，所以可以只使用其中一个）。
+		class ErrorBoundary extends React.Component {
+			constructor(props) {
+				super(props);
+				this.state = { hasError: false };
+			}
+
+			static getDerivedStateFromError(error) {
+				// 更新 state
+				return { hasError: true };
+			}
+
+			componentDidCatch(error, info) {
+				//logErrorToMyService(error, info);
+				this.setState({hasError: true})
+			}
+
+			render() {
+				if (this.state.hasError) {
+					return <h1>Something went wrong.</h1>;
+				}
+
+				return this.props.children; 
+			}
+		}
+	组合普通组件使用：
+		<ErrorBoundary>
+			<MyWidget />
+		</ErrorBoundary>
+	可以使用错误边界组件包装最顶层的路由组件并为用户展示一个全局的错误信息。也可以将单独的部件包装在错误边界
+以保护应用其他部分不崩溃。
+	自 React 16 起，任何未被错误边界捕获的错误将会导致整个 React 组件树被卸载。
 
 
 
