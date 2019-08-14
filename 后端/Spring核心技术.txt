@@ -908,8 +908,147 @@ jsp文件中使用jstl的某些特性（如Locale），需要配置JstlView作�
         </form>
     这里的${}是变量表达式，表示后端上下文中的某个对象，*{}是选择表达式，表示选中对象的某个属性。
     
-    
+											第七章
+	配置其他的servlet和filter：
+	public class MyServletInitializer implements WebApplicationInitializer {
+		@Override
+		public void onStartup(ServletContext servletContext) throws ServletException {
+			ServletRegistration.Dynamic myServletReg = servletContext.addServlet("myServlet", MyServlet.class);
+			myServletReg.addMapping("/myServlet");
 
+			FilterRegistration.Dynamic myFilterReg = servletContext.addFilter("myFilter", MyFilter.class);
+			System.out.println("check myFilterReg: "+myFilterReg);
+			myFilterReg.addMappingForUrlPatterns(null,false,"/myServlet");
+		}
+	}
+	为DispatcherServlet配置filter：
+		public class MinimsgWebAppInitializer extends AbstractAnnotationConfigDispatcherServletInitializer {
+			...
+			@Override
+			protected Filter[] getServletFilters(){
+				return new Filter[]{new MyFilter()};
+			}
+		}
+	基于web.xml的springMVC配置：
+		<?xml version="1.0" encoding="UTF-8"?>
+		<web-app version="2.5"
+				xmlns="http://java.sun.com/xml/ns/javaee"
+				xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+				xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+				http://java.sun.com/xml/ns/j2ee/web-app_2_5.xsd">
+			<context-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>/WEB-INF/spring-root-context.xml</param-value>
+			</context-param>
+			
+			<listener>
+				<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+			</listener>
+			
+			<servlet>
+				<servlet-name>appServlet</servlet-name>
+				<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+				<init-param>
+					<param-name>contextConfigLocation</param-name>
+					<param-value>/WEB-INF/appServlet-context.xml</param-value>
+				</init-param>
+				<load-on-startup>1</load-on-startup>
+			</servlet>
+			<servlet-mapping>
+				<servlet-name>appServlet</servlet-name>
+				<url-pattern>/</url-pattern>
+			</servlet-mapping>
+		</web-app>
+	appServlet-context.xml	
+		<?xml version="1.0" encoding="UTF-8"?>
+		<beans xmlns="http://www.springframework.org/schema/beans"
+			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+			xmlns:context="http://www.springframework.org/schema/context"
+			xsi:schemaLocation="
+			http://www.springframework.org/schema/beans
+			http://www.springframework.org/schema/beans/spring-beans.xsd
+			http://www.springframework.org/schema/context
+			http://www.springframework.org/schema/context/spring-context.xsd">
+
+			<context:component-scan base-package="com.zhangwei.newmsg.controller"/>
+
+			<bean id="viewResolver"
+				class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+				<property name="prefix" value="/WEB-INF/views/"/>
+				<property name="suffix" value=".jsp"/>
+			</bean>
+		</beans>
+	spring-root-context.xml
+		<?xml version="1.0" encoding="UTF-8"?>
+		<beans xmlns="http://www.springframework.org/schema/beans"
+			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+			xmlns:context="http://www.springframework.org/schema/context"
+			xsi:schemaLocation="http://www.springframework.org/schema/beans
+				http://www.springframework.org/schema/beans/spring-beans.xsd
+				http://www.springframework.org/schema/context
+				http://www.springframework.org/schema/context/spring-context.xsd">
+			<context:component-scan base-package="com.zhangwei.newmsg"/>
+		</beans>
+    
+	处理multipart格式的数据：
+	设置表单数据的格式为multipart，将把表单数据拆分为多个部分，每个部分对应一个输入域。
+	配置multipart解析器:
+	使用 StandardServletMultipartResolver（servlet3.0开始提供）
+		@Bean
+		public MultipartResolver multipartResolver(){
+			return new StandardServletMultipartResolver();
+		}
+	配置文件大小及保存位置：
+		在web.xml中配置：（需要servlet3.0之后的web.xml）
+			<multipart-config>
+				<location>e:/tem_file/</location>
+				<max-file-size>2097152</max-file-size>
+				<max-request-size>4194304</max-request-size>
+			</multipart-config>
+		基于Java配置（web应用初始化类继承AbstractAnnotationConfigDispatcherServletInitializer）：
+			@Override
+			protected void customizeRegistration(ServletRegistration.Dynamic registration) {
+				registration.setMultipartConfig(new MultipartConfigElement("e:/tem_file/files/",2097152,4194304,0));
+			}
+		基于Java配置（web应用初始化类实现 WebApplicationInitializer接口）：
+			@Override
+			public void onStartup(ServletContext servletContext) throws ServletException {
+				ServletRegistration.Dynamic myServletReg = servletContext.addServlet("appServlet", DispatcherServlet.class);
+				myServletReg.addMapping("/");
+				registration.setMultipartConfig(new MultipartConfigElement("e:/tem_file/files/",2097152,4194304,0));
+			}
+	使用 Apache 的 CommonsMultipartResolver ：
+		@Bean
+		public MultipartResolver multipartResolver() throws IOException {
+			CommonsMultipartResolver multipartResolver = new CommonsMultipartResolver();
+			multipartResolver.setUploadTempDir(new FileSystemResource("e:/tem_file/files/"));
+			multipartResolver.setMaxUploadSize(2097152);
+			multipartResolver.setMaxInMemorySize(0);
+			return multipartResolver;
+		}
+	上传文件的表单：
+		<form method="post" enctype="multipart/form-data">
+			username: <input name="username" type="text"/><br/>
+			age: <input name="age" type="number"/><br/>
+			picture: <input type="file" name="picture" accept="image/png,image/jpeg,image/gif">
+			<input type="submit" value="regist"/>
+		</form>
+	controller方法:
+		@RequestMapping(value = "/register",method = RequestMethod.POST)
+		public String registerUser(@RequestPart("picture") MultipartFile picture, User user){
+			System.out.println(user);
+			System.out.println("contentType: "+picture.getContentType());
+			System.out.println("fileName: "+picture.getOriginalFilename());
+			return "index";
+		}
+	@RequestPart参数类型还可以是byte[]，也可以使用servlet的Part接口类型。MultipartFile类型的文件可以调用：
+		picture.transferTo(new File("e:/tem_file/files/"+picture.getOriginalFilename()));
+写到文件系统中，Part类型对应写到文件系统的方法是write(String filename).
+	使用Part类型接受上传文件实际上不需要配置multipart解析器。
+	
+	
+	
+	
     
 
 
