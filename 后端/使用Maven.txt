@@ -89,7 +89,17 @@ maven统一管理着项目中很多琐碎的信息，方便了查找这些信息
         </executions>
     </plugin>
 	执行：mvn assembly:assembly
+	
 	使用archetype快速创建项目结构：mvn archetype:generate 选择7号（默认）quickstart项目结构
+	
+	直接使用maven执行main方法：
+	先编译：
+		mvn compile
+	然后执行：
+		mvn exec:java -Dexec.mainClass="com.zhangwei.spring.start.SpringApp"
+	给main方法传递参数：
+		mvn exec:java -Dexec.mainClass="com.zhangwei.spring.start.SpringApp" -Dexec.args="arg0 arg1 arg2"
+
 													第三章
 	依赖的范围：用来表述依赖的jar包和程序编译、测试、运行时的classpath的关系，默认为compile，将在三个阶段的classpath
 中都可以引用依赖的jar包，test指明只在测试时可以引用依赖的jar，provided指明编译、测试期间可以引用依赖的jar，runtime表明

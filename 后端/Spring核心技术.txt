@@ -991,14 +991,14 @@ jsp文件中使用jstl的某些特性（如Locale），需要配置JstlView作�
 		</beans>
     
 	处理multipart格式的数据：
-	设置表单数据的格式为multipart，将把表单数据拆分为多个部分，每个部分对应一个输入域。
+	设置表单数据的格式为multipart，将把表单数据拆分为多个部分，每个部分对应一个输入域（表单上传文件需要使用这种格式）。
 	配置multipart解析器:
 	使用 StandardServletMultipartResolver（servlet3.0开始提供）
 		@Bean
 		public MultipartResolver multipartResolver(){
 			return new StandardServletMultipartResolver();
 		}
-	配置文件大小及保存位置：
+	配置上传文件大小及保存位置：
 		在web.xml中配置：（需要servlet3.0之后的web.xml）
 			<multipart-config>
 				<location>e:/tem_file/</location>
@@ -1045,6 +1045,7 @@ jsp文件中使用jstl的某些特性（如Locale），需要配置JstlView作�
 		picture.transferTo(new File("e:/tem_file/files/"+picture.getOriginalFilename()));
 写到文件系统中，Part类型对应写到文件系统的方法是write(String filename).
 	使用Part类型接受上传文件实际上不需要配置multipart解析器。
+	spring4.3.x 已经可以使用 @RequestParam 注解替换 @RequestPart
 	
 	
 	
