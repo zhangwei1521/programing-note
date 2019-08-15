@@ -1047,7 +1047,84 @@ jsp文件中使用jstl的某些特性（如Locale），需要配置JstlView作�
 	使用Part类型接受上传文件实际上不需要配置multipart解析器。
 	spring4.3.x 已经可以使用 @RequestParam 注解替换 @RequestPart
 	
-	
+    处理异常：
+    servlet 应该总是为请求返回一个响应，即使应用发送了异常。spring 提供多种将异常转换为响应的方式。
+    一些特定的spring预定义异常将被自动转换为指定的 http 状态码，例如 NoSuchRequestHandlingMethodException 将被
+转换为 http 状态码 404 。
+    如果应用中不处理抛出的自定义异常或其他异常，将会自动返回 http 状态码 500 。
+    spring提供一个注解：@ResponseStatus 用于映射应用中的自定义异常。
+        @ResponseStatus(value=HttpStatus.NOT_FOUND, reason="data not exist")
+        public class DataNotExistException extends RuntimeException {}
+    spring 还提供另外一个注解：@ExceptionHandler 用于标记处理应用异常的方法。使用这个注解的方法只能在controller中
+定义(可以处理controller中抛出或controller调用链后端抛出的异常)。
+        @ExceptionHandler(AppRunningException.class)
+        private String handleAppRunningException() {
+            return "error";
+        }
+    spring3.2开始提供一个注解 @ControllerAdvice ，用于处理所有的控制器方法（使用 @RequestMapping 标记的方法）
+异常。 @ControllerAdvice 使用了@Component注解，所以在包扫描时它标记的类可以被扫描到。可以把所有的 @ExceptionHandler
+标记的方法都放到这个注解标记的类中，统一处理所有控制器方法抛出的异常。
+        @ControllerAdvice
+        public class AppExceptionHandler {
+            @ExceptionHandler(AppRunningException.class)
+            @ResponseBody
+            private Map<String, Object> handleAppRunningException(Exception e,HttpServletRequest request,
+                    HttpServletResponse response) {
+                System.err.println("handleAppRunningException........"+e.getMessage());
+                Map<String,Object> resultMap = new HashMap<>();
+                resultMap.put("message", e.getMessage());
+                return resultMap;
+            }
+            
+            @ExceptionHandler(DataNotExistException.class)
+            private String handleDataNotExistException(Exception e) {
+                System.err.println("handleDataNotExistException........"+e.getMessage());
+                return "error";
+            }
+        }
+	需要注意，返回Map类型需要使用 @ResponseBody 注解修饰方法，并且需要单独引入jackson依赖。
+    如果是返回视图名，这里其实不能向视图的模型中填充数据。
+    使用post方法提交表单数据后，通常需要进行重定向，spring使用 return "redirect:/~" 的方式指定返回的字符串是重定向
+请求而不是视图名。跨重定向存在传输数据问题，spring支持在重定义响应中填充数据（在模型中填充），然后浏览器将使用这些数
+据作为重定向请求的请求参数。
+    设置重定向请求数据： 
+        @RequestMapping(value = "/register",method = RequestMethod.POST)
+        public String registerUser(@RequestParam("picture") MultipartFile picture, User user, Model model) throws IOException {
+            System.out.println("fileName: "+picture.getOriginalFilename());
+            picture.transferTo(new File("d:/tem_file/files/"+picture.getOriginalFilename()));
+            //重定向路径变量
+            model.addAttribute("userId", "1521");
+            //重定向url参数
+             model.addAttribute("username", "zhangwei");
+            return "redirect:/{userId}";
+        }
+    如果需要传递一个复杂对象作为重定向请求参数，就不能将对象返回给客户端再由客户端传递给服务端，通常是将这个对象保存
+到session中。spring提供的处理方法是，重定向前将对象保存到Model的子接口RedirectAttributes实例中，返回重定向响应时
+spring就将这个模型上的对象保存到session中，重定向后的新请求到达服务器后，就从session中取出保存的对象填充到新请求的
+模型对象中，然后销毁session中的对象。
+    第一次请求：
+        @RequestMapping(value = "/findAll",method = RequestMethod.GET)
+        public String findAll(RedirectAttributes model) {
+            User user = new User();
+            user.setId("1920");
+            user.setUsername("xiaoming");
+            user.setAge(33);
+            model.addFlashAttribute("user",user);
+            model.addAttribute("userid", user.getId());
+            return "redirect:/{userid}";
+        }
+    重定向后的新请求：
+        @RequestMapping(value = "/{userId}",method= RequestMethod.GET)
+        public String hello(@PathVariable String userId, Model model){
+            String name = null;
+            //如果model中已经有user对象，这个对象可以渲染到视图上
+            if(!model.containsAttribute("user")) {
+                name = userService.getNameById(userId);
+            }    	
+            model.addAttribute("username",name);
+            return "index";
+        }
+
 	
 	
     
