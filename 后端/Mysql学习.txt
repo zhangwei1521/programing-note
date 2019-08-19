@@ -190,3 +190,13 @@ mysql5.5及之前的版本都必须要写这一条语句
 
 分页查询：
 	select * from table_name order by id limit rownum,pagesize;
+
+建立索引：
+    create index i_emp_num on emp(empNum);
+建立unique索引：
+    create unique index i_emp_id on emp(empId);
+标准sql中可以建立cluster索引：
+    create cluster index i_name on table_name(attr_name);
+    建立这种索引后加入的数据在写入物理文件时将尽可能按照 cluster 索引属性进行靠近存储。
+mysql的 MyISAM 存储引擎不支持 cluster 索引，而 InnoDB 存储引擎默认使用主键作为 cluster 索引，
+而且不能修改。所以在 mysql 中手动创建 cluster 索引会提示语法错误。
