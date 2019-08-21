@@ -1048,11 +1048,97 @@ componentDidCatch(error, errorInfo)方法被调用，可以使用这个方法打
 以保护应用其他部分不崩溃。
 	自 React 16 起，任何未被错误边界捕获的错误将会导致整个 React 组件树被卸载。
 
+	Refs转发：
+	Refs转发是在中间层组件透传ref的技术。通常用在高阶组件中。
+		function logProps(Component) {
+			class LogProps extends React.Component {
+				componentDidUpdate(prevProps) {
+					console.log('old props:', prevProps);
+					console.log('new props:', this.props);
+				}
 
+				render() {
+					const {forwardedRef, ...rest} = this.props;
 
+					// 将自定义的 prop 属性 “forwardedRef” 定义为 ref
+					return <Component ref={forwardedRef} {...rest} />;
+				}
+			}
 
+			// 注意 React.forwardRef 回调的第二个参数 “ref”。
+			// 我们可以将其作为常规 prop 属性传递给 LogProps，例如 “forwardedRef”
+			// 然后它就可以被挂载到被 LogPros 包裹的子组件上。
+			return React.forwardRef((props, ref) => {
+				return <LogProps {...props} forwardedRef={ref} />;
+			});
+		}
+	React.forwardRef接收一个函数为参数，函数第一个参数为props，第二个参数就是要转发的ref。在挂载转发组件时，参数函数将执行，传入的ref将被
+传入参数函数。参数函数执行后挂载高阶组件，传入的ref被当做普通属性传入，高阶组件内取出作为普通props属性的ref，再作为ref传递给内层组件。
+	可以认为React.forwardRef返回一个react元素，这个元素被挂载时，就将它的ref属性以ref的名称传入参数函数，参数函数内就可以把这个ref再传给
+内层组件。
 
+	Fragments
+	react 要求一个组件的render方法只能返回一个react元素，不能返回多个并列的react元素，传统的做法是用一个div包裹需要返回的并列元素，但是
+这就引入了一个实际上并不需要的dom元素。Fragments是解决这个问题的新语法：
+		render() {
+			return (
+				<React.Fragment>
+					<ChildA />
+					<ChildB />
+					<ChildC />
+				</React.Fragment>
+			);
+		}
+	使用React.Fragment包裹多个并列的元素，渲染时不会渲染一个多余的dom元素。<React.Fragment>可以简写为<>
+	使用显式 <React.Fragment> 语法声明的片段可能具有 key，但是仍然不会为这个便签渲染出dom节点。
 
+	高阶组件：
+	高阶组件是参数为组件，返回值为新组件的函数。
+	高阶组件不应该修改传入的组件，但是可以过滤一部分的props，它的主要用途还是用来传入额外的props给被包裹组件。高阶组件是纯函数，没有副作用。
+		function logProps(WrappedComponent) {
+			
+			return class extends React.Component{
+				constructor(props) {
+					super(props);
+					this.handleChange = this.handleChange.bind(this);
+					this.state = {
+						blogPost: DataSource.getBlogPost(props.id)
+					};
+				}
 
+				componentDidMount() {
+					DataSource.addChangeListener(this.handleChange);
+				}
 
+				componentWillUnmount() {
+					DataSource.removeChangeListener(this.handleChange);
+				}
+
+				handleChange() {
+					this.setState({
+						blogPost: DataSource.getBlogPost(this.props.id)
+					});
+				}
+
+				render() {
+					// 过滤掉非此 HOC 额外的 props，且不要进行透传
+					const { extraProp, ...passThroughProps } = this.props;
+
+					// 将 props 注入到被包装的组件中。
+					// 通常为 state 的值或者实例方法。
+					const injectedProp = someStateOrInstanceMethod;
+
+					// 将 props 传递给被包装组件
+					return (
+						<WrappedComponent
+							injectedProp={injectedProp}
+							{...passThroughProps}
+						/>
+					);
+				}
+			}
+		}
+	不要在 render 方法中使用高阶组件，调用高阶组件（函数）将返回一个新的组件，这样每次调用render都会产生新的组件，挂载的原组件就会
+卸载，造成性能损耗。
+	
 	
