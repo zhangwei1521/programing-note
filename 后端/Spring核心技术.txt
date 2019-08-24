@@ -937,8 +937,8 @@ jsp文件中使用jstl的某些特性（如Locale），需要配置JstlView作�
 				xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
 				http://java.sun.com/xml/ns/j2ee/web-app_2_5.xsd">
 			<context-param>
-			<param-name>contextConfigLocation</param-name>
-			<param-value>/WEB-INF/spring-root-context.xml</param-value>
+				<param-name>contextConfigLocation</param-name>
+				<param-value>/WEB-INF/spring-root-context.xml</param-value>
 			</context-param>
 			
 			<listener>

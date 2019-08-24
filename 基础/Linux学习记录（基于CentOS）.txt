@@ -385,8 +385,35 @@ defaults 包含rw、exec、auto、nouser、async
 	yum-config-manager: command not found
 	这个是因为系统默认没有安装这个命令，这个命令在yum-utils 包里，可以通过命令yum -y install yum-utils 安装就可以了。
 	
-
-		
+	kill 命令
+	执行一个 kill 命令，实际上是发送一个信号给系统，让系统去终结指定的应用。使用 kill -l 可以查看可以使用的信号，常用的
+有 SIGTERM(15) 和 SIGKILL(9)。
+	SIGTERM 信号请求一个进程停止运行。这个信号是默认的信号（可以省略）。发送这个信号后，进程将进行进度保存和释放资源，这
+通常需要一段时间，然后正常关闭，所以它不是强制停止。
+	SIGKILL 信号强制进程立刻停止运行，未保存的进度将会丢失。
+	语法： kill [信号或选项] PID(s)
+	可以使用信号名称，也可以使用信号量：
+		kill SIGKILL 12345
+		或
+		kill -9 12345
+	可以在同一时间kill多个进程：
+		kill -9 12345 8023
+	pkill 命令使用进程名执行 kill ，它使用扩展的正则表达式和其它匹配方式匹配进程名称然后执行 kill，为了避免 kill 掉错误的
+进程，通常应该先执行 pgrep -l [进程名] 来确认匹配进程的名称。
+		pgrep -l nginx
+		pkill nginx
+	killall同样使用进程名执行 kill ，并且它会kill掉所有的同名进程：
+		killall firefox
+	
+	ps 命令
+	ps 命令能够显示出当前进程列表的快照：
+		ps [选项]
+	选项包括：
+		a 显示所有用户的进程
+		u 显示进程的用户和拥有者
+		x 显示不依附于终端的进程
+	可以使用管道将 ps 命令的输出传递给 grep 命令，然后输出匹配的样式：
+		ps aux | grep chrome
 
 
 
