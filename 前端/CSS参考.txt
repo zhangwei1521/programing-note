@@ -3,7 +3,8 @@
 	样式定义如何显示 HTML 元素，样式通常存储在样式表中，样式表可以在html文件中编写，也可以在单独的样式表文件中编写后引入html文件，
 外部样式表可以方便的复用和替换，修改一个样式表文件就可以改变站点中所有的页面的外观。外部样式表通常存储在 CSS 文件中，多个样式定义可层叠为一。
 	HTML 3.2 时代使用字体标签和颜色属性表现标签的外观，W3C在HTML 4.0中引入了CSS，主要目的是实现内容与表现的分离。
-	
+
+
 	CSS基础语法：
 	通常所说的层叠样式表指的是一组CSS规则构成的集合。
 	一条CSS 规则由两个主要的部分构成：选择器，以及一条或多条声明:
@@ -23,7 +24,8 @@
 			color:black;
 			font-family:arial;
 		}
-		
+
+
 	id 和 class 选择器：
 	id 选择器可以为标有特定 id 的 HTML 元素指定特定的样式。通常情况下页面(站点所有页面)内部某个特定id只应该属于一个HTML元素，CSS 中 id 选择器以
 "#" 来定义。注：id属性不要以数字开头，数字开头的ID在 Mozilla/Firefox 浏览器中不起作用。
@@ -31,17 +33,21 @@
 	class 选择器用于描述一组元素的样式，class 选择器有别于id选择器，class可以在多个元素中使用。class 选择器在HTML中以class属性表示, 在 CSS 中，
 类选择器以一个点"."号显示。注：class属性的第一个字符不能使用数字，它无法在 Mozilla 或 Firefox 中起作用。
 		.center {color:red;text-align:center;}
-	
+
+
 	插入样式表的三种方式:
-	外部样式表,页面使用 <link> 标签引用外部css文件：
-			<head>
-				<link rel="stylesheet" type="text/css" href="mystyle.css">
-			</head>
-		外部css文件中直接书写CSS 规则，不要在属性值与单位之间留有空格
-			hr {color:sienna;}
-			p {margin-left:20px;}
-			body {background-image:url("/images/back40.gif");}
-	内部样式表，使用 <style> 标签在文档头部定义内部样式表：
+	外部样式表
+	页面使用 <link> 标签引用外部css文件：
+		<head>
+			<link rel="stylesheet" type="text/css" href="mystyle.css">
+		</head>
+	外部css文件中直接书写CSS 规则，不要在属性值与单位之间留有空格
+		hr {color:sienna;}
+		p {margin-left:20px;}
+		body {background-image:url("/images/back40.gif");}
+
+	内部样式表
+	使用 <style> 标签在文档头部定义内部样式表：
 		<head>
 			<style>
 				hr {color:sienna;}
@@ -49,25 +55,29 @@
 				body {background-image:url("images/back40.gif");}
 			</style>
 		</head>
+
 	内联样式，元素使用style属性。style 属性可以包含任何 CSS 属性：
 		<p style="color:sienna;margin-left:20px">这是一个段落。</p>
+
 	多重样式：如果某些属性在不同的样式表中被同样的选择器定义，那么属性值将从更具体的样式表中被继承过来，不同样式表中重复定义的属性的优先级：
-内联样式 > 内部样式 >外部样式 > 浏览器默认样式
-实际上，如果外部样式放在内部样式的后面，则外部样式将覆盖内部样式，可见样式表中样式的应用是根据声明顺序（加载顺序）来的。
-更准确地说，选择器具有优先级，浏览器根据选择器的优先级决定元素的样式：
-	通用选择器（*）< 元素(类型)选择器 < 类选择器 < 属性选择器 < 伪类 < ID 选择器 < 内联样式
-选择器具体权重：
-内联样式表的权值最高 1000； ID 选择器的权值为 100； Class 类选择器的权值为 10； HTML 标签选择器的权值为 1
+		内联样式 > 内部样式 >外部样式 > 浏览器默认样式
+	实际上，如果外部样式放在内部样式的后面，则外部样式将覆盖内部样式，可见样式表中样式的应用是根据声明顺序（加载顺序）来的。更准确地说，
+选择器具有优先级，浏览器根据选择器的优先级决定元素的样式：
+		通用选择器（*）< 元素(类型)选择器 < 类选择器 < 属性选择器 < 伪类 < ID 选择器 < 内联样式
+
+	选择器具体权重：
+	内联样式表的权值最高 1000； ID 选择器的权值为 100； Class 类选择器的权值为 10； HTML 标签选择器的权值为 1
 	当 !important 规则被应用在一个样式声明中时,该样式声明会覆盖CSS中任何其他的声明, 无论它处在声明列表中的哪里,使用 !important 不是一个好习惯，
 因为它改变了样式表本来的级联规则，从而使其难以调试。只在需要覆盖全站或外部 css（例如引用的 ExtJs 或者 YUI ）的特定页面中使用 !important:
 		p {color:red !important;}
 
-CSS 优先级法则总结：
- A 选择器都有一个权值，权值越大越优先；
- B 当权值相等时，后出现的样式表设置要优于先出现的样式表设置；
- C 创作者的规则高于浏览者：即网页编写者设置的CSS 样式的优先权高于浏览器所设置的样式；
- D 继承的CSS 样式不如后来指定的CSS 样式；
- E 在同一组属性设置中标有“!important”规则的优先级最大
+	CSS 优先级法则总结：
+		A 选择器都有一个权值，权值越大越优先；
+		B 当权值相等时，后出现的样式表设置要优于先出现的样式表设置；
+		C 创作者的规则高于浏览者：即网页编写者设置的CSS 样式的优先权高于浏览器所设置的样式；
+		D 继承的CSS 样式不如后来指定的CSS 样式；
+		E 在同一组属性设置中标有“!important”规则的优先级最大
+
 
 	CSS 背景属性
 	CSS 背景属性用于定义HTML元素的背景,属性包括：background-color; background-image; background-repeat; background-attachment; background-position
@@ -96,7 +106,8 @@ CSS 优先级法则总结：
 	当使用简写属性时，属性值需要按以下顺序书写:background-color、background-image、background-repeat、background-attachment、background-position
 以上属性无需全部使用，可以按照页面的实际需要使用。
 	浅墨蓝色：#5d9ab2		浅亮蓝色：#d0f0f6
-	
+
+
 	CSS文本样式：
 	设置颜色：
 		<style>
@@ -159,7 +170,8 @@ pre-wrap用于保留空白符序列，但是正常地进行换行。pre-line会�
 			p.lowercase {text-transform:lowercase;}
 			p.capitalize {text-transform:capitalize;} /*单词首字母大写*/
 		</style>
-	
+
+
 	CSS字体：
 	几种字体类型：
 		Serif：衬线体，衬线(serif)指的是笔画边缘的装饰部分。网页设计中常用的衬线体有Times New Roman和Georgia。中文中的宋体也是衬线体。
@@ -190,7 +202,8 @@ pre-wrap用于保留空白符序列，但是正常地进行换行。pre-line会�
 		p.small{font-variant:small-caps/normal;}
 	使用font属性代替上面的属性：(font-size和font-family的值是必需的)
 		p{font:italic bold 12px/30px Georgia,serif;}
-		
+
+
 	CSS链接样式
 	链接的样式，可以用任何CSS属性（如颜色，字体，背景等）
 	四个链接状态：a:link - 正常，未访问过的链接; a:visited - 用户已访问过的链接; a:hover - 当用户鼠标放在链接上时; a:active - 链接被点击的那一刻
@@ -201,6 +214,7 @@ pre-wrap用于保留空白符序列，但是正常地进行换行。pre-line会�
 			a:active {color:#0000FF;}  /* 鼠标点击时 */
 		</style>
 	注：a:hover 必须跟在 a:link 和 a:visited后面,a:active 必须跟在 a:hover后面
+
 
 	CSS列表属性
 	对于无序列表，浏览器默认添加标记是实心圆，有序列表默认标记是数字1、2、3...
@@ -218,9 +232,12 @@ Chrome和Safari更高一点点，可以使用下来的样式解决这个问题�
 				background-position:0px 5px; 
 				padding-left:14px;
 			}
-	简写模式：ul.c {list-style:circle url("sqpurple.gif");}	
-	设置标记的位置：ul {list-style-position: inside/outside}
-	
+	简写模式：
+		ul.c {list-style:circle url("sqpurple.gif");}	
+	设置标记的位置：
+		ul {list-style-position: inside/outside}
+
+
 	CSS表格样式属性：
 	为表格添加边框：(这里需要写出table的子元素，说明table的边框不会被子元素继承)
 		table,th,td {border:1px solid black;}
@@ -236,7 +253,8 @@ Chrome和Safari更高一点点，可以使用下来的样式解决这个问题�
 		th,td {padding:15px;}
 	表格名称<caption>的位置：
 		caption {caption-side:bottom;}
-	
+
+
 	CSS 盒子模型
 	盒子模型将元素及周围空间分为：边距，边框，填充，和实际内容 四个部分
 	指定一个CSS元素的宽度和高度属性时，只是设置了内容区域的宽度和高度。
@@ -249,7 +267,8 @@ Chrome和Safari更高一点点，可以使用下来的样式解决这个问题�
 			margin: 25px;
 		}
 	注： IE5和IE6的呈现不遵循这个模式，不过现在不用再考虑这样古老的浏览器了。
-	
+
+
 	CSS 边框属性
 	设置边框的样式：
 		p {
@@ -265,11 +284,11 @@ Chrome和Safari更高一点点，可以使用下来的样式解决这个问题�
 			border-left-style:solid;
 		}
 	使用border-style设置各个边：(border-width、border-color也可以这样用)
-		p{ border-style: dotted solid dashed double; } /*这里可以设置4个值，按顺序分别是上右下左，如果设置3个值，顺序就是上(右左)下，
-也可以是2个值和一个值*/
+		p{ border-style: dotted solid dashed double; } /*这里可以设置4个值，按顺序分别是上右下左，如果设置3个值，顺序就是上(右左)下，也可以是2个值和一个值*/
 	使用border实现简写：(border-bottom、border-left、border-right、border-top也可以这样用)
 		p {border:5px solid red;}
-	
+
+
 	CSS 轮廓：
 	轮廓（outline）是绘制于元素周围的一条线，位于边框边缘的外围，可起到突出元素的作用。CSS outline 属性规定元素轮廓的样式、颜色和宽度。
 		p{
@@ -278,31 +297,37 @@ Chrome和Safari更高一点点，可以使用下来的样式解决这个问题�
 		}
 	也可以单独使用outline-color、outline-style、outline-width属性
 	outline不会增加元素的width和height，但是会占据元素边框外的空间
-	
+
 	外边距 margin：
 		p {	margin-top:100px; margin-bottom:2cm; margin-right:50px; margin-left:50px;} /*这里可以使用厘米cm作为单位*/
-	简写：p {margin: 100px 50px}
-	使用%： p {margin: 5%} /*这里取到的是body的width的5%*/
-	
+	简写：
+		p {margin: 100px 50px}
+	使用%： 
+		p {margin: 5%} /*这里取到的是body的width的5%*/
+
 	填充 padding：(也称为 内边距)
 		p {	padding-top:100px; padding-bottom:2cm; padding-right:50px; padding-left:50px;} /*这里可以使用厘米cm作为单位*/
-	简写：p {padding: 100px 50px}
-	使用%： p {padding: 5%} /*这里取到的是body的width的5%*/
-	
+	简写：
+		p {padding: 100px 50px}
+	使用%： 
+		p {padding: 5%} /*这里取到的是body的width的5%*/
+
 	分组选择器，每个选择器用逗号分隔：
 		h1,h2,p {color:green;}
 	嵌套选择器，包括选择器指向的元素内部元素的选择器的复合选择器 和 具有class、id或其他属性的元素复合选择器
 		.marked p{ }: 为所有 class="marked" 元素内的 p 元素指定一个样式。
 		p.marked{ }: 为所有 class="marked" 的 p 元素指定一个样式。
-	
+
+
 	CSS 尺寸 (Dimension)
 	设置元素的宽和高可以使用元素的width和height属性，但是如果使用了样式属性：height:auto; 设置的元素的height属性就不会生效了。
-	设置元素高：img.big{height:120px/50%;} /* 这里的50%是指body的height的50% */
+	设置元素高：img.big{height:120px/50%;} /* 这里的50%是指body的height的50%*/
+	使用百分比高度，层级关系：浏览器窗口->HTML->body->子元素，后面的元素的高度是相对于前面的元素，所以通常需要把html和body的height设为100%。
 	设置最大高度：p {max-height:50px; background-color:yellow;} /* 如果最大高度不能容纳内容，内容将溢出到下方的元素，但是不会挤压下方
 的元素，而是出现在下方元素的背景中 */
 	设置最小高度：p {min-height:50px; background-color:yellow;}
 	行高：line-height:50%; 这里的50%指的是当前元素的字体的大小的50%，行高的增加或减少对应元素的content部分的高度，与填充padding无关。
-	
+
 	display属性设置一个元素应如何显示，visibility属性指定一个元素应可见还是隐藏。
 	隐藏一个元素可以通过把display属性设置为"none"，或把visibility属性设置为"hidden"。但是请注意，这两种方法会产生不同的结果。
 visibility:hidden可以隐藏某个元素，但隐藏的元素仍需占用与未隐藏之前一样的空间。也就是说，该元素虽然被隐藏了，但仍然会影响布局。
@@ -317,7 +342,8 @@ visibility:hidden可以隐藏某个元素，但隐藏的元素仍需占用与未
 table相关元素的表现比较独特，元素在页面上隐藏不显示，不占据table内空间（不影响表格布局），但也不像display:none那样无法使用调试
 工具查看其盒子模型。新版本Firefox和Chrome表现类似。
 		tr.collapse {visibility:collapse;}
-	
+
+
 	CSS定位
 	CSS使用position 属性指定元素的定位类型。position 属性有五个值：static、relative、fixed、absolute、sticky
 	HTML元素默认使用static定位，即没有定位，遵循正常的文档流。
@@ -364,9 +390,9 @@ position:relative; 而当页面滚动超出目标区域时，它的表现就像 
 			background-color: green;
 			border: 2px solid #4CAF50;
 		}
-		可以理解成：sticky定位是一种fixed定位的变形，它的固定定位坐标和元素的当前坐标一致，但是它的固定定位坐标有一个阈值，超过这个
+	可以理解成：sticky定位是一种fixed定位的变形，它的固定定位坐标和元素的当前坐标一致，但是它的固定定位坐标有一个阈值，超过这个
 值就把定位坐标固定为这个阈值。
-		Internet Explorer, Edge 15 及更早 IE 版本不支持 sticky 定位。 Safari 需要使用 -webkit- prefix。
+	注：Internet Explorer, Edge 15 及更早 IE 版本不支持 sticky 定位。 Safari 需要使用 -webkit- prefix。
 	使用z-index:
 		img{
 			position:absolute;
@@ -383,11 +409,12 @@ position:relative; 而当页面滚动超出目标区域时，它的表现就像 
 			hei?ght: 110px;
 			overflow: scroll/hidden/auto/visible;
 		}
-		使用scroll总是显示滚动条框；hidden不显示滚动条框，超出的内容将被隐藏；auto只有内容超出区域才显示滚动条；visible不显示滚动条框，
+	使用scroll总是显示滚动条框；hidden不显示滚动条框，超出的内容将被隐藏；auto只有内容超出区域才显示滚动条；visible不显示滚动条框，
 超出部分将显示，但不会挤占后面的元素位置。
 	设置光标样式：
-<span style="cursor:auto/crosshair/default/help/move/n-resize/e-resize/ne-resize/nw-resize/pointer/progress/text/wait">xxxxxxx</span><br>
-	
+		<span style="cursor:auto/crosshair/default/help/move/n-resize/e-resize/ne-resize/nw-resize/pointer/progress/text/wait">xxxxxxx</span><br>
+
+
 	CSS浮动
 	浮动会使元素向左或向右移动，其周围的元素也会重新排列。
 		img{float:right/left/none/inherit;}
@@ -399,19 +426,90 @@ position:relative; 而当页面滚动超出目标区域时，它的表现就像 
 	使用clear 属性指定元素两侧不能出现浮动元素。这个属性对行级元素没有作用。
 		p {clear:both/left/right;}
 	如果浮动的元素外层元素没有设置换行样式或不包含其他元素，则浮动会传递给外层元素。
+
+
+	元素的水平对齐
+	元素类型：
+		文本/行内元素/行内块级元素：在父元素上添加：text-align: center; 可以让子元素（后代元素）实现水平居中。
+		单个块级元素：在元素上添加：margin: auto;可以实现当前元素水平居中（上下margin设为auto等效于设为0，起作用的是左右margin为auto）。
+这种方法还需要设置子元素的width小于父元素的width。
+		多个块级元素：在每个块级元素上添加：display: inline-block;然后在公共父元素上添加：text-align: center，可以实现水平居中。
+	为某个元素使用 text-align: center; 会导致其所有的后代行级元素受到影响。
+		<div class="d1">
+			<div class="d11">
+				<div class="d11n">d111</div>
+				<div class="d11n">d112</div>
+			</div>
+		</div>
+		<style>
+			.d1{
+				border:20px solid #4CAF50;
+				height: 400px;
+				width: 80%;
+			}
+			.d11{
+				border:16px solid #CCAF50;
+				width: 50%;
+				margin: auto;
+				text-align: center;
+			}
+			.d11n{
+				border:12px solid #CCA0F0;
+				width: 60%;
+				display: inline-block;
+				margin-top: 2px;
+			}
+			
+		</style>
+	绝对定位也可以实现水平对齐，在父元素上添加：position: relative; 在子元素上添加：position: absolute; left: 50%; 
+transform: translateX(-50%); width: 50%; 实现子元素的水平居中。但是绝对定位元素会被从正常流中删除，并且能够交叠元素，
+所以对多个子元素应用绝对定位实现水平居中就需要单独设置每个元素的top。
+		<div class="d2">
+			<div class="d2n">
+				d21
+			</div>
+			<div class="d2n">
+				d22
+			</div>
+		</div>
+		<style>
+			.d2{
+				border:20px solid #9c4646;
+				height: 400px;
+				width: 80%;
+				position: relative;
+			}
+			.d2n{
+				border:16px solid #CCAF50;
+				position: absolute;
+				left: 50%;
+				transform: translateX(-50%);
+				width: 50%;
+				margin-top: 2px;			
+			}
+		</style
+	使用flex：在父元素上添加：display: flex; justify-content: center; 父元素设置display为flex后，父元素的子级div将表现为行级元素，
+justify-content: center 使子级div 水平居中。
+		<div class="d12">
+			<div class="d12n">d121</div>
+			<div class="d12n">d122</div>
+		</div>
+		<style>
+			.d12{
+				margin-top: 2px;
+				border:16px solid #CCA0F0;
+				width: 50%;
+				display: flex;
+				justify-content: center;
+			}
+			.d12n{
+				border:12px solid #15dada;
+				margin-right: 2px;
+			}
+		</style>
+	注：justify-content属性需要ie11才支持。
 	
-	元素的水平 & 垂直对齐
-	设置元素水平居中对齐：(不适用于行级元素，因为行级元素设置width无效，当然可以通过设置display:block;改变行级元素CSS行为为块级元素)
-		p {
-			margin: auto;
-			width: 50%; /*设置>=100% 或不设置width将不能实现居中 */
-		}
-		img {
-			display: block;
-			margin: auto; /*图片尺寸合适时不需要设置width*/
-		}
-	虽然绝对定位也可以实现水平对齐，但是绝对定位元素会被从正常流中删除，并且能够交叠元素，所以可能会出现意料之外的情况。
-	注：当使用 position或float 属性时，请始终设置 !DOCTYPE 声明，这是因为IE9之前的IE使用position，float时总是表现很奇怪（会在右侧增加
+	当使用 position或float 属性时，请始终设置 !DOCTYPE 声明，这是因为IE9之前的IE使用position，float时总是表现很奇怪（会在右侧增加
 17px 的外边距）。
 	还可以使用 float 属性来对齐元素：
 		.right {
@@ -421,28 +519,215 @@ position:relative; 而当页面滚动超出目标区域时，它的表现就像 
 			padding: 10px;
 		}
 	如果子元素的高度大于父元素，且子元素设置了浮动，那么子元素将溢出，可以在父元素上添加 overflow: auto; 来解决子元素溢出的问题
-	垂直居中对齐指的其实是元素内的内容的位置，可以使用padding实现：
-		.center {
-			padding: auto;
-			border: 3px solid green;
-			text-align: center;
-		}
-	使用绝对定位，设置top:50%后需要居中的元素其实是从容器高度的50%处开始的，并不是实际的居中，可以使用 transform 属性来设置垂直居中：
-		.center p {
-			margin: 0;
-			position: absolute;
-			top: 50%;
-			left: 50%;
-			transform: translate(-50%, -50%); /*第一个50%表示回退居中元素width的50%，后一个50%表示回退居中元素height的50%*/
-		}
 	
+	
+	元素的垂直居中对齐
+	对于文本节点或行内元素(display: inline)，在其父元素上设置line-height等于height的值（需要知道具体的height的数值）可以实现垂直居中
+对齐。
+		<div class="d3">
+			d31
+			<span>d31x</span>
+			<div class="d31">
+				d31z
+				d31z
+			</div>
+		</div>
+		<style>
+			.d3{
+				border:20px solid #ff8f46;
+				height: 400px;
+				width: 80%;
+				line-height: 400px;
+			}
+			.d31{
+				border:16px solid #CCA0F0;
+				display: inline;
+			}
+		</style>
+	具有多行文本并且知道具体的行数，可以设置父元素的 line-height 等于 height/行数：
+		<div class="d31">
+			d31z
+			d31z
+		</div>
+		<style>
+			.d31{
+				border:16px solid #CCA0F0;
+				heigth:50%;//这里实际值为父元素 height 的 50% 即 200px
+				width: 30px;
+				line-height: 100px;//这里 100px 由 height(200px)/行数(2)得到
+			}
+		</style>
+	图片的垂直对齐：
+		<div class="d3">
+			<img class="d31" src="../media/venglobe.gif">
+		</div>
+		<style>
+			.d3{
+				border:20px solid #ff8f46;
+				height: 400px;
+				width: 80%;
+				line-height: 400px;
+				font-size: 0;
+			}
+			.d31{
+				border:16px solid #CCA0F0;
+				vertical-align: middle;
+			}
+		</style>
+	单个块级元素垂直对齐：
+	使用tabel-cell实现:
+		<div class="d3">
+			<div class="d31">
+				d31
+			</div>
+		</div>
+		<style>
+			.d3{
+				border:20px solid #ff8f46;
+				height: 400px;
+				width: 80%;	
+				display: table-cell;//table-cell模式下，width不起作用
+				vertical-align: middle;
+			}
+			.d31{
+				border:16px solid #CCA0F0;
+			}
+		</style>
+	使用绝对定位实现：
+		<div class="d3">
+			<div class="d31">
+				d31
+			</div>
+		</div>
+		<style>
+			.d3{
+				border:20px solid #ff8f46;
+				height: 400px;
+				width: 80%;
+				position: relative;
+			}
+			.d31{
+				border:16px solid #CCA0F0;
+				position: absolute;
+				height: 50%;
+				top:50%;
+				transform: translateY(-50%);
+			}
+		</style>
+	使用 flex 实现：
+		<div class="d3">
+			<div class="d31">
+				d31
+			</div>
+		</div>
+		<style>
+			.d3{
+				border:20px solid #ff8f46;
+				height: 400px;
+				width: 80%;
+				display: flex;
+				align-items: center;
+			}
+			.d31{
+				border:16px solid #CCA0F0;
+				height: 50%;
+			}
+		</style>
+	多个块级元素垂直对齐，使用 flex 实现：
+		<div class="d3">
+			<div class="d31">
+				d31
+			</div>
+			<div class="d31">
+				d31z
+			</div>
+		</div>
+		<style>
+			.d3{
+				border:20px solid #ff8f46;
+				height: 400px;
+				width: 80%;
+				display: flex;
+				align-items: center;
+			}
+			.d31{
+				border:16px solid #CCA0F0;
+				height: 50%;
+			}
+		</style>
+	组合使用绝对定位和 line-height：
+		<div class="d3">
+			<div>
+				<div class="d31">
+					d31
+				</div>
+				<div class="d31">
+					d31z
+				</div>
+			</div>
+		</div>
+		<style>
+			.d3{
+				border:20px solid #ff8f46;
+				height: 400px;
+				width: 80%;
+				position:relative;
+			}
+			.d3 > div{
+				position: absolute;
+				top: 50%;
+				transform: translateY(-50%);
+				width: 50%;
+			}
+			.d31{
+				border:16px solid #CCA0F0;
+				height: 25%;
+				line-height: 100px;
+			}
+		</style>
+
+	水平垂直居中：
+		<div class="d3">
+			<div>
+				<div class="d31">
+					d31
+				</div>
+				<div class="d31">
+					d31z
+				</div>
+			</div>
+		</div>
+		<style>
+			.d3{
+				border:20px solid #ff8f46;
+				height: 400px;
+				width: 80%;
+				position:relative;
+			}
+			.d3 > div{
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%,-50%);
+				width: 50%;
+			}
+			.d31{
+				border:16px solid #CCA0F0;
+				height: 25%;
+				line-height: 100px;
+				text-align: center;
+			}
+		</style>
+
+
 	组合选择器：
 	在 CSS3 中包含了四种组合方式:
 		后代选择器(以空格分隔)		div p {background-color:yellow;}	/*p可以不是div的子元素*/
 		子元素选择器(以大于号分隔） div>p {background-color:yellow;}	/*p是div的子元素*/
 		相邻兄弟选择器（以加号分隔）div+p {background-color:yellow;}	/*p是div的后一个元素，p和div有相同的父元素，p只有一个*/
 		普通兄弟选择器（以破折号分隔） div~p {background-color:yellow;}	/*p是div的同级元素，p和div有相同的父元素，p可以有多个*/
-	
+
+
 	CSS伪类用来添加一些选择器的特殊效果。
 	伪类的语法：selector:pseudo-class {property:value;}
 	伪类选择元素基于的是当前元素处于的状态，或者说元素当前所具有的特性，而不是元素的id、class、属性等静态的标志。
@@ -552,8 +837,9 @@ position:relative; 而当页面滚动超出目标区域时，它的表现就像 
 	:after伪元素： 用于向选定的元素之后插入内容。使用content 属性来指定要插入的内容。
 		p:after{content:"- 注意我";}
 	
-	对导航栏应用CSS样式：查看CSS实例文档相关部分。
 	
+	css实例
+	对导航栏应用CSS样式：查看CSS实例文档相关部分。
 	设置悬停下拉效果：查看CSS实例文档相关部分。
 	设置这种效果的典型用法：容器使用relative定位，需要悬停显示的部分使用absolute定位。
 	设置提示工具(Tooltip)：查看CSS实例文档相关部分。
@@ -566,20 +852,25 @@ position:relative; 而当页面滚动超出目标区域时，它的表现就像 
 			opacity:1.0;
 			filter:alpha(opacity=100); /* 适用 IE8 及其更早版本 */
 		}
-	使用图像拼合：将页面需要用到的多个图片保存在一个大图片文件中，下载这个图片后使用拼合
+
+
+	使用图像拼合
+	将页面需要用到的多个图片保存在一个大图片文件中，下载这个图片后使用拼合
 技术显示需要的部分：
-	img.home{
-		width:46px;
-		height:44px;
-		background:url(img_navsprites.gif) 0 0;
-	}
-	img.next {
-		width: 43px;
-		height: 44px;
-		background: url(img_navsprites.gif) -91px 0;
-	}
-	
-	media属性：@media 规则允许在相同样式表为不同媒体设置不同的样式。
+		img.home{
+			width:46px;
+			height:44px;
+			background:url(img_navsprites.gif) 0 0;
+		}
+		img.next {
+			width: 43px;
+			height: 44px;
+			background: url(img_navsprites.gif) -91px 0;
+		}
+
+
+	media属性
+	@media 规则允许在相同样式表为不同媒体设置不同的样式。
 		@media screen
 		{
 			p.test {font-family:verdana,sans-serif;font-size:20px;}
@@ -594,7 +885,9 @@ position:relative; 而当页面滚动超出目标区域时，它的表现就像 
 		}
 	@media的其他值包括：all、handheld、braille、tty、tv等
 	
-	属性选择器：HTML元素的属性不只是id和class，其他属性也可以用作选择器：
+	
+	属性选择器
+	HTML元素的属性不只是id和class，其他属性也可以用作选择器：
 		[title] {color:blue;}  //选择所有具有title属性的元素
 		[title=runoob] {color:blue;}  //选择所有title属性值为runoob的元素
 		[title~=hello] { color:blue; }  //选择title属性值包含hello(空格作为分隔符)的元素
@@ -604,6 +897,7 @@ position:relative; 而当页面滚动超出目标区域时，它的表现就像 
 		[lang^=en]{...}					//选择lang属性值以en开始的元素
 		input[type="text"] {background-color:yellow;}
 
+	
 
 
 
