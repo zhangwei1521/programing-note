@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Document</title>
+	<style>
+		html,body{
+			height: 100%;
+			margin: 0;
+			padding: 0;
+		}
+
+		.d1{
+			border:20px solid #4CAF50;
+			height: 400px;
+			width: 80%;
+			position: relative;
+		}
+		.d11{
+			border:16px solid #CCAF50;
+			width: 50%;
+			height: 50%;
+			margin: auto;
+			text-align: center;
+			line-height: 35px;
+			color: #CCAF50;
+		}
+		.d11 > span{
+			border:12px solid #CCA0F0;
+			color: #CCA0F0;
+		}
+		.d111{
+			border:12px solid #CCA0F0;
+			width: 80%;
+			display: inline-block;
+			margin-top: 2px;
+			color: #CCA0F0;
+		}
+		.d112{
+			display: inline;
+			border:12px solid #CCA0F0;
+			color: #CCA0F0;
+		}
+		
+		.d12{
+			border:16px solid #a0f0c0;
+			width: 50%;
+			position: absolute;
+			left: 50%;
+			transform: translateX(-50%);
+			display: flex;
+			justify-content: center;
+			color: #a0f0c0;
+		}
+		.d12n{
+			border:12px solid #15dada;
+			color: #15dada;
+		}
+
+
+		.d3{
+			border:20px solid #ff8f46;
+			height: 400px;
+			width: 80%;
+			line-height: 400px;
+			color: #ff8f46;
+			position: relative;
+		}
+		.d3 > span{
+			border:16px solid #ff8f46;			
+		}
+		.d31{
+			border:16px solid #ff8f46;
+			display: inline;
+		}
+		.d32{
+			border:16px solid #a0f0c0;
+			display: inline-block;
+			color: #a0f0c0;
+			height: 60%;
+			position: absolute;
+			top: 50%;
+			left: 68%;
+			transform: translateY(-50%);
+			line-height: 120px;
+		}
+		.d33{
+			border:16px solid #89172c;
+			display: inline-block;
+			width: 19%;
+			height: 50%;
+			line-height: 100px;
+			vertical-align: middle;
+		}
+		
+
+		.d4{
+			border:20px solid #558ffc;
+			width: 80%;
+			height: 400px;
+			display: table;
+			position: relative;
+		}
+		.d4 .first{
+			display: table-cell;
+			vertical-align: middle;
+			line-height: 68px;
+			width: 45%;
+		}
+		.d41{			
+			border:16px solid #aa5070;
+			height: 25%;
+			color: #aa5070;
+		}
+		.d4 .second{
+			position: absolute;
+			left: 70%;
+			top: 50%;
+			transform: translate(-10%,-50%);
+			width: 30%;
+			height: 50%;
+		}
+		.d42{
+			border:16px solid #a0f0c0;
+			color: #a0f0c0;	
+			height: 68px;
+			line-height: 68px;
+		}
+		.d4 .flex{
+			display: flex;
+			width: 40%;
+			height: 100%;
+			align-items: center;
+		}
+		.d43{
+			border:16px solid #15dada;
+		}
+		
+
+		.d5{			
+			border:20px solid #aa8f0c;
+			width: 80%;
+			height: 400px;
+		}
+		.d5 .first{
+			display: inline-block;
+			width: 50%;
+			height: 100%;
+		}
+		.d5 .b1{
+			outline: none;
+			border: none;
+			background-color: #fff;
+			height: 100%;
+			width: 100%;	
+			
+		}
+		.d51{
+			border: 16px solid #8546a1;
+			display: inline-block;
+			width: 50%;
+			height: 50%;
+			line-height: 200px;
+		}
+
+		.d5 .second{
+			border: 1px solid #4CAF50;
+			width: 50%;
+			height: 100%;
+			position: relative;
+			left: 50%;
+			top:-100%;
+		}
+		.d52{
+			border:16px solid #a0f0c0;
+			position: absolute;
+			margin: auto;
+			top: 0;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			height: 50%;
+			width: 50%;
+			line-height: 100px;
+			color: #a0f0c0;
+		}
+		
+
+		.d7{
+			border:20px solid #aa81b2;
+			height: 400px;
+			width: 80%;
+			display: flex;
+		}
+		.d71{
+			border:16px solid #15dada;
+			height: 50%;
+			width: 25%;
+			margin: auto;
+			color: #15dada;
+			line-height: 200px;
+			text-align: center;
+		}
+	</style>
+</head>
+<body>
+	<div class="d1">
+		<div class="d11">
+			使用 margin: auto; 实现 块级 div 元素 水平居中<br>
+			<span>行内 span 元素，继承 line-height</span><br>
+			<div class="d111">行内块级 div 元素(inline-block)，继承 text-align 实现水平居中</div><br>
+			<div class="d112">行级 div 元素(inline)</div>
+		</div>
+		<div class="d12">
+			<div class="d12n">flex布局实现div水平居中</div>
+			使用绝对定位实现 块级 div 元素 水平居中
+			<div class="d12n">flex布局实现div水平居中</div>
+		</div>
+	</div>
+	
+	<div class="d3">
+		设置 line-height 等于 height 实现行内元素垂直居中
+		<span>行内 span 元素</span>
+		<div class="d31">
+			行内 div 元素(inline)
+		</div>
+		<div class="d32">
+			使用绝对定位实现 行内块级 div 元素(inline-block) 垂直居中，<br>
+			设置line-height 等于 height / n 实现多行文本垂直居中
+		</div>
+		<div class="d33">
+			设置 vertical-align: middle 实现 行内块级 div 元素(inline-block) 垂直居中
+		</div>
+	</div>
+
+	<div class="d4">
+		<div class="first">
+			<div class="d41">
+				设置 display 为 table-cell，vertical-align 为 middle实现多个块级 div 元素垂直居中
+			</div>
+			<div class="d41">
+				设置 line-height 等于 height 实现文本垂直居中(继承 line-height)
+			</div>
+		</div>
+		<div class="flex">
+			<div class="d43">
+				使用 flex布局 实现多个 块级 div 元素 实现垂直居中
+			</div>
+			<div class="d43">
+				display: flex;
+				align-items: center;
+				height: 100%;
+			</div>
+		</div>
+		<div class="second">
+			<div class="d42">
+				使用 绝对定位 实现多个 块级 div 元素 实现垂直居中
+			</div>
+			<div class="d42">
+				设置 line-height 等于 height 实现文本垂直居中
+			</div>
+		</div>
+
+	</div>
+	<div class="d5">
+		<div class="first">
+			<button class="b1">
+				<div class="d51">
+					利用 button 的默认样式实现水平垂直居中
+				</div>
+			</button>
+		</div>
+		<div class="second">
+			<div class="d52">
+				绝对定位，设置 margin 为 auto，top、bottom、left、right 为 0 实现水平垂直居中
+			</div>
+		</div>
+	</div>
+
+	
+	<div class="d7">
+		<div class="d71">
+			flex布局实现多个 块级 div 元素 实现水平垂直对齐
+		</div>
+		<div class="d71">
+			flex
+		</div>
+		<div class="d71">
+			flex
+		</div>
+	</div>
+</html>

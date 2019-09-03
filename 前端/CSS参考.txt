@@ -586,7 +586,7 @@ justify-content: center 使子级div 水平居中。
 				border:20px solid #ff8f46;
 				height: 400px;
 				width: 80%;	
-				display: table-cell;//table-cell模式下，width不起作用
+				display: table-cell;//table-cell模式下，width、height设置百分比值不起作用
 				vertical-align: middle;
 			}
 			.d31{
@@ -687,6 +687,7 @@ justify-content: center 使子级div 水平居中。
 		</style>
 
 	水平垂直居中：
+	使用绝对定位：
 		<div class="d3">
 			<div>
 				<div class="d31">
@@ -716,6 +717,91 @@ justify-content: center 使子级div 水平居中。
 				height: 25%;
 				line-height: 100px;
 				text-align: center;
+			}
+		</style>
+		另一种绝对定位实现：(当top和bottom都为0，margin-top&bottom为auto时，上下的margin会自动适应垂直居中后的高度。)
+			.d3 > div{
+				position: absolute;
+				margin: auto;
+				top: 0;
+				bottom: 0;
+				left: 0;
+				right: 0;
+				width: 50%;
+				height: 50%;
+			}
+	行内元素可以设置父元素 height 等于 line-height，设置父元素 text-align 为 center，如果是行内块元素(display: inline-block)，需要设置子元素的
+vertical-align 为 middle.
+		<style>
+			.d3{
+				border:20px solid #ff8f46;
+				height: 400px;
+				width: 80%;
+				line-height: 400px;
+				text-align: center;
+			}
+			.d31{
+				border:16px solid #CCA0F0;
+				height: 50%;
+				display: inline-block;
+				vertical-align: middle;
+			}
+		</style>
+	使用table-cell实现：
+		<div class="d4">
+			<div class="d41">
+				<div class="d411">
+					d411
+				</div>
+			</div>
+		</div>
+		<style>
+			.d4{
+				display: table;
+				border:20px solid #558ffc;
+				width: 80%;
+				height: 400px;
+			}
+			.d41{			
+				height: 400px;
+				width: 80%;
+				display: table-cell;
+				vertical-align: middle;
+				text-align: center;
+			}
+			.d411{
+				border:16px solid #aa5070;
+				height: 50%;
+				width: 50%;
+				margin: 0 auto;
+				line-height: 168px;
+			}
+		</style>
+	设置tabl-cell的元素，宽度和高度的值设置百分比无效，需要给它的父元素设置display: table; 才生效。此时其 width 不是相对于其父元素。
+	使用 button 元素作为父元素，可以利用其默认样式实现垂直水平居中：(ie下点击会有凹陷的效果)
+		<div class="d5">
+			<button class="b1">
+				<div class="d51">
+					d51
+				</div>
+			</button>
+		</div>
+		<style>
+			.d5{			
+				border:20px solid #aa8f0c;
+				width: 80%;
+				height: 400px;
+			}
+			.d5 .b1{
+				outline: none;
+				border: none;
+				background-color: #fff;
+				height: 400px;
+				width: 100%;
+			}
+			.d51{
+				border: 16px solid #8546a1;
+				display: inline-block;
 			}
 		</style>
 
