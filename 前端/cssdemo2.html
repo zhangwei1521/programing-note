@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Document</title>
+	<style>
+
+		html,body{
+			height: 100%;
+			margin: 0;
+			padding: 0;
+		}
+
+		.d1{
+			height: 200px;
+			border: 10px solid #a1fcf5;
+		}
+
+		.d1 .left{
+			float: left;
+			background-color: #f00;
+			width: 100px;
+			height: 200px;
+		}
+
+		.d1 .right{
+			margin-left: 100px;
+			background-color: #0f0;
+			height: 198px;
+			border: 1px solid;
+		}
+
+
+		.d2{
+			height: 200px;
+			border: 10px solid #a112fa;
+		}
+
+		.d2 .left{
+			float: left;
+			background-color: #f00;
+			width: 100px;
+			height: 200px;
+		}
+
+		.d2 .right-fix{
+			float: right;
+			width: 100%;
+			margin-left: -100px;
+			height: 200px;
+		}
+
+		.d2 .right{
+			margin-left: 100px;
+			background-color: #0f0;
+			height: 200px;
+		}
+
+
+		.d3{
+			height: 200px;
+			border: 10px solid #aafcf5;
+		}
+
+		.d3 .left{
+			float: left;
+			background-color: #f00;
+			width: 100px;
+			height: 200px;
+		}
+
+		.d3 .right{
+			overflow: hidden;
+			background-color: #0f0;
+			height: 198px;
+			border: 1px solid;
+		}
+
+		.d4{
+			width: 100%;
+			display: table;
+			height: 200px;
+			border: 10px solid #11faf5;
+		}
+
+		.d4 .left{
+			width: 100px;
+			display: table-cell;
+			background-color: #f00;
+		}
+		.d4 .right {
+			display: table-cell;
+			background-color: #0f0;
+			border: 1px solid;
+		}
+
+		.d5{
+			height: 200px;
+			border: 10px solid #111a55;
+			position: relative;
+		}
+		.d5 .left {
+			position: absolute;
+			left: 0;
+			top: 0;
+			background-color: #f00;
+			width: 100px;
+			height: 200px;
+		}
+		.d5 .right {
+			position: absolute;
+			left: 100px;
+			right: 0;
+			top: 0;
+			background-color: #0f0;
+			height: 200px;
+			border: 1px solid;
+		}
+
+		.d6{
+			height: 200px;
+			border: 10px solid #151aa5;
+			display: flex;
+		}
+		.d6 .left{
+			width: 100px;
+			background-color: #f00;
+		}
+		.d6 .right{
+			background-color: #0f0;
+			flex: 1;
+			border: 1px solid;
+		}
+
+		.d7{
+			height: 200px;
+			border: 10px solid #8512a5;
+			display: grid;
+			grid-template-columns: 100px auto;
+		}
+		.d7 .left{
+			background-color: #f00;
+		}
+		.d7 .right{
+			background-color: #0f0;
+			border: 1px solid;
+		}
+
+
+		.d8{
+			height: 200px;
+			border: 10px solid #aafcf5;
+		}
+
+		.d8 .left{
+			float: left;
+			background-color: #f00;
+			height: 200px;
+		}
+
+		.d8 .right{
+			overflow: hidden;
+			background-color: #0f0;
+			height: 198px;
+			border: 1px solid;
+		}
+
+		.d9{
+			height: 200px;
+			border: 10px solid #afa1a1;
+		}
+		.d9 .center{
+			float: left;
+			width: 100%;
+			/*background-color: #f0fe2c;*/
+			height: 200px;
+		}
+		.d9 .center .center-inner{
+			margin: 0 215px 0 115px;
+			border: 1px solid;
+			height: 198px;
+			background-color: #f0fe2c;
+		}
+
+		.d9 .left{
+			float: left;
+			width: 100px;
+			margin-left: -100%;
+			background-color: #f47f17;
+			opacity: 0.5;
+			height: 200px;
+		}
+
+		.d9 .right{
+			float: left;
+			width: 200px;
+			margin-left: -200px;
+			background-color: #77ff14;
+			opacity: 0.5;
+			height: 200px;
+		}
+
+
+		.d10{
+			box-sizing: border-box;
+			padding: 0 215px 0 115px;
+			height: 220px;
+			border: 10px solid #fa4151;
+		}
+		.d10 .center{
+			float: left;
+			width: 100%;
+			height: 200px;
+			box-sizing: border-box;
+			border: 1px solid;
+			background-color: #f0fe2c;
+		}
+		.d10 .left{
+			float: left;
+			margin-left: -100%;
+			width: 100px;
+			height: 200px;
+			background-color: #f47f17;
+			opacity: 0.5;
+			position: relative;
+			left: -115px;
+		}
+		.d10 .right{
+			float: left;
+			margin-left: -200px;
+			width: 200px;
+			height: 200px;
+			background-color: #00ffff;
+			opacity: 0.5;
+			position: relative;
+			left: 215px;
+		}
+	</style>
+</head>
+<body>
+	<div class="d1">
+		<div class="left"> 
+			左侧定宽，float: left; width: 100px;
+		</div>
+		<div class="right"> 
+			右侧设置，margin-left: 100px;
+		</div>
+	</div>
+	<div class="d2">
+		<div class="left"> 
+			左侧定宽，float: left; width: 100px;
+		</div>
+		<div class="right-fix">
+			<div class="right"> 
+				右侧设置，float: right;
+			</div>
+		</div>
+	</div>
+	<div class="d3">
+		<div class="left"> 
+			左侧定宽，float: left;
+			可设置 margin-right
+		</div>
+		<div class="right"> 
+			右侧自适应，overflow: hidden;
+		</div>
+	</div>
+	<div class="d4">
+		<div class="left"> 
+			左侧定宽，table布局实现，设置左侧和右侧的 margin 很麻烦
+		</div>
+		<div class="right"> 
+			右侧自适应，table布局实现，设置左侧和右侧的 margin 很麻烦
+		</div>
+	</div>
+	<div class="d5">
+		<div class="left"> 
+			左侧定宽，绝对定位实现
+		</div>
+		<div class="right"> 
+			右侧自适应，绝对定位实现，可设置 margin-left
+		</div>
+	</div>
+	<div class="d6">
+		<div class="left"> 
+			左侧定宽，flex布局实现，可设置 margin-right
+		</div>
+		<div class="right"> 
+			右侧自适应，flex布局实现
+		</div>
+	</div>
+	<div class="d7">
+		<div class="left"> 
+			左侧定宽，grid布局实现,IE不支持
+		</div>
+		<div class="right"> 
+			右侧自适应，grid布局实现,IE不支持
+		</div>
+	</div>
+
+	<div class="d8">
+		<div class="left"> 
+			左侧不定宽，float: left;
+		</div>
+		<div class="right"> 
+			右侧自适应，overflow: hidden;
+		</div>
+	</div>
+
+	<div class="d9">
+		<div class="center">
+			<div class="center-inner">
+				双飞翼布局：center部分，float: left; width: 100%; 
+			</div>
+		</div>
+		<div class="left">
+			left部分，float: left
+		</div>
+		<div class="right">
+			right部分，float: left
+		</div>
+	</div>
+
+	<div class="d10">
+		<div class="center">
+			圣杯布局：center部分，float: left; width: 100%; 
+		</div>
+		<div class="left">
+			left部分，float: left
+		</div>
+		<div class="right">
+			right部分，float: left
+		</div>
+	</div>
+</body>
+</html>
