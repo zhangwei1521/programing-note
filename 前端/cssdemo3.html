@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Document</title>
+	<style>
+
+		html,body{
+			height: 100%;
+			margin: 0;
+			padding: 0;
+		}
+
+		.d1{
+			width: 80%;
+			height: 200px;
+			border: 20px solid #e66;
+		}
+		.d1 .left{
+			float: left;
+			width: 100px;
+			height: 180px;
+			background-color: #f00;
+		}
+		.d1 .right{
+			overflow: hidden;
+			height: 200px;
+			background-color: #0f0;
+		}
+
+		.d2{
+			margin-left: -20px;
+		}
+		.d2 .column{
+			width: 25%;
+			height: 200px;
+			box-sizing: border-box;
+			border: 1px solid;
+			background-clip: content-box;
+			float: left;
+			padding-left: 20px;
+		}
+		.d2 .column:nth-child(odd){
+			background-color: #f00;
+		}
+		.d2 .column:nth-child(even){
+			background-color: #0f0;
+		}
+
+		.d3{
+			height: 240px;  /*抵消上下边20*2间距的高度影响*/
+			width: 100%;
+		    display: table;
+		    margin: -20px 0;  /*抵消上下边20*2间距的位置影响*/
+		    /*两边离页面间距较大,改用子元素设置padding来当成间隔就不会有这样的问题*/
+		    border-spacing: 20px;  /*设置间距*/
+		}
+		.d3 .column{
+			 display: table-cell;
+		}
+		.d3 .column:nth-child(odd){
+			background-color: #f00;
+		}
+		.d3 .column:nth-child(even){
+			background-color: #0f0;
+		}
+
+		.d4{
+			height: 200px;
+			display: flex;
+			margin-left: -15px;
+		}
+		.d4 .column{
+			flex: 1;
+			margin-left: 15px;
+		}
+		.d4 .column:nth-child(odd){
+			background-color: #f00;
+		}
+		.d4 .column:nth-child(even){
+			background-color: #0f0;
+		}
+
+
+		#d5 {
+		    width: 1200px;
+		    height: 500px;
+		    margin: 0 auto;
+		    display: flex;
+		    flex-direction: column;
+		}
+		#d5 .row {
+		    display: flex;
+		    flex: 1;
+		}
+		#d5 .item {
+		    flex: 1;
+		    border: 1px solid #000;
+		}
+
+		#d6 {
+		    width: 1200px;
+		    height: 500px;
+		    margin: 0 auto;
+		    display: grid;
+		    grid-template-columns: repeat(3, 1fr); /*等同于1fr 1fr 1fr,此为重复的合并写法*/
+		    grid-template-rows: repeat(3, 1fr);  /*等同于1fr 1fr 1fr,此为重复的合并写法*/
+		}
+		#d6 .item {
+		    border: 1px solid #000;
+		}
+
+
+
+
+	</style>
+</head>
+<body>
+	<div class="d1">
+		<div class="left"> 
+			左侧定宽，float: left;
+			可设置 margin-right
+		</div>
+		<div class="right"> 
+			右侧自适应，overflow: hidden;
+		</div>
+	</div>
+
+	<div class="d2">
+		<div class="column">1<p>float</p></div>
+		<div class="column">2<p>文本</p></div>
+		<div class="column">3<p>文本</p></div>
+		<div class="column">4<p>文本</p></div>
+	</div>
+	<hr>
+	<hr>
+	<div class="d3">
+		<div class="column">1<p>table</p></div>
+		<div class="column">2<p>文本</p></div>
+		<div class="column">3<p>文本</p></div>
+		<div class="column">4<p>文本</p></div>
+	</div>
+	<hr>
+	<hr>
+	<div class="d4">
+		<div class="column">1<p>flex</p></div>
+		<div class="column">2<p>文本</p></div>
+		<div class="column">3<p>文本</p></div>
+		<div class="column">4<p>文本</p></div>
+	</div>
+
+	<hr>
+	<hr>
+	
+	<div id="d5">
+	    <div class="row">
+	        <div class="item">1</div>
+	        <div class="item">2</div>
+	        <div class="item">3</div>
+	    </div>
+	    <div class="row">
+	        <div class="item">4</div>
+	        <div class="item">5</div>
+	        <div class="item">6</div>
+	    </div>
+	    <div class="row">
+	        <div class="item">7</div>
+	        <div class="item">8</div>
+	        <div class="item">9</div>
+	    </div>
+	</div>
+	<hr>
+	<hr>
+	<div id="d6">
+	    <div class="item">1</div>
+	    <div class="item">2</div>
+	    <div class="item">3</div>
+	    <div class="item">4</div>
+	    <div class="item">5</div>
+	    <div class="item">6</div>
+	    <div class="item">7</div>
+	    <div class="item">8</div>
+	    <div class="item">9</div>
+	</div>
+
+
+</body>
+</html>

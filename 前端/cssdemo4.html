@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Document</title>
+	<style>
+		*{
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+			list-style: none;
+		}
+
+		body{
+			background-color: #f5f5f5;
+		}
+
+		.header{
+			height: 40px;
+			margin-bottom: 20px;
+			background-color: #333;
+		}
+		.top{
+			height: 1210px;
+			background-color: #fff;
+		}
+		.center{
+			height: 1791px;
+			width: 1226px;
+			margin: 0 auto;
+			margin-bottom: 60px;
+			padding-top: 60px;
+			background-color: #fff;
+		}
+		.bottom{
+			height: 274px;
+			background-color: #fff;
+		}
+		.footer{
+			height: 166px;
+			width: 1226px;
+			margin: 0 auto;
+			border: 1px solid #000;
+			padding: 30px 0;
+		}
+
+		.container{
+			width: 1226px;
+			height: 100%;
+			margin: 0 auto;
+			border: 1px solid #f00;
+		}
+		.header-left{
+			width: 380px;
+			height: 100%;
+			float: left;
+			background-color: #0f0;
+		}
+		.header-right{
+			width: 260px;
+			height: 100%;
+			float: right;
+			background-color: #0f0;
+		}
+
+		.top-nav{
+			height: 100px;
+			background-color: #f00;
+		}
+		.top-slider{
+			height: 460px;
+			background-color: #00f;
+			margin-bottom: 14px;
+			position: relative;
+		}
+		.slider-navbar{
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 234px;
+			height: 100%;
+			background-color: #000;
+			opacity: 0.5;
+		}
+		.top-recommend{
+			height: 170px;
+			margin-bottom: 26px;
+			background-color: #0f0;
+		}
+		.recommend-left{
+			float: left;
+			width: 234px;
+			height: 100%;
+			background-color: skyblue;
+		}
+		.recommend-right{
+			float: right;
+			width: 978px;
+			height: 100%;
+			border: 1px solid #000;
+		}
+		.recommend-right > ul{
+			height: 100%;
+		}
+		.recommend-right > ul li{
+			float: left;
+			width: 316px;
+			height: 100%;
+			background-color: deepskyblue;
+		}
+		.recommend-right > ul li + li{
+			margin-left: 14px;
+		}
+		.top-flashsale{
+			height: 438px;
+			background-color: #ff4455;
+		}
+		.flashsale-title{
+			height: 58px;
+			background-color: purple;
+		}
+		.flashsale-content{
+			border: 1px solid #000;
+			padding-bottom: 40px;
+			height: 380px;
+		}
+		.content-timer{
+			margin-right: 14px;
+			float: left;
+			width: 234px;
+			height: 100%;
+			background-color: #fff;
+		}
+		.content-shops{
+			overflow: hidden;
+			height: 100%;
+			background-color: #6effb1;
+		}
+		.content-shops > li{
+			float: left;
+			width: 234px;
+			height: 100%;
+			background-color: #fff;
+		}
+		.content-shops > li + li{
+			margin-left: 12.5px;
+		}
+
+		.center-photo{
+			margin-bottom: 8px;
+			height: 686px;
+			background-color: yellow;
+		}
+		.photo-title{
+			height: 58px;
+			background-color: black;
+		}
+		.photo-content{
+			height: 628px;
+			background-color: pink;
+		}
+		.photo-left{
+			float: left;
+			width: 234px;
+			height: 100%;
+			margin-right: 14px;
+			background-color: darkseagreen;
+		}
+		.photo-right{
+			overflow: hidden;
+			height: 100%;
+			background-color: #ccc;
+		}
+		.photo-right > li{
+			float: left;
+			width: 25%;
+			margin-bottom: 28px;
+			padding-left: 14px;
+			height: 300px;
+			border: 1px solid #000;
+			background-color: #f00;
+			background-clip: content-box;
+		}
+		.photo-right > li:nth-child(1),
+		.photo-right > li:nth-child(5){
+			margin-left: 0;
+		}
+		.center-household{
+			margin-bottom: 8px;
+			height: 686px;
+			background-color: yellow;
+		}
+		.household-title{
+			height: 58px;
+			background-color: black;
+		}
+		.household-content{
+			height: 614px;
+		}
+		.household-content > li{
+			float: left;
+			width: 234px;
+			height: 300px;
+			position: relative;
+			margin-left: 14px;
+			margin-bottom: 28px;			
+			background-color: #d7d7d7; 
+		}
+		.household-content > li:nth-child(1),
+		.household-content > li:nth-child(6){
+			margin-left: 0;
+		}
+		.household-content > li:last-child p:first-child{
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			height: 143px;
+			border: 1px solid #000;
+		}
+		.household-content > li:last-child p:last-child{
+			position: absolute;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			height: 143px;
+			border: 1px solid #000;
+		}
+		.video-content{
+			height: 343px;
+			background-color: pink;
+		}
+		.video-title{
+			height: 58px;
+			background-color: black;
+		}
+		.video-content{
+			height: 285px;
+		}
+		.video-content > li{
+			float: left;
+			width: 296px;
+			height: 100%;
+			border: 1px solid #000;
+		}
+		.video-content > li + li{
+			margin-left: 14px;
+		}
+
+		.bottom-service{
+			height: 80px;
+			background-color: seagreen;
+		}
+		.bottom-service > ul{
+			height: 100%;
+		}
+		.bottom-service > ul li{
+			float: left;
+			width: 20%;
+			height: 100%;
+			padding: 0 50px;
+			background-color: goldenrod;
+			background-clip: content-box;
+			position: relative;
+		}
+		.bottom-service > ul li+li::before{
+			position: absolute;
+			top: 28px;
+			left: 0;
+			content: '';
+			width: 1px;
+			height: 24px;
+			background-color: #999;
+		}
+		.bottom-links{
+			height: 192px;
+			background-color: #8545e0;
+		}
+		.links-left{
+			float: left;
+			width: 960px;
+			height: 100%;
+			background-color: yellow;
+		}
+		.links-left > ul{
+			height: 100%;
+		}
+		.links-left > ul li{
+			float: left;
+			width: 16.666667%;
+			height: 100%;
+			border: 1px solid #000;
+			background-color: #ff0000;
+			background-clip: content-box;
+			padding-right: 60px;
+		}
+		.links-right{
+			float: right;
+			width: 252px;
+			height: 100%;
+			background-color: yellow;
+		}
+
+		.footer-info{
+			height: 57px;
+			background-color: #6effb1;
+		}
+		.info-left{
+			float: left;
+			width: 630px;
+			height: 100%;
+			border: 1px solid #000;
+		}
+		.info-right{
+			float: right;
+			width: 436px;
+			height: 100%;
+			border: 1px solid #000;
+		}
+		.footer-slogan{
+			margin-top: 30px;
+			height: 19px;
+			background-color: #8545e0;
+		}
+	</style>
+</head>
+<body>
+	<div class="header">
+		<div class="container">
+			<div class="header-left">
+				
+			</div>
+			<div class="header-right">
+				
+			</div>
+		</div>
+	</div>
+	<div class="top">
+		<div class="container">
+			<div class="top-nav">
+				
+			</div>
+			<div class="top-slider">
+				<div class="slider-navbar">
+					
+				</div>
+			</div>
+			<div class="top-recommend">
+				<div class="recommend-left">
+					
+				</div>
+				<div class="recommend-right">
+					<ul>
+						<li>1</li>
+						<li>2</li>
+						<li>3</li>
+					</ul>
+				</div>
+			</div>
+			<div class="top-flashsale">
+				<div class="flashsale-title">
+					
+				</div>
+				<div class="flashsale-content">
+					<div class="content-timer">
+						
+					</div>
+					<ul class="content-shops">
+						<li>a</li>
+						<li>b</li>
+						<li>c</li>
+						<li>d</li>						
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="center">
+		<div class="center-photo">
+			<div class="photo-title">
+				
+			</div>
+			<div class="photo-content">
+				<div class="photo-left"></div>
+				<ul class="photo-right">
+					<li>1</li>
+					<li>2</li>
+					<li>3</li>
+					<li>4</li>
+					<li>5</li>
+					<li>6</li>
+					<li>7</li>
+					<li>8</li>
+				</ul>
+			</div>
+		</div>
+		<div class="center-household">
+			<div class="household-title">
+				
+			</div>
+			<div class="household-content">
+					<li>1</li>
+					<li>2</li>
+					<li>3</li>
+					<li>4</li>
+					<li>5</li>
+					<li>6</li>
+					<li>7</li>
+					<li>8</li>
+					<li>9</li>
+					<li>
+						<p>a</p>
+						<p>b</p>
+					</li>
+			</div>
+		</div>
+		<div class="center-video">
+			<div class="video-title">
+				
+			</div>
+			<ul class="video-content">
+				<li>1</li>
+				<li>2</li>
+				<li>3</li>
+				<li>4</li>
+			</ul>
+		</div>
+	</div>
+	<div class="bottom">
+		<div class="container">
+			<div class="bottom-service">
+				<ul>
+					<li>1</li>
+					<li>2</li>
+					<li>3</li>
+					<li>4</li>
+					<li>5</li>
+				</ul>
+			</div>
+			<div class="bottom-links">
+				<div class="links-left">
+					<ul>
+						<li>1</li>
+						<li>2</li>
+						<li>3</li>
+						<li>4</li>
+						<li>5</li>
+						<li>6</li>
+					</ul>
+				</div>
+				<div class="links-right">
+					
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="footer">
+		<div class="footer-info">
+			<div class="info-left"></div>
+			<div class="info-right"></div>
+		</div>
+		<div class="footer-slogan"></div>
+	</div>
+</body>
+</html>
