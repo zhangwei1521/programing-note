@@ -287,7 +287,7 @@ Chrome和Safari更高一点点，可以使用下来的样式解决这个问题�
 		p{ border-style: dotted solid dashed double; } /*这里可以设置4个值，按顺序分别是上右下左，如果设置3个值，顺序就是上(右左)下，也可以是2个值和一个值*/
 	使用border实现简写：(border-bottom、border-left、border-right、border-top也可以这样用)
 		p {border:5px solid red;}
-
+	border-spacing 属性设置相邻单元格的边框间的距离（仅用于"边框分离"模式）。
 
 	CSS 轮廓：
 	轮廓（outline）是绘制于元素周围的一条线，位于边框边缘的外围，可起到突出元素的作用。CSS outline 属性规定元素轮廓的样式、颜色和宽度。
