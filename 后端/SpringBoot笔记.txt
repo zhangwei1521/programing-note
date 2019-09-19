@@ -181,6 +181,17 @@ java配置或扫描发现的方式完成；然后是分析bean之间的依赖关
 来从META-INF/spring.factories文件（这是一个标准properties文件）读取java配置类，这些配置类中使用了
 条件化配置bean，只有满足条件才会创建bean的实例。
 
+	spring-boot的结构：
+	springboot使用spring-boot-dependencies管理基于springboot构建的项目的基础（常用）依赖的版本、基础插件的版本，
+	spring-boot-parent继承spring-boot-dependencies，通常作为springboot项目的父工程，基本没有提供额外的功能，所以自己的
+springboot项目可以直接import上面的spring-boot-dependencies来控制依赖信息。
+	spring-boot包括了spring的核心jar包：spring-core、spring-context，还有servlet-api、tomcat、jetty、commons-logging等
+依赖。
+	spring-boot-starter包括了spring-boot、spring-boot-autoconfigure、spring-boot-starter-logging等依赖。
+	spring-boot-starter-web等通常需要引入spring-boot-starter依赖。
+	spring-boot-autoconfigure用于启用自动配置，默认配置文件：META-INF/spring-autoconfigure-metadata.properties(json),
+其他依赖的jar包内也可以包含这类文件，用于自动配置。自动配置大量使用了spring的新注解@ConditionalOnClass、@ConditionalOnProperty
+	
 第三部分 SpringBoot应用启动流程：
 	如果是通过静态方法启动：SpringApplication.run(SpringbootDemo1Application.class, args);第一步是根据
 classpath下是否有某个特定ApplicationContext类推断需要创建的应用上下文ApplicationContext的类型（这一步不
@@ -203,7 +214,7 @@ ApplicationPreparedEvent、ContextRefreshedEvent、EmbeddedServletContainerIniti
 	CommandLineRunner实例的run方法基本上是在应用启动的最后一步执行，所以可以自己实现CommandLineRunner并注入到IOC容器中。
 	
 第四部分 springboot起步依赖模块
-	SpringBoot广泛应用了最佳实践”约定优先于配置“，提供了大量的默认配置，简单的springboot应用几乎可以实现零配置运行。
+	SpringBoot广泛应用了最佳实践“约定优先于配置”，提供了大量的默认配置，简单的springboot应用几乎可以实现零配置运行。
 springboot的自定义配置可以在以下位置：
 	命令行参数、系统环境变量、文件系统中的配置文件、classpath下的配置文件、代码中配置
 	优先级从前至后降低。	
@@ -213,18 +224,7 @@ springboot的自定义配置可以在以下位置：
 	配置文件中可以自定义一些值：
 		book.author=James Kaite
 		book.name=SpringBoot Introduce
-		
-	spring-boot的结构：
-	springboot使用spring-boot-dependencies管理基于springboot构建的项目的基础（常用）依赖的版本、基础插件的版本，
-	spring-boot-parent继承spring-boot-dependencies，通常作为springboot项目的父工程，基本没有提供额外的功能，所以自己的
-springboot项目可以直接import上面的spring-boot-dependencies来控制依赖信息。
-	spring-boot包括了spring的核心jar包：spring-core、spring-context，还有servlet-api、tomcat、jetty、commons-logging等
-依赖。
-	spring-boot-starter包括了spring-boot、spring-boot-autoconfigure、spring-boot-starter-logging等依赖。
-	spring-boot-starter-web等通常需要引入spring-boot-starter依赖。
-	spring-boot-autoconfigure用于启用自动配置，默认配置文件：META-INF/spring-autoconfigure-metadata.properties(json),
-其他依赖的jar包内也可以包含这类文件，用于自动配置。自动配置大量使用了spring的新注解@ConditionalOnClass、@ConditionalOnProperty
-	
+
 	①日志模块起步依赖：(spring-boot-starter已经包含了spring-boot-starter-logging)
 	<dependency>
 			<groupId>org.springframework.boot</groupId>
