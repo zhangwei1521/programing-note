@@ -1,25 +1,28 @@
+											java记录
+										
 										第一章 java的历史和演进
+
 	java继承了其它语言的优秀元素，也提出了自己的新特性、新概念。
 计算机编程语言的出现和发展主要是由两个因素推动的，第一个是环境的需要和对环境的适应，第二个是编程思想的演进。
 java从C和C++继承了大量的特性。
-
     C使用的结构化编程模式在编写大型应用程序时其复杂性超出了承受范围，个人认为是普通开发者无法驾驭这样的复杂性导致的。
 这将导致企业的开发成本过高，在这种背景下，对开发人员要求更低、同时也更符合普通人思考模式的面向对象模式语言出现了。
-
     java出现的背景其实是为了实现平台独立，C++程序需要使用为不同CPU编写的编译器编译，C++程序本身也可能设计到操作系统
 调用，出现了和操作系统的耦合，难以实现平台独立。而java被设计成基于虚拟机的语言，sun官方提供主流操作系统的虚拟机实现和SDK（包含编译器），
 而且不用为每一种CPU提供一个编译器。个人理解是java编译器、虚拟机都只需要和操作系统打交道，而不需要关注CPU。
 Internet上的服务器的硬件设施和操作系统的多样性要求开发的程序需要是平台独立的，这也是java兴起的一个重要推动力。
 	目前主流的java版本仍然是1.8，学习也以1.8为准。
 
+
 										第二章 java综述
+
 	两种编程模式：第一种是面向过程编程模式，C语言便是代表，围绕“正在发生什么”编程，代码直接作用于数据；第二种是面向
 对象编程模式，围绕“将影响谁”编程，定义了对象这种数据结构，对象封装了数据和操作数据的接口，通过调用对象的接口操作数据，通过组合对象解决复杂性问题。
 	OOP三原则：
 	封装，即定义对象（类）封装数据和对数据的操作；
 	继承，对象（类）可以继承其它对象（类）获得属性和方法，可以减少程序复杂性；
 	多态，接口方法只定义功能，不提供具体实现，不同实现类可以选择不同的实现方式。
-
+	
 	开发环境搭建：安装JDK1.8
 	配置环境变量：JAVA_HOME	JDK安装路径
 				 path		添加;%JAVA_HOME%\bin
@@ -42,12 +45,13 @@ Internet上的服务器的硬件设施和操作系统的多样性要求开发的
 	打包：在最外层目录(com目录同级)建manifest.txt文件：
 		Manifest-Version: 1.0
 		Main-Class: com.zhangwei.javademo1.MainClass
-	
 	manifest.txt最后一行为空行，并且manifest.txt文件换行符需要使用linux的换行符(windows回车换行符：\r\n无效，linux换行符：\n)
 	打包命令：jar -cvfm aa.jar manifest.txt com
 	执行jar：java -jar aa.jar
 	
+
 										第三章 数据类型
+
 	强类型的语言有利于在代码编译时进行检测，因此可以避免很多不必要的问题，增强程序的安全性和健壮性。
 	java的八种基本数据类型：
 		整数型：byte、short、int、long；
@@ -57,8 +61,8 @@ Internet上的服务器的硬件设施和操作系统的多样性要求开发的
 	int型最大值：2^31-1 = 2147483647；最小值-2^31 = -2147483648；
 	java运行时字符类型使用utf-16编码存储，并且只使用16位即两个字节，所以java的char类型只能取unicode码点小于等于  
 65535的字符。而unicode码点大于65535的字符由于需要4个字节才能保存，所以java直接就在编译期报错。
-	从JDK7开始，java可以使用0b或0B开头后跟0和1表示二进制数，也可以使用下划线分隔数字，使得数位较多的数字更好读，例
-如：	int x = 0b1011_1110_1001;
+	从JDK7开始，java可以使用0b或0B开头后跟0和1表示二进制数，也可以使用下划线分隔数字，使得数位较多的数字更好读，例如：	
+		int x = 0b1011_1110_1001;
 	java默认浮点字面值类型为双精度double型：1.1默认为double类型。
 	字符型字面量可以使用这些形式：字符a的三种表示：'a'、97（unicode码点）、'\u0061'(16进制表示)、'\141'(8进制表示);
 无法输入的字符还可以使用转义表示法：如换行符使用'\n'。8进制表示并不常用。
@@ -66,8 +70,8 @@ Internet上的服务器的硬件设施和操作系统的多样性要求开发的
 String cs = "𤭢";但是cs.length()返回2。
 	byte使用8位，表示范围：-128~127
 	一个奇怪的错误与类型提升：
-	byte b = 50;
-	b = b * 2;
+		byte b = 50;
+		b = b * 2;
 	上面的代码将会报错，这是由于b在参与运算b * 2时，进行了类型提升，实际参与运算的类型变成了int，结果也就成了int值
 ，而将结果赋值给byte型的b就出错了。
 	实际上，在没有long、float、double类型变量参与运算时，byte、short、char都会提升为int型的值，有long参与就提升为
@@ -81,24 +85,27 @@ long型，有float参与就提升为float型，有double参与就提升为double
 	同时声明多个实例变量：private String s1="1", s2="2";	//也可以不初始化
 	局部变量也可以这样写：String s3="3",s4="4";
 	实例变量不初始化可以直接使用，因为在创建实例时会赋予实例变量默认值，但是局部变量使用前必须被显式赋值，否则会编译不通过。
+
+
 										第四章 运算符与条件语句
+
 	左移运算符：<<	在不越界的情况下相当于乘以二： 2<<2 == 8
 	右移运算符：>>	在不越界的情况下相当于除以二： 8>>2 == 2,右移使用了符号扩充，所以-1右移总是得到-1.
 	无符号右移：>>>	右移不使用符号扩充：所以-1>>>2 == 2^30-1.
 	if(c==1 & e++ < 100) d=100;这种写法表示无论c是否等于1，都会对e执行自增1，c等于1且e小于100则d赋值为100.
 
 	switch语句：
-	switch(exp){
-		case const1:
-			...;
-			break;
-		case const2:
-			...;
-			break;
-		...
-		default:
-			...;
-	}
+		switch(exp){
+			case const1:
+				...;
+				break;
+			case const2:
+				...;
+				break;
+			...
+			default:
+				...;
+		}
 	assert: JDK1.4引入，用法：
 		1、assert <boolean表达式>
 			如果<boolean表达式>为true，则程序继续执行；如果为false，则程序抛出AssertionError，并终止执行。
@@ -120,15 +127,17 @@ long型，有float参与就提升为float型，有double参与就提升为double
 	和break、continue连用的标签用来标记代码块，break或continue加标签只能跳到所在的代码块标签处，即break或continue
 后的标签必须是当前代码块或当前代码块的上级代码块。
 	^ :异或运算符，对两个操作数进行按位异或，即只有一个1取1，否则取0：-1 ^(-1 << 12) --> 4095
-	
+
+
 										第五章 类和对象
+
 	每个类都定义了一种数据类型（数据结构），声明对象的对象名只是一个变量，通常称为对象引用，大体上可以认为是为对象所分配内存的地址，
 但不能像操作指针那样去操作对象引用。new运算符在运行时动态为对象分配内存。
 	默认构造函数自动将所有实例变量初始化为其对应类型的默认值：数字为0，布尔为false，对象为null，char为码点为0的字符
 	finalize方法的一般形式：
-	protected void finalize(){
-		...;
-	}
+		protected void finalize(){
+			...;
+		}
 	finalize方法通常是jvm在销毁对象前调用以完成一些特殊工作。
 	方法调用时的自动类型提升：
 	如果只定义了test(double i)；实际上是可以使用test(1)的；
@@ -144,19 +153,20 @@ long型，有float参与就提升为float型，有double参与就提升为double
 	静态内部类并不会在主类被加载和初始化时加载，而是在实际使用(引用)时才被加载。类的加载和初始化总是线程安全的。
 	（静态）内部类可以访问外部类的（静态）私有属性和方法。
 	通过外部类的实例对象创建内部类对象：
-	Demo1 demo1 = new Demo1();
-    InnerClass inner = demo1.new InnerClass();
+		Demo1 demo1 = new Demo1();
+		InnerClass inner = demo1.new InnerClass();
     可变长参数方法：（varargs方法）：
-    void test(String msg, int ... v){
-    	System.out.println(msg+" ; length of v is "+v.length);
+		void test(String msg, int ... v){
+			System.out.println(msg+" ; length of v is "+v.length);
 
-    }
-    调用： test("hello",1,2);
-    	   test("hello",1,2,3);
-    	   test("hello");
+		}
+    调用： 
+		test("hello",1,2);
+    	test("hello",1,2,3);
+    	test("hello");
     变长参数实际是一个数组。
 	
-继承：
+	继承：
 	继承的一个好处是可以实现代码复用，创建的子类模型不需要重新声明已经在父类中定义的熟悉和方法，这样写出来的代码就
 显得清晰很多。
 	可以使用超类的类型变量指向子类的实例对象，这有一些实际的好处，比如说作为多态的一种实现方式，但是需要注意使用
@@ -174,7 +184,9 @@ long型，有float参与就提升为float型，有double参与就提升为double
 	通常java在运行时动态分析对方法的调用（方法的源），这称为后期绑定；而final方法不能被重写，所以对final方法的调用
 可以在编译期间解析，直接将final方法的源例程字节码和方法的编译代码内联在一起，这称为早期绑定。
 	
+
 											第六章 包和接口
+
 	java使用文件系统的目录存储包，目录名和包名必须精确匹配。
 	具有确定的包的对象，包名是对象的名称空间的一部分，所以使用java命令运行时不能只写类名。
 	一个类implement一个接口时，如果没有全部实现接口中的方法，那么这个类需要被声明为抽象类；接口中未实现的方法将由
@@ -191,7 +203,10 @@ long型，有float参与就提升为float型，有double参与就提升为double
 	当一个类实现了多个接口，而每个接口都定义了默认实现的方法，则这个类确实相当于继承了多级父类的行为。
 	JDK8新增了接口可以添加静态方法的特性，接口的静态方法像类的静态方法一样，通过接口名直接调用，但是实现类不会继承
 接口的静态方法。
+
+
 											第七章 异常处理
+
 	异常是什么？
 	异常是程序运行时发生的错误，在编译期不能确定运行时一定会出现错误，但是可能会在运行时发生错误，比如读取一个输入值
 作为除数，如果输入0就会发生除零异常。
@@ -228,7 +243,9 @@ long型，有float参与就提升为float型，有double参与就提升为double
 错误码，个人是不认可这种做法的。http请求中，如果是参数不满足业务校验，捕获异常后最好返回422错误码和相关错误提示信息。
 这样基于http协议的前后端通信才符合http语义。
 
+
 											第八章 并发编程
+
 	多线程需要的开销比多进程要小，进程需要自己的地址空间，进程间通信开销大而且限制多，从一个进程上下文切换到另一个
 进程上下文开销很大。多线程共享相同的地址空间，互相通信开销较小，上下文切换开销也很小。
 	单线程的问题是遇到一些非CPU处理的耗时任务时，CPU只能空闲等待，如IO操作。多线程就是为了处理这种问题。
@@ -265,161 +282,162 @@ run()、sleep()、start()等。
 	Thread定义了getState()方法返回线程的状态，返回值是Thread.State类型值，包括RUNNABLE、NEW等状态，事实上该返回值不能
 反映之后一段时间的线程状态，所以并不能用来作同步使用，而是为了调试程序使用。
 
+
 										第九章 枚举和注解
+
 	java中的枚举是一种类类型，使用enum关键字定义枚举：
-	enum Apple{
-		Jonathan, GoldenDel, RedDel, Winesap, Cortland
-	}
+		enum Apple{
+			Jonathan, GoldenDel, RedDel, Winesap, Cortland
+		}
 	每一个枚举常量都隐式的声明为枚举类公有的、静态的、final成员，即public static final XXX xxx。
 	枚举常量的使用：Apple app;  app = Apple.Jonathan; if(app == Apple.Jonathan){...}  
-	switch(app){
-		case Jonathan:
-			...
-		case Winesap:
-			...
-	}
+		switch(app){
+			case Jonathan:
+				...
+			case Winesap:
+				...
+		}
 	所有枚举类都具有两个静态方法：values()和valueOf();
 	Apple [] allApples = Apple.values();
 	Apple app = Apple.valueOf("Jonathan");
 	枚举类可以定义实例变量和构造方法：
-	enum Apple {
-		Jonathan(10), GoldenDel(9), RedDel, Winesap(15), Cortland(8);
-		private int price;
-		Apple(int price){
-			this.price = price;
+		enum Apple {
+			Jonathan(10), GoldenDel(9), RedDel, Winesap(15), Cortland(8);
+			private int price;
+			Apple(int price){
+				this.price = price;
+			}
+			Apple(){
+				this.price = 0;
+			}
+			int getPrice(){
+				return this.price;
+			}
 		}
-		Apple(){
-			this.price = 0;
-		}
-		int getPrice(){
-			return this.price;
-		}
-	}
 	枚举类的两个要点：定义的枚举类不能继承其他类，枚举类不能作为超类。
 	所有的枚举类都继承自Enum类，Enum类定义了3个实例方法：
-	final int ordinal();	//返回调用枚举常量的序数值（从0开始），如Apple.Jonathan.ordinal(); //0
-	final int compareTo(enum-type e); 	//返回与参数枚举常量的序数值的差值正负结果： Apple.Jonathan.compareTo(Apple.GoldenDel);  // -n(负数)
-	final boolean equals(enum-type e);  //比较两个枚举常量的相等性
+		final int ordinal();	//返回调用枚举常量的序数值（从0开始），如Apple.Jonathan.ordinal(); //0
+		final int compareTo(enum-type e); 	//返回与参数枚举常量的序数值的差值正负结果： Apple.Jonathan.compareTo(Apple.GoldenDel);  // -n(负数)
+		final boolean equals(enum-type e);  //比较两个枚举常量的相等性
 	说明一下：equals比较时只需要两个枚举常量是同一个枚举类中相同的常量即可成立，而==比较的是引用；如果是通过网络传输的一个
 枚举常量和本地的一个枚举常量比较，则使用equals比较成立，而二者引用是不同的。
 	装箱、拆箱和自动装箱、自动拆箱：
 	JDK1.5之前的基本数据类型封装类使用：
-	Character(char c);		char charValue();
-	Boolean(boolean b);		boolean booleanValue();
-	...
+		Character(char c);		char charValue();
+		Boolean(boolean b);		boolean booleanValue();
+		...
 	JDK1.5新增自动装箱和自动拆箱：
-	Inteter iob = 100;
-	++iob;
-	Boolean b = true;
-	if(b) ...
-	Character c = 'x';
+		Inteter iob = 100;
+		++iob;
+		Boolean b = true;
+		if(b) ...
+		Character c = 'x';
 	不应该滥用自动装拆箱，否则会影响程序性能。
 	JDK5新增了注解语法，用于在源文件中嵌入补充信息，主要是便于其它工具获取这些信息。
 	注解定义语法：
-	@Interface MyAnno {
-		String str();
-		int val();
-	}
+		@Interface MyAnno {
+			String str();
+			int val();
+		}
 	注解定义语法不能使用extends继承其它类，实际上所有注解都扩展了Annotation接口,Annotation接口重写了toString、equals和
 hashCode方法。
 	注解使用：
-	@MyAnno(str = "example", val = 100)
-	public static void meMethod();
+		@MyAnno(str = "example", val = 100)
+		public static void meMethod();
 	保留策略：RetentionPolicy枚举类定义了三种枚举常量保留策略：SOURCE、CLASS、RUNTIME。
 	使用内置注解@Retention声明注解的保留策略：(默认是RetentionPolicy.CLASS)
-	@Retention(RetentionPolicy.RUNTIME)
-	@Interface MyAnno {
-		String str();
-		int val();
-	}
+		@Retention(RetentionPolicy.RUNTIME)
+		@Interface MyAnno {
+			String str();
+			int val();
+		}
 	Class、Method、Field、Constructor对象上定义了getAnnotation(Class<A> annoType)和getAnnotations()方法，前者返回指定
-的注解，后者返回所有的注解。这两个方法来源于AnnotatedElement接口。Package也实现了该接口。该接口定义的另外的可用的方法
-还有：
-	Annotation [] getDeclaredAnnotations();			//返回所有的非继承的注解
-	boolean isAnnotationPresent(Class<A> annoType);	//是否使用了指定注解修饰
-	...
+的注解，后者返回所有的注解。这两个方法来源于AnnotatedElement接口。Package也实现了该接口。该接口定义的另外的可用的方法还有：
+		Annotation [] getDeclaredAnnotations();			//返回所有的非继承的注解
+		boolean isAnnotationPresent(Class<A> annoType);	//是否使用了指定注解修饰
+		...
 	注解属性的使用：
-	MyAnno myAnno = ...;
-	String str = myAnno.str();
+		MyAnno myAnno = ...;
+		String str = myAnno.str();
 	设置注解属性默认值：
-	@Interface MyAnno {
-		String str() default "test";
-		int val() default 100;
-	}
+		@Interface MyAnno {
+			String str() default "test";
+			int val() default 100;
+		}
 	标记注解：没有属性，使用时不使用括号：@Mark
 	单成员注解：
-	@Interface MyAnno {
-		String value();
-	}
+		@Interface MyAnno {
+			String value();
+		}
 	或者
-	@Interface MyAnno {
-		String value();
-		int val() default 100;
-	}
+		@Interface MyAnno {
+			String value();
+			int val() default 100;
+		}
 	使用：
-	@MyAnno("hello")
-	public static void test();
-	或者：
-	@MyAnno(value="hello",val=55)
-	public static void test();
+		@MyAnno("hello")
+		public static void test();
+		或者：
+		@MyAnno(value="hello",val=55)
+		public static void test();
 	内置注解：@Retention声明注解的保留策略；@Documented声明注解将被文档化；@Target声明注解能修饰的数据类型：其参数只能
 是ElementType枚举类中的常量：FIELD、LOCAL_VARIABLE、METHOD等；@Inherited声明注解可以被修饰类的子类继承；
 	类型注解的声明：
-	@Target(ElementType.TYPE_USE)
-	@interface Unique{}
+		@Target(ElementType.TYPE_USE)
+		@interface Unique{}
 	类型注解有什么用？首先类型注解用在类型之前，用于修饰类型，比如说使用上面的@Unique修饰一个类的构造方法（或者某种类型
 的成员变量），然后第三方工具可以使用该注解来检查该类是否只声明了一个构造方法（某种类型的变量）。
 	重复注解：
-	@Retention(RetentionPolicy.CLASS)
-	@Repeatable(MyAnnoContainer.class)
-	@interface MyAnno{
-		String str();
-		int val();
-	}
+		@Retention(RetentionPolicy.CLASS)
+		@Repeatable(MyAnnoContainer.class)
+		@interface MyAnno{
+			String str();
+			int val();
+		}
 
-	@Retention(RetentionPolicy.CLASS)
-	@interface MyAnnoContainer{
-		MyAnno [] value();
-	}
+		@Retention(RetentionPolicy.CLASS)
+		@interface MyAnnoContainer{
+			MyAnno [] value();
+		}
 	应用：
-	@MyAnno(str="aaa",val=11)
-	@MyAnno(str="bbb",val=22)
-	public void test(){}
-	
-	Annotation anno = m.getAnnotation(MyAnnoContainer.class);m是test方法的反射对象
+		@MyAnno(str="aaa",val=11)
+		@MyAnno(str="bbb",val=22)
+		public void test(){}
+		
+		Annotation anno = m.getAnnotation(MyAnnoContainer.class);m是test方法的反射对象
+
 
 										第十章 IO基础及其他
+
 	java使用“流”进行输入输出抽象，“流”是一种对接对象，输入流和输入源对接，提供一系列方法从数据源获取数据，输出流提供一系列
 方法将数据导出到目的地。java提供基于字节操作和字符操作的两类流。
-	字节流家族：InputStream、
-					BufferedInputStream、ByteArrayInputStream、DataInputStream、FileInputStream等
-				OutputStream
-					BufferedOutputStream、ByteArrayOutputStream、DataOutputStream、FileOutputStream等
-	字符流家族：Reader
-					BufferedReader、CharArrayReader、FileReader等
-				Writer
-					BufferedWriter、CharArrayWriter、FileWriter等
+	字节流家族：
+		InputStream、BufferedInputStream、ByteArrayInputStream、DataInputStream、FileInputStream等
+		OutputStream、BufferedOutputStream、ByteArrayOutputStream、DataOutputStream、FileOutputStream等
+	字符流家族：
+		Reader、BufferedReader、CharArrayReader、FileReader等
+		Writer、BufferedWriter、CharArrayWriter、FileWriter等
 	System类有三个静态的预定义流成员变量：out、in、err. in是InputStream的实例对象，out和err是PrintStream的实例对象。
 	可以使用BuffredReader读取控制台输入：
 		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-		BufferedReader的read方法读取单个字符，readLine方法读取一行字符串。System.in采用按行缓冲。
+	BufferedReader的read方法读取单个字符，readLine方法读取一行字符串。System.in采用按行缓冲。
 	向控制台输出使用PrintWriter和使用System.out(PrintStream)的区别（好处）在于更好的国际化支持。
 	读写文件：使用文件名构造FileInputStream和FileOutputStream 的实例对象都可能抛出文件不存在异常，对于输出流其实是指
 不能打开文件或者创建文件，如果有原文件会先销毁原文件。
 	JDK1.7之前需要手动关闭流，JDK1.7新增了“自动资源管理”的特性，对于实现了AutoCloseable接口的资源类，可以使用扩展的try
 语法实现自动关闭资源，事实上所以流都实现了该接口，所以可以使用该新特性。
-	try(FileInputStream fin = new FileInputStream("fileName")){
-		...
-	}
+		try(FileInputStream fin = new FileInputStream("fileName")){
+			...
+		}
 	try后括号中的资源实际上被隐式声明成final类型，所以不能修改。
 	
 	io包下的类和接口详细介绍：
 	字节输入流：
 		InputStream、BufferedInputStream、ByteArrayInputStream、DataInputStream、FileInputStream、FilterInputStream、
-ObjectInputStream、PipedInputStream、PushbackInputStream、SequenceInputStream
+		ObjectInputStream、PipedInputStream、PushbackInputStream、SequenceInputStream
 	字节输出流：
 		OutputStream、BufferedOutputStream、ByteArrayOutputStream、DataOutputStream、FileOutputStream、FilterOutputStream、
-ObjectOutputStream、PipedOutputStream、PrintStream
+		ObjectOutputStream、PipedOutputStream、PrintStream
 	字符输入流：
 		Reader、BufferedReader、CharArrayReader、FileReader、FilterReader、InputStreamReader、LineNumberReader、PipedReader、
 PushbackReader、StringReader
@@ -473,26 +491,26 @@ ObjectStreamConstants、Serializable、Externalizable、Flushable
 	获取目录下的文件/目录：
 		File f1 = new File("/tem_file");
 		String[] fs = f1.list();	//获取所有文件、目录名称
-		使用FilenameFilter过滤文件：
-			public class MyFilenameFilter implements FilenameFilter {			
-				@Override
-				public boolean accept(File dir, String name) {	//这里的第一个参数dir是调用list或listFiles方法的目录对象
-					return name.endsWith(".jpg");
-				}
+	使用FilenameFilter过滤文件：
+		public class MyFilenameFilter implements FilenameFilter {			
+			@Override
+			public boolean accept(File dir, String name) {	//这里的第一个参数dir是调用list或listFiles方法的目录对象
+				return name.endsWith(".jpg");
 			}
-			MyFilenameFilter filenameFilter = new MyFilenameFilter();
-			String[] fs = f1.list(filenameFilter);
-		File [] fs = f1.listFiles();
-		File [] fs = f1.listFiles(filenameFilter);
-		使用FileFilter过滤文件：
-			public class MyFileFilter implements FileFilter {
-				@Override
-				public boolean accept(File pathname) {
-					return pathname.getName().endsWith("txt");
-				}
+		}
+		MyFilenameFilter filenameFilter = new MyFilenameFilter();
+		String[] fs = f1.list(filenameFilter);
+	File [] fs = f1.listFiles();
+	File [] fs = f1.listFiles(filenameFilter);
+	使用FileFilter过滤文件：
+		public class MyFileFilter implements FileFilter {
+			@Override
+			public boolean accept(File pathname) {
+				return pathname.getName().endsWith("txt");
 			}
-			MyFileFilter fileFilter = new MyFileFilter();
-			File [] fs = f1.listFiles(fileFilter);
+		}
+		MyFileFilter fileFilter = new MyFileFilter();
+		File [] fs = f1.listFiles(fileFilter);
 	创建目录：
 		File dir1 = new File("/tem_file/dir1");
         boolean result = dir1.mkdir();	//如果tem_file不存在则创建目录会失败
@@ -789,7 +807,10 @@ InputStreamReader。
 	java8将API库的子集组织成3个所谓“紧凑配置文件”：compact1、compact2、compact3，后一个完整包含前一个，使用：
 	javac -profile compactn Demo.java
 	可以只加载需要使用的库，加载会更快。
+
+
 											第十一章 泛型
+
 	JDK1.5引入了泛型，泛型从两个方面影响或者说改变了java，一是增加了新的语法元素，二是改变了核心API中很多类和方法。
 	使用泛型的类、接口或者方法可以以类型安全的方式使用各种类型的数据，这样可以为算法相同而数据类型不同的程序只编写
 一个通用的程序单元。集合框架是受泛型影响最大的API了，引入泛型使得集合框架的使用更加安全。
@@ -797,55 +818,55 @@ InputStreamReader。
 Object引用所有类型对象，这样的方式并不安全，比如手动类型转换时进行了非法的转换，则会导致运行时错误，而泛型不需要进行
 手动类型转换，可以在编译期就避开这种问题。
 	泛型类： 
-	class Gen<T>{
-		T t;
-		public Gen(T t){
-			this.t = t;
+		class Gen<T>{
+			T t;
+			public Gen(T t){
+				this.t = t;
+			}
+			T getT(){
+				return t;
+			}
 		}
-		T getT(){
-			return t;
-		}
-	}
 	两个泛型类型：
-	class TwoGen<K,V>{
-		K k;
-		V v;
-		TwoGen(K k, V v){
-			this.k = k;
-			this.v = v;
+		class TwoGen<K,V>{
+			K k;
+			V v;
+			TwoGen(K k, V v){
+				this.k = k;
+				this.v = v;
+			}
 		}
-	}
 	声明泛型类的实例对象时，只能使用引用类型：Gen<int> gen = new Gen<int>(55); // Error
 	有界的泛型：
-	class Stats<T extends Number>{
-		T[] nums;
-		Stats(T[] nums){
-			this.nums = nums;
-		}
-		double average(){
-			double sum = 0.0;
-			for(int i =0; i < nums.length; i++){
-				sum += nums[i].doubleValue();
+		class Stats<T extends Number>{
+			T[] nums;
+			Stats(T[] nums){
+				this.nums = nums;
 			}
-			return sum / nums.length;
+			double average(){
+				double sum = 0.0;
+				for(int i =0; i < nums.length; i++){
+					sum += nums[i].doubleValue();
+				}
+				return sum / nums.length;
+			}
 		}
-	}
 	这样nums[i].doubleValue()就可以编译通过，并且不能使用Stats<String>这种非Number的子类泛型参数。
 	事实上，还可以声明泛型类型的父接口，或者同时声明父类和父接口：
 	class Gen<T extends MyClass & MyInterface>{...}
 	通配符问题：当泛型类的某个方法需要接受另一个泛型类对象作为参数，而该参数对象的泛型可能不是当前对象的泛型类型：
-	Stats<T extends Number>方法public boolean sameAvg(Stats<T> stats){...}
-	Stats<Integer> istats = new Stats<Integer>(inums);
-    Stats<Double> dstats = new Stats<>(dnums);
-	istats.sameAvg(dstats);//不能通过编译
+		Stats<T extends Number>方法public boolean sameAvg(Stats<T> stats){...}
+		Stats<Integer> istats = new Stats<Integer>(inums);
+		Stats<Double> dstats = new Stats<>(dnums);
+		istats.sameAvg(dstats);//不能通过编译
 	问题在于编译时将istats中的泛型类型都替换为Integer了，所以传入泛型为Double的对象不能通过编译。
 	解决方案是使用通配符 ? ，
-	public boolean sameAvg(Stats<?> stats){...}这样stats就可以是任意泛型类型的Stats对象了。当然这里的泛型类型仍然只能
+		public boolean sameAvg(Stats<?> stats){...}这样stats就可以是任意泛型类型的Stats对象了。当然这里的泛型类型仍然只能
 是Number的子类。
 	有界的通配符：泛型类指定的泛型类型只能是某个类的子类，但是有些方法需要的参数泛型类对象的泛型不能是任意的有效泛型
 类型：
-	class NegNumber extends Number{//负数类}
-	class PosNumber extends Number{//正数类}
+		class NegNumber extends Number{//负数类}
+		class PosNumber extends Number{//正数类}
 	Gen类定义方法 public double sum2(Stats<?> stats){//对stats中的数组的元素先开方再求和}
 	这里如果使用NegNumber作为泛型类型的对象是可以传入sum2方法的，但是会出现错误。
 	使用有界的通配符： public double sum2(Stats<? extends PosNumber> stats){//对stats中的数组的元素先开方再求和}
@@ -853,19 +874,19 @@ Object引用所有类型对象，这样的方式并不安全，比如手动类�
 	泛型方法：<type-param-list> ret-type method-name(param-list){...}
 	这里泛型参数类型声明需要放在返回值类型前面。泛型方法可以是静态的，也可以是非静态的。
 	泛型构造函数：可以在非泛型类中定义泛型构造方法：
-	class Gen{
-		double num;
-		<T extends Number> Gen(T t){
-			this.num = t.doubleValue();
+		class Gen{
+			double num;
+			<T extends Number> Gen(T t){
+				this.num = t.doubleValue();
+			}
 		}
-	}
 	泛型接口：
-	public interface MinMax<T> {
-		T min();
-		T max();
-	}
+		public interface MinMax<T> {
+			T min();
+			T max();
+		}
 	实现接口：
-	class MyClass<T> implements MinMax{...}
+		class MyClass<T> implements MinMax{...}
 	这里需要把接口中的泛型声明写到子类后面
 	class MyClass implements MinMax<Integer>{...} 这种写法是允许的
 	为了某些需要和原始代码兼容，可以按照原始代码方式使用泛型类：Gen gen = new Gen(...);
@@ -881,35 +902,35 @@ Object引用所有类型对象，这样的方式并不安全，比如手动类�
 	(Gen<Integer>)gen 			//强制类型转换是允许的，但是并不安全
 	JDK1.7新增了泛型类型推断，即所谓“菱形运算符”：Gen<Integer> igen = new Gen<>(55);
 	模糊性错误：
-	public class MyGenClass<K,V extends Number> {
-		K k;
-		V v;
-		void set(K k){
-			this.k = k;
+		public class MyGenClass<K,V extends Number> {
+			K k;
+			V v;
+			void set(K k){
+				this.k = k;
+			}
+			void set(V v){
+				this.v = v;
+			}
 		}
-		void set(V v){
-			this.v = v;
-		}
-	}
 	这里重载的set方法可以通过编译，但是如果使用MyGenClass<Number,Number>类型对象调用set方法就会导致错误。
 	泛型类不能继承Throwable，不能创建包括特定泛型类型的数组：
-	Gen<Integer> gens = new Gen<Integer>[10];  //wrong
+		Gen<Integer> gens = new Gen<Integer>[10];  //wrong
 	可以使用通配符：
-	Gen<?> gens = new Gen<?>[10];  //OK
+		Gen<?> gens = new Gen<?>[10];  //OK
 	
 	补充：java的SPI
 	SPI 全称为 (Service Provider Interface) ,是JDK内置的一种服务提供发现机制。它是一种动态替换的机制。
 	使用方法：在JAR包的"src/META-INF/services/"目录下建立一个文件，文件名是接口的全限定名，文件的内容可以有多行，每行都是该接口对应的具体实现类的全限定名。
-	src
-		main
-			java
-				com.zhangwei
-					inteface.LogWriter
-					impl.ErrorLogWriter
-			resources
-				META-INF
-					services
-						com.zhangwei.inteface.LogWriter(文件名就是接口的全限定名，没有扩展名)
+		src
+			main
+				java
+					com.zhangwei
+						inteface.LogWriter
+						impl.ErrorLogWriter
+				resources
+					META-INF
+						services
+							com.zhangwei.inteface.LogWriter(文件名就是接口的全限定名，没有扩展名)
 	com.zhangwei.inteface.LogWriter文件内容：
 		com.zhangwei.impl.ErrorLogWriter
 	测试：
@@ -919,6 +940,7 @@ Object引用所有类型对象，这样的方式并不安全，比如手动类�
         }
 						
 											第十二章 lambda表达式
+
 	lambda表达式提升了java的表达能力。
 	lambda表达式包括三个部分，参数列表、->、lambda体 ：(n)->n%2==0
 	lambda表达式本质上是一个匿名方法，这个方法并不能独立执行，而是作为一个函数式接口的抽象方法的实现。
@@ -1166,16 +1188,17 @@ lambda表达式作为该函数式的实例。
 			方法：boolean test(T t);
 
 	补充：
-	List<String> list = Arrays.asList("aaa","bbb");
-	Iterator<String> iterator = list.iterator();
-	while (iterator.hasNext()){
-		String name = iterator.next();
-		if(name.equals("aaa")){
-			iterator.remove();
+		List<String> list = Arrays.asList("aaa","bbb");
+		Iterator<String> iterator = list.iterator();
+		while (iterator.hasNext()){
+			String name = iterator.next();
+			if(name.equals("aaa")){
+				iterator.remove();
+			}
 		}
-	}
-	执行报错：java.lang.UnsupportedOperationException: null		
-			at java.util.AbstractList.remove(AbstractList.java:161)
+	执行报错：
+		java.lang.UnsupportedOperationException: null		
+		at java.util.AbstractList.remove(AbstractList.java:161)
 	说明：在使用Arrays.asList()后调用add，remove这些method时出现java.lang.UnsupportedOperationException异常，
 是由于Arrays.asList()返回java.util.Arrays$ArrayList，而不是ArrayList。
 	Arrays$ArrayList和ArrayList都是继承AbstractList，remove，add等method在AbstractList中是默认throw 
@@ -1184,7 +1207,9 @@ UnsupportedOperationException而且不作任何操作。ArrayList override这些
 	可以这样处理：
 		List<String> list = new ArrayList<>(Arrays.asList("aaa","bbb"));
 
+
 											第十三章 JavaBean
+
 	Java Bean 是能够在各种不同的环境中重用的软件组件。
 	内省：分析Bean的过程用以确定Bean的功能的技术。
 	暴露Bean的属性、事件和方法的两种方式：一是使用约定的规则命名，二是提供一个实现了BeanInfo接口的附加类，由这个类
@@ -1205,7 +1230,10 @@ UnsupportedOperationException而且不作任何操作。ArrayList override这些
 		static BeanInfo getBeanInfo(Class<?> bean) throw IntrospectionException;
 这个方法可以使用内省机制返回bean的信息提供者BeanInfo实例（如果在bean的包下自己提供了BeanInfo实现，获取的BeanInfo实例
 就是自己提供的那个类的实例）。
+
+
 											第十四章 Servlet
+
 	早期获取动态资源使用CGI程序（公共网关接口），HTTP请求先被CGI程序获取，CGI为每个请求创建一个进程，这个进程再和数据
 库通信，这中方式的问题是性能不高，每个请求就产生一个进程，占用内存和CPU资源太多，而且每个进程都和数据库通信引起的频繁
 的数据库连接和关闭连接也是很昂贵的代价。并且CGI可以使用各种语言开发，通常存在平台移植问题。
@@ -1235,8 +1263,8 @@ destroy方法回收资源。
 		Servlet：声明servlet的生命周期方法以及getServletConfig()
 		ServletConfig：方法：getServletContext()、getInitParameter(String paramName)、Enumeration<String> getInitParameterNames()
 		ServletContext: 方法：Object getAttribute(String name)[返回服务器空间中的属性]、getRealPath(String rPath)
-		ServletRequest: 方法：Object getAttribute(String name)[返回请求中的属性]、getContentType()、getParameter(...)
-、getInputStream()、getReader()、getRemoteHost()等
+		ServletRequest: 方法：Object getAttribute(String name)[返回请求中的属性]、getContentType()、getParameter(...)、
+getInputStream()、getReader()、getRemoteHost()等
 		ServletResponse: 方法：setContentType(...)、getOutputStream()
 	javax.servlet包提供类：
 		GenericServlet:实现了Servlet和ServletConfig接口
@@ -1327,8 +1355,10 @@ destroy方法回收资源。
 静态缓存数组cache中的对象，所以a==b。可以使用System.identityHashCode(a)打印对象的内存地址，就可以看到a和b的地址完全相同。
 使用new语法创建的对象则没有这个问题。String创建对象时也使用了相同的规则，只是String没有大小限制。Float和Double没有这个问题。
 		比较Integer的值时应该使用equals方法
-		
+
+
 											第十五章 对象的序列化和反序列化
+
 	对象序列化机制（object serialization）是Java语言内建的一种对象持久化方式，通过对象序列化，可以把对象的状态保存为字节数组，
 并且可以在有需要的时候将这个字节数组通过反序列化的方式再转换成对象。对象序列化可以很容易的在JVM中的活动对象和字节数组（流）之间
 进行转换。
@@ -1412,7 +1442,9 @@ destroy方法回收资源。
 		}
 	虚拟机在反序列化时会检查类路径和序列化ID( private static final long serialVersionUID)，只有两者都能匹配才完成反序列化。
 
+
 												第十六章 jdbc
+
 	jdbc是java提供的数据库连接技术，其目的是提供统一的API访问不同的数据库，java以接口的形式定义了这些API，数据库厂商根据自己的
 产品特性实现这些接口(jdbc驱动)。
 	常用的jdbc接口：DriverManager、Connection、DatabaseMetaData、Statement、PreparedStatement、CallableStatement、
@@ -1423,126 +1455,128 @@ ResultSet、ResultSetMetaData.
 		3、执行sql语句；
 		4、处理结果集；
 		5、关闭连接。
-	import java.sql.*;
-	public class JdbcDemo1 {
-		public static void main(String[] args){
-			String url="jdbc:mysql://127.0.0.1:3306/network_info";
-			String user="root";
-			String password="root";
+	实例：
+		import java.sql.*;
+		public class JdbcDemo1 {
+			public static void main(String[] args){
+				String url="jdbc:mysql://127.0.0.1:3306/network_info";
+				String user="root";
+				String password="root";
 
-			String sql = "select * from account";
-			try {
-				Class.forName("com.mysql.cj.jdbc.Driver");
-				Connection conn = DriverManager.getConnection(url,user,password);
-				Statement stmt = conn.createStatement();
-				ResultSet resultSet = stmt.executeQuery(sql);
-				while (resultSet.next()){
-					Account account = new Account();
-					account.setId(resultSet.getInt("id"));
-					account.setName(resultSet.getString("name"));
-					account.setNum(resultSet.getString("num"));
-					account.setPwd(resultSet.getString("pwd"));
-					System.out.println(account);
-				}
-				ResultSetMetaData rsmd = resultSet.getMetaData();
-				for(int i=1; i<=rsmd.getColumnCount(); i++ ){
-					System.out.println(rsmd.getColumnName(i));;
-				}
-				resultSet.close();
-				stmt.close();
-				conn.close();
-			} catch (SQLException | ClassNotFoundException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-	可以将连接数据库的配置信息放到配置文件中，再提供一个通用的工具类获取连接：
-database.propperties:
-	#mysql
-	driver=com.mysql.cj.jdbc.Driver
-	url=jdbc:mysql://127.0.0.1:3306/network_info
-	#oracle
-	#driver=oracle.jdbc.driver.OracleDriver
-	#url=jdbc:oracle:thin:@127.0.0.1:1521:mydb_info
-	user=root
-	password=root
-DBUtils.java
-	import java.io.IOException;
-	import java.io.InputStream;
-	import java.sql.Connection;
-	import java.sql.DriverManager;
-	import java.sql.SQLException;
-	import java.util.Properties;
-
-	public class DBUtils {
-		private static String driver = null;
-		private static String url = null;
-		private static String user = null;
-		private static String password = null;
-		private static BasicDataSource dataSource = new BasicDataSource();
-		
-		static {
-			InputStream inputStream = DBUtils.class.getClassLoader().getResourceAsStream("database.properties");
-			Properties prop = new Properties();
-			try {
-				prop.load(inputStream);
-				driver = prop.getProperty("driver");
-				url = prop.getProperty("url");
-				user = prop.getProperty("user");
-				password = prop.getProperty("password");
-				//使用DBCP连接池
-				dataSource.setDriverClassName(driver);
-				dataSource.setUrl(url);
-				dataSource.setUsername(user);
-				dataSource.setPassword(password);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		public static Connection getConnection() throws ClassNotFoundException, SQLException {
-			//Class.forName("com.mysql.cj.jdbc.Driver");
-			//Connection conn = DriverManager.getConnection(url,user,password);
-			//return conn;
-			return dataSource.getConnection();
-		}
-		public static void closeResource(Connection conn, Statement stmt, ResultSet rs){
-			if(rs != null){
+				String sql = "select * from account";
 				try {
-					rs.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-			}
-			if(stmt != null){
-				try {
+					Class.forName("com.mysql.cj.jdbc.Driver");
+					Connection conn = DriverManager.getConnection(url,user,password);
+					Statement stmt = conn.createStatement();
+					ResultSet resultSet = stmt.executeQuery(sql);
+					while (resultSet.next()){
+						Account account = new Account();
+						account.setId(resultSet.getInt("id"));
+						account.setName(resultSet.getString("name"));
+						account.setNum(resultSet.getString("num"));
+						account.setPwd(resultSet.getString("pwd"));
+						System.out.println(account);
+					}
+					ResultSetMetaData rsmd = resultSet.getMetaData();
+					for(int i=1; i<=rsmd.getColumnCount(); i++ ){
+						System.out.println(rsmd.getColumnName(i));;
+					}
+					resultSet.close();
 					stmt.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-			}
-			if(conn != null){
-				try {
 					conn.close();
-				} catch (SQLException e) {
+				} catch (SQLException | ClassNotFoundException e) {
 					e.printStackTrace();
 				}
 			}
 		}
-	}
+	可以将连接数据库的配置信息放到配置文件中，再提供一个通用的工具类获取连接：
+		#database.propperties:
+		#mysql
+		driver=com.mysql.cj.jdbc.Driver
+		url=jdbc:mysql://127.0.0.1:3306/network_info
+		#oracle
+		#driver=oracle.jdbc.driver.OracleDriver
+		#url=jdbc:oracle:thin:@127.0.0.1:1521:mydb_info
+		user=root
+		password=root
+
+		/** DBUtils.java */
+		import java.io.IOException;
+		import java.io.InputStream;
+		import java.sql.Connection;
+		import java.sql.DriverManager;
+		import java.sql.SQLException;
+		import java.util.Properties;
+
+		public class DBUtils {
+			private static String driver = null;
+			private static String url = null;
+			private static String user = null;
+			private static String password = null;
+			private static BasicDataSource dataSource = new BasicDataSource();
+			
+			static {
+				InputStream inputStream = DBUtils.class.getClassLoader().getResourceAsStream("database.properties");
+				Properties prop = new Properties();
+				try {
+					prop.load(inputStream);
+					driver = prop.getProperty("driver");
+					url = prop.getProperty("url");
+					user = prop.getProperty("user");
+					password = prop.getProperty("password");
+					//使用DBCP连接池
+					dataSource.setDriverClassName(driver);
+					dataSource.setUrl(url);
+					dataSource.setUsername(user);
+					dataSource.setPassword(password);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			public static Connection getConnection() throws ClassNotFoundException, SQLException {
+				//Class.forName("com.mysql.cj.jdbc.Driver");
+				//Connection conn = DriverManager.getConnection(url,user,password);
+				//return conn;
+				return dataSource.getConnection();
+			}
+			public static void closeResource(Connection conn, Statement stmt, ResultSet rs){
+				if(rs != null){
+					try {
+						rs.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+				if(stmt != null){
+					try {
+						stmt.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+				if(conn != null){
+					try {
+						conn.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
 	使用连接池时，可以设置一下参数：初始连接数、最大连接数、最小连接数、每次增加连接数、最大空闲连接数、最小空闲连接数、超时时间
 	连接数据库或操作数据库时都可能发生SQLException，这类异常通常是由于sql错误、数据库表或数据错误等造成，这类异常属于必检异常。
 	获取数据库连接也可以使用try(...)语法来自动关闭数据库连接：
-	try(
-		Connection conn = DBUtils.getConnection();
-		Statement stmt = conn.createStatement();
-		ResultSet resultSet = stmt.executeQuery(sql);
-	) {
-		while (resultSet.next()){
-			...
+		try(
+			Connection conn = DBUtils.getConnection();
+			Statement stmt = conn.createStatement();
+			ResultSet resultSet = stmt.executeQuery(sql);
+		) {
+			while (resultSet.next()){
+				...
+			}
+		} catch (ClassNotFoundException | SQLException e) {
+			e.printStackTrace();
 		}
-	} catch (ClassNotFoundException | SQLException e) {
-		e.printStackTrace();
-	}
 	使用PreparedStatement：
 	Statement及PreparedStatement执行时，一个sql语句执行过程分为以下几个步骤：
 		1、传输SQL给数据库
@@ -1634,29 +1668,29 @@ preparedstatement在执行的时候，每次均会命中cache，使用已存在�
 			thread1---->|_threadLocal2___|___val2______|
 						|_threadLocal3___|___val3______|
 							threadLocals
-ThreadLocal的set方法：
-	public void set(T value) {
-		Thread t = Thread.currentThread();
-		ThreadLocalMap map = getMap(t);
-		if (map != null)
-			map.set(this, value);
-		else
-			createMap(t, value);
-	}
-get方法：
-	public T get() {
-		Thread t = Thread.currentThread();
-		ThreadLocalMap map = getMap(t);
-		if (map != null) {
-			ThreadLocalMap.Entry e = map.getEntry(this);
-			if (e != null) {
-				@SuppressWarnings("unchecked")
-				T result = (T)e.value;
-				return result;
-			}
+	ThreadLocal的set方法：
+		public void set(T value) {
+			Thread t = Thread.currentThread();
+			ThreadLocalMap map = getMap(t);
+			if (map != null)
+				map.set(this, value);
+			else
+				createMap(t, value);
 		}
-		return setInitialValue();
-	}
+	get方法：
+		public T get() {
+			Thread t = Thread.currentThread();
+			ThreadLocalMap map = getMap(t);
+			if (map != null) {
+				ThreadLocalMap.Entry e = map.getEntry(this);
+				if (e != null) {
+					@SuppressWarnings("unchecked")
+					T result = (T)e.value;
+					return result;
+				}
+			}
+			return setInitialValue();
+		}
 	为什么线程的threadlocals中key保存的是threadlocal的弱引用？
 	弱引用的特点是，不会干扰GC，也就是说如果某个threadlocal对象没有强引用（持有threadlocal的对象已经回收），这里尽管线程的threadlocals
 持有该threadlocal的弱引用，这个threadlocals还是会被GC。
@@ -1665,7 +1699,8 @@ get方法：
 		软引用：只有软引用的对象在内存不足时将被JVM回收；
 		弱引用：每次GC触发时JVM都会回收只有弱引用的对象；
 		幻影引用：幻影引用和没有引用一样，任何时候都可能被回收
-	打印classpath：
+	
+	补充：打印classpath：
 		public class TestDemo1 {
 			public static void main(String[] args) {
 				System.out.println(Thread.currentThread().getClass().getResource("/").getPath());
@@ -1678,7 +1713,7 @@ get方法：
 			}
 		}
 
-	将科学计数法表示的数字转为普通格式数字：
+	补充：将科学计数法表示的数字转为普通格式数字：
 		BigDecimal d = new BigDecimal(12E7);
 		System.out.println(d.toPlainString());						// 120000000（字符串）
 		System.out.println(Integer.parseInt(d.toPlainString()));	// 120000000
@@ -1691,7 +1726,9 @@ get方法：
         System.out.println(0.00012145);								//1.2145E-4
 	对于小数，看起来只能转成字符串形式
 
+
 												第十七章 NIO
+
 	在JDK1.4的时候，java开始支持一套新的IO系统，被称为NIO，NIO是一套基于缓冲区和通道的系统，在JDK1.7发布时，又对NIO进行了扩展和增强。
 NIO的设计目的并不是替代早期的基于流模型的IO系统。
 	NIO的相关类和接口都定义在nio包及其子包下。
@@ -1928,8 +1965,10 @@ ServerSocket、DatagramSocket都支持通道。
 		FileOutputStream fout = new FileOutputStream("/tem_file/file2.txt");
 		FileChannel channel2 = fout.getChannel();
 	JDK1.7之前还需要手动关闭流（不能使用try(...)语法）。
-	
+
+
 												第十八章 网络
+
 	IP协议定义了IP数据包的格式和如何将IP数据包传输给指定主机的机制（由网络中的路由器提供支持），IP协议本身并不能提供可靠性保证，所以
 传输的IP数据包可以丢失。根据分层设计的思想，数据传输的可靠性保证将由IP协议层的上层协议来提供，TCP协议就是设计用来提供这种保证的，TCP
 协议使用了面向连接、排序传输、检测重传等机制来实现数据的可靠传输。TCP协议保证了可靠传输，但是也不可避免地引入了传输效率降低的问题。
@@ -2227,9 +2266,11 @@ Optional对象返回，所以map方法实际上是做了一个映射；
 		orElseThrow方法也接受一个Supplier函数式接口实例作为参数，但是参数对象里直接new Exception，这里可以抛出需要的任何异常。
 		filter方法接受一个Predicate函数式接口实例作为参数，Predicate接口提供一个boolean test(T t)方法，包装对象为null，直接返回原Optional对象，
 test方法返回true时，filter方法也返回原Optional对象，test方法返回false，filter方法返回一个包装null的Optional对象。
-	
+
+
 												第十九章 Stream
 							（参考：https://lw900925.github.io/java/java8-stream-api.html）
+
 	Stream是Java8开始提供的一套处理集合的API接口，处理模型称为“流式处理”。Stream使用声明式的操作，类似于数据库的查询操作。Stream可以看作是对集合的
 包装，对外提供更方便的操作集合的接口。遍历集合时需要自己的程序获取集合中的元素，这称为外部迭代，Stream遍历集合不需要自己的程序再去手动获取元素，称为
 内部迭代。Stream除了提供一批更方便的API外，还可以选择使用并行处理，这可以极大地提高程序运行效率。Stream的一个特点是只能遍历一次，遍历结束后不能再次
@@ -2272,149 +2313,149 @@ test方法返回true时，filter方法也返回原Optional对象，test方法返
 			Object [] arr = Stream.of(1, 8, 5, 2).toArray();
 			Integer [] arr = Stream.of(1, 8, 5, 2).toArray((n)->new Integer[4]);
 	收集元素：
-		reduce()：对流中的元素归并计算:
-			Optional<Integer> result = Stream.of(1, 8, 5, 2).reduce((a, b)->a+b);
-			Integer result = Stream.of(1, 8, 5, 2).reduce(0,Integer::sum);
-		collect()：收集流中的元素：
-			long size = Stream.of(1, 8, 5, 2).collect(Collectors.counting());
-        	List<Integer> list = Stream.of(1, 8, 5, 2).collect(Collectors.toList());
-        	Optional<Integer> max = Stream.of(1, 8, 5, 2).collect(Collectors.maxBy(Comparator.comparing(Integer::valueOf)));
-			Optional<Integer> min = Stream.of(1, 8, 5, 2).collect(Collectors.minBy(Comparator.comparing(Integer::valueOf)));
-			综合统计：
-				public class Employee {
-					private long empId;
-					private long depId;
-					private String name;
-					private double sal;
-					private int level;
-					...
-				}
-				Employee emp1 = new Employee(1L,101L,"jack",8888D,6);
-				Employee emp2 = new Employee(2L,101L,"mike",9999D,7);
-				Employee emp3 = new Employee(3L,102L,"zake",8555D,6);
-				Employee emp4 = new Employee(4L,102L,"cake",9566D,7);
+	reduce()：对流中的元素归并计算:
+		Optional<Integer> result = Stream.of(1, 8, 5, 2).reduce((a, b)->a+b);
+		Integer result = Stream.of(1, 8, 5, 2).reduce(0,Integer::sum);
+	collect()：收集流中的元素：
+		long size = Stream.of(1, 8, 5, 2).collect(Collectors.counting());
+		List<Integer> list = Stream.of(1, 8, 5, 2).collect(Collectors.toList());
+		Optional<Integer> max = Stream.of(1, 8, 5, 2).collect(Collectors.maxBy(Comparator.comparing(Integer::valueOf)));
+		Optional<Integer> min = Stream.of(1, 8, 5, 2).collect(Collectors.minBy(Comparator.comparing(Integer::valueOf)));
+	综合统计：
+		public class Employee {
+			private long empId;
+			private long depId;
+			private String name;
+			private double sal;
+			private int level;
+			...
+		}
+		Employee emp1 = new Employee(1L,101L,"jack",8888D,6);
+		Employee emp2 = new Employee(2L,101L,"mike",9999D,7);
+		Employee emp3 = new Employee(3L,102L,"zake",8555D,6);
+		Employee emp4 = new Employee(4L,102L,"cake",9566D,7);
 
-				Stream<Employee> empStream = Stream.of(emp1,emp2,emp3,emp4);
-				DoubleSummaryStatistics salStatis = empStream.collect(Collectors.summarizingDouble(Employee::getSal));
-				System.out.println("count: "+salStatis.getCount());
-				System.out.println("sum: "+salStatis.getSum());
-				System.out.println("average: "+salStatis.getAverage());
-				System.out.println("max: "+salStatis.getMax());
-				System.out.println("min: "+salStatis.getMin());
-			连接字符串：String str = Stream.of("A", "B", "C", "D").collect(Collectors.joining(","));
-			分组：
-				Map<Long,List<Employee>> empMap = empStream.collect(Collectors.groupingBy(Employee::getDepId));
-				Map<String,List<Employee>> newMap = empStream.collect(Collectors.groupingBy(emp->{
-					if(emp.getSal()>9000){
-						return "A";
-					}
-					else if(emp.getSal()>8000){
-						return "B";
-					}
-					else {
-						return "C";
-					}
-				}));
-			多级分组：
-				Map<Long,Map<String,List<Employee>>> mapMap = empStream.collect(Collectors.groupingBy(Employee::getDepId,Collectors.groupingBy(emp->{
-					if(emp.getSal()>9000){
-						return "A";
-					}
-					else if(emp.getSal()>8000){
-						return "B";
-					}
-					else {
-						return "C";
-					}
-				})));
-			分组后统计各个分组的数据量：
-				Map<Long,Long> sizeMap = empStream.collect(Collectors.groupingBy(Employee::getDepId,Collectors.counting()));
-				//统计各个dep的sal最大的Employee
-				Map<Long,Employee> maxMap = empStream.collect(
-					Collectors.groupingBy(
-						Employee::getDepId,
-						Collectors.collectingAndThen(
-							Collectors.maxBy(Comparator.comparingDouble(Employee::getSal)),
-							Optional::get
-						)
-					)
-				);
-			需要注意，不能重复的收集流中的元素。
-			可以看出来，上面的写法太冗长了，不易理解，可以使用静态导入减少类名的引用。
-				import static java.util.stream.Collectors.*;
-				import static java.util.Comparator.*;
-				Map<Long,Employee> maxMap = empStream.collect(
-					groupingBy(
-						Employee::getDepId,
-						collectingAndThen(
-							maxBy(comparingDouble(Employee::getSal)),
-							Optional::get
-						)
-					)
-				);
+		Stream<Employee> empStream = Stream.of(emp1,emp2,emp3,emp4);
+		DoubleSummaryStatistics salStatis = empStream.collect(Collectors.summarizingDouble(Employee::getSal));
+		System.out.println("count: "+salStatis.getCount());
+		System.out.println("sum: "+salStatis.getSum());
+		System.out.println("average: "+salStatis.getAverage());
+		System.out.println("max: "+salStatis.getMax());
+		System.out.println("min: "+salStatis.getMin());
+	连接字符串：String str = Stream.of("A", "B", "C", "D").collect(Collectors.joining(","));
+	分组：
+		Map<Long,List<Employee>> empMap = empStream.collect(Collectors.groupingBy(Employee::getDepId));
+		Map<String,List<Employee>> newMap = empStream.collect(Collectors.groupingBy(emp->{
+			if(emp.getSal()>9000){
+				return "A";
+			}
+			else if(emp.getSal()>8000){
+				return "B";
+			}
+			else {
+				return "C";
+			}
+		}));
+	多级分组：
+		Map<Long,Map<String,List<Employee>>> mapMap = empStream.collect(Collectors.groupingBy(Employee::getDepId,Collectors.groupingBy(emp->{
+			if(emp.getSal()>9000){
+				return "A";
+			}
+			else if(emp.getSal()>8000){
+				return "B";
+			}
+			else {
+				return "C";
+			}
+		})));
+	分组后统计各个分组的数据量：
+		Map<Long,Long> sizeMap = empStream.collect(Collectors.groupingBy(Employee::getDepId,Collectors.counting()));
+		//统计各个dep的sal最大的Employee
+		Map<Long,Employee> maxMap = empStream.collect(
+			Collectors.groupingBy(
+				Employee::getDepId,
+				Collectors.collectingAndThen(
+					Collectors.maxBy(Comparator.comparingDouble(Employee::getSal)),
+					Optional::get
+				)
+			)
+		);
+	需要注意，不能重复的收集流中的元素。
+	可以看出来，上面的写法太冗长了，不易理解，可以使用静态导入减少类名的引用。
+		import static java.util.stream.Collectors.*;
+		import static java.util.Comparator.*;
+		Map<Long,Employee> maxMap = empStream.collect(
+			groupingBy(
+				Employee::getDepId,
+				collectingAndThen(
+					maxBy(comparingDouble(Employee::getSal)),
+					Optional::get
+				)
+			)
+		);
 	并行处理：
-		并行流使用集合的parallelStream()方法可以获取一个并行流。Java内部会将流的内容分割成若干个子部分，然后将它们交给多个线程并行处理，
-		这样就将工作的负担交给多核CPU的其他内核处理。
-		并行处理测试：（计算从1到n的累加值）（本地机器：i5-7500 3.40GHz, DDR4 2400MHz 16.00GB）
-			定义n：
-				long number = 20000000L;
-			测试方法：
-				重复测试10次，返回执行时间最短的一次的数据：
-				public static long sumTest(Function<Long,Long> func,long number){
-					long maxValue = Long.MAX_VALUE;
-					for(int i=0;i<10;i++){
-						long start = System.nanoTime();
-						long sum = func.apply(number);
-						long end = System.nanoTime();
-						System.out.println("result: "+sum);
-						long time = (end-start)/1000000;
-						if(time<maxValue){
-							maxValue = time;
-						}
-					}
-					return maxValue;
+	并行流使用集合的parallelStream()方法可以获取一个并行流。Java内部会将流的内容分割成若干个子部分，然后将它们交给多个线程并行处理，
+	这样就将工作的负担交给多核CPU的其他内核处理。
+	并行处理测试：（计算从1到n的累加值）（本地机器：i5-7500 3.40GHz, DDR4 2400MHz 16.00GB）
+	定义n：
+		long number = 20000000L;
+	测试方法：
+	重复测试10次，返回执行时间最短的一次的数据：
+		public static long sumTest(Function<Long,Long> func,long number){
+			long maxValue = Long.MAX_VALUE;
+			for(int i=0;i<10;i++){
+				long start = System.nanoTime();
+				long sum = func.apply(number);
+				long end = System.nanoTime();
+				System.out.println("result: "+sum);
+				long time = (end-start)/1000000;
+				if(time<maxValue){
+					maxValue = time;
 				}
-			单线程for循环：
-				public static long sumFor(long n){
-					long result = 0;
-					for(long i=1L;i<=n;i++){
-						result += i;
-					}
-					return result;
-				}
-				测试：
-				System.out.println("total time of sumFor with number:"+number+" is: "+sumTest(StreamDemo2::sumFor,number)+" 毫秒");
-				// total time of sumFor with number:20000000 is: 7 毫秒
-			单线程stream(使用iterate迭代)：
-				public static long sumStream(long n){
-					return Stream.iterate(1L,i->i+1).limit(n).reduce(0L,Long::sum);
-				}
-				测试：
-				System.out.println("total time of sumStream with number:"+number+" is: "+sumTest(StreamDemo2::sumStream,number)+" 毫秒");
-				// total time of sumStream with number:20000000 is: 147 毫秒
-			并行stream(使用iterate迭代):
-				public static long sumParallelStream(long n){
-					return Stream.iterate(1L,i->i+1).limit(n).parallel().reduce(0L,Long::sum);
-				}
-				测试：
-				System.out.println("total time of sumParallelStream with number:"+number+" is: "+sumTest(StreamDemo2::sumParallelStream,number)+" 毫秒");
-				// total time of sumParallelStream with number:20000000 is: 432 毫秒
-			单线程stream（不使用iterate迭代）：
-				public static long sumLongStream(long n){
-					return LongStream.rangeClosed(1L,n).reduce(0L,Long::sum);
-				}
-				测试：
-				System.out.println("total time of sumLongStream with number:"+number+" is: "+sumTest(StreamDemo2::sumLongStream,number)+" 毫秒");
-				// total time of sumLongStream with number:20000000 is: 7 毫秒
-			并行stream（不使用iterate迭代）：
-				public static long sumParallelLongStream(long n){
-					return LongStream.rangeClosed(1L,n).parallel().reduce(0L,Long::sum);
-				}
-				测试：
-				System.out.println("total time of sumParallelLongStream with number:"+number+" is: "+sumTest(StreamDemo2::sumParallelLongStream,number)+" 毫秒");
-				// total time of sumParallelLongStream with number:20000000 is: 2 毫秒
-		根据测试结果可以知道，iterate迭代会造成stream处理变慢，这是因为iterate迭代的后一个迭代依赖前一个迭代的结果，在使用iterate迭代时再启用多线程并行处理，需要线程间
-		传递迭代变量，所以变得更慢。使用LongStream.rangeClosed(1L,n)则可以实现分段处理，然后再启用并行处理，就可以实现更快的处理。
+			}
+			return maxValue;
+		}
+	单线程for循环：
+		public static long sumFor(long n){
+			long result = 0;
+			for(long i=1L;i<=n;i++){
+				result += i;
+			}
+			return result;
+		}
+	测试：
+		System.out.println("total time of sumFor with number:"+number+" is: "+sumTest(StreamDemo2::sumFor,number)+" 毫秒");
+		// total time of sumFor with number:20000000 is: 7 毫秒
+	单线程stream(使用iterate迭代)：
+		public static long sumStream(long n){
+			return Stream.iterate(1L,i->i+1).limit(n).reduce(0L,Long::sum);
+		}
+	测试：
+		System.out.println("total time of sumStream with number:"+number+" is: "+sumTest(StreamDemo2::sumStream,number)+" 毫秒");
+		// total time of sumStream with number:20000000 is: 147 毫秒
+	并行stream(使用iterate迭代):
+		public static long sumParallelStream(long n){
+			return Stream.iterate(1L,i->i+1).limit(n).parallel().reduce(0L,Long::sum);
+		}
+	测试：
+		System.out.println("total time of sumParallelStream with number:"+number+" is: "+sumTest(StreamDemo2::sumParallelStream,number)+" 毫秒");
+		// total time of sumParallelStream with number:20000000 is: 432 毫秒
+	单线程stream（不使用iterate迭代）：
+		public static long sumLongStream(long n){
+			return LongStream.rangeClosed(1L,n).reduce(0L,Long::sum);
+		}
+	测试：
+		System.out.println("total time of sumLongStream with number:"+number+" is: "+sumTest(StreamDemo2::sumLongStream,number)+" 毫秒");
+		// total time of sumLongStream with number:20000000 is: 7 毫秒
+	并行stream（不使用iterate迭代）：
+		public static long sumParallelLongStream(long n){
+			return LongStream.rangeClosed(1L,n).parallel().reduce(0L,Long::sum);
+		}
+	测试：
+		System.out.println("total time of sumParallelLongStream with number:"+number+" is: "+sumTest(StreamDemo2::sumParallelLongStream,number)+" 毫秒");
+		// total time of sumParallelLongStream with number:20000000 is: 2 毫秒
+	根据测试结果可以知道，iterate迭代会造成stream处理变慢，这是因为iterate迭代的后一个迭代依赖前一个迭代的结果，在使用iterate迭代时再启用多线程并行处理，需要线程间
+	传递迭代变量，所以变得更慢。使用LongStream.rangeClosed(1L,n)则可以实现分段处理，然后再启用并行处理，就可以实现更快的处理。
 		
 		
 
