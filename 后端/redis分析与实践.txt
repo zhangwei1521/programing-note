@@ -243,8 +243,99 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 			sort user_id by user_score_* get user_name_* store user_ranking_name
 			lrange user_ranking_name 0 -1
 	
+    redis管道：客户端将多个命令打包在一起，将它们一次性发送，客户端不需要等待单个命令的返回，服务器在执行完打包在一起的命令组后才返回
+结果给客户端管道。
+        #编辑pipeline命令文件
+        #vim pipeline.txt
+        set mykey myvalue
+        sadd myset value1 value2 value3
+        get mykey
+        scard myset
+        #使用unix2dos命令（需要安装dos2unix）将上面的文件的换行符\n转为\r\n（redis通信协议格式要求）
+        unix2dos pipeline.txt
+        #redis客户端发送上面的文件给redis服务端
+        cat pipeline.txt | redis-cli --pipe
 
-		
+    redis事务
+    redis使用 multi 命令开启事务，然后执行一组操作，最后使用 exec 命令提交事务。
+    redis事务不同于关系型数据库的事务，redis事务不一定保证一组操作的原子性：
+        第一种情况：
+            set foo bar
+            multi
+            set foo bar2
+            got foo
+            set foo bar3
+            exec
+            #返回错误：(error) EXECABORT Transaction discarded because of previous errors.
+            get foo
+            #返回 bar，说明事务中的某个命令错误将导致事务中的所有命令都失效
+        第二种情况：
+            multi
+            set foo bar
+            incr foo
+            set foo bar2
+            get foo
+            exec
+            #返回 1)OK 2)(error) 3)OK 4)bar2
+            #说明命令执行出错，将只影响其自身，事务中的其他不相关命令不受影响
+        第三种情况：
+            set foo bar
+            watch foo
+            multi
+            set foo bar2
+            get foo
+            #exec执行前在另一个redis连接中修改foo：set foo bar3
+            exec
+            #返回 (nil)，查看 get foo 返回 bar3
+            #说明使用 watch 监控的key，在事务中提交修改前会检查该key是否已经被修改，如果已经被修改，当前事务中的操作将失败
+    
+    redis发布订阅
+    redis支持客户端订阅一个或多个频道，客户端也可以向这些频道发布消息，订阅频道的客户端就会收到发布的消息：
+        #订阅(这些频道如果不存在就会被创建)
+        subscribe channel1  channel2
+        #发布
+        publish channel1 hello,redis
+        #订阅的客户端将收到消息：
+        1) message
+        2) channel1
+        3) hello,redis
+        #查看当前活跃的频道
+        pubsub channels
+    redis的发布订阅不支持持久化，频道、消息和发布订阅关系都不会被保存到磁盘上，如果服务器重启就会丢失这些信息。
+    如果向一个没有任何订阅的频道发送消息，消息将被丢弃。
+    
+    使用lua脚本：
+        #vim updatejson.lua
+        local id = KEYS[1]
+        local data = ARGV[1]
+        local dataSource = cjson.decode(data)
+
+        local retJson = redis.call('get',id)
+        if retJson == false then
+            retJson = {}
+        else
+            retJson = cjson.decode(retJson)
+        end
+
+        for k,v in pairs(dataSource) do
+            retJson[k] = v
+        end
+        redis.call('set',id,cjson.encode(retJson))
+        return redis.call('get',id)
+    使用 redis-cli 执行lua脚本：
+        redis-cli --eval updatejson.lua user:1521 , '{"name":"zhangwei","sex":"male","grade":"B"}'
+    注册lua脚本到redis服务器：
+        redis-cli script load "`cat updatejson.lua`"
+        #返回 脚本的序列号：bfad2c674ad8f2e76b4b3961fc80e386423d1f63
+    使用脚本序列号执行脚本：
+        redis-cli EVALSHA bfad2c674ad8f2e76b4b3961fc80e386423d1f63 1 user:1521 '{"grade":"A"}'
+	redis中lua脚本默认执行时长为5s（redis.conf中 lua-time-limit的值），如果超出此时间，可以使用script kill命令停止脚本的
+执行，如果脚本中包含写入的操作，就必须不保存地停止服务器：shutdown nosave
+    查询脚本是否登记：
+        script exists bfad2c674ad8f2e76b4b3961fc80e386423d1f63
+    redis服务器重启后需要重新登记脚本，因为登记脚本只是将脚本保存在服务器进程的脚本缓存空间中。
+    
+
 		
 		
 		
