@@ -331,6 +331,7 @@ defaults 包含rw、exec、auto、nouser、async
 	解压缩后不覆盖已有文件： unzip -n -d tempdir dirname.zip
 	touch test.txt
 	echo "hello" > !$		//!$表示上一个命令的参数
+	xz压缩包需要先解压缩 xz -d xxx.xz 后才能解包：tar xvf xxx.tar
 	
 	安装RPM包
 	RPM包是预先在Linux上编译并打包的文件，安装起来非常快捷
@@ -423,6 +424,19 @@ defaults 包含rw、exec、auto、nouser、async
 	~/.bashrc是用户的 bash shell配置文件，该文件包含专用于用户自己的bash shell的bash信息，用户登录时和每次打开新的bash shell时，
 该文件被读取执行。
 
+	使用防火墙firewalld
+	启动：
+		systemctl start firewalld 或 systemctl start firewalld.service
+	停止：
+		systemctl stop firewalld 或 systemctl stop firewalld.service
+	查看防火墙状态：
+		systemctl status firewalld
+	重启：
+		systemctl restart firewalld 或 systemctl restart firewalld.service
+	设置开机启动：
+		systemctl enable firewalld 或 systemctl enable firewalld.service
+	禁用开机启动：
+		systemctl disable firewalld.service 或 systemctl disable firewalld.service
 
 
 
