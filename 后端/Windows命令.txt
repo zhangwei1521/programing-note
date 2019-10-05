@@ -11,7 +11,10 @@ PowerShell环境的4种运行权限：
 	Unrestricted——允许所有的script运行
 解决powershell下使用curl访问http报错：powershell:Invoke-WebRequest : 请求被中止: 未能创建 SSL/TLS 安全通道
 	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
+查看powershell版本：
+    Get-Host | Select-Object Version
+下载 Windows Management Framework 5.15.0 地址：
+    https://www.microsoft.com/en-us/download/details.aspx?id=54616
 PowerShell中安装scoop：
 1、制定执行策略，确认当前用户远程签名范围
 set-executionpolicy remotesigned -s cu
