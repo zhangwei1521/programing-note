@@ -97,6 +97,30 @@ Survivor块，每次都在Eden和一个Survivor中创建对象，回收时将存
 	64位虚拟机默认为server模式启动，不能切换为client模式。配置文件为：JAVA_HOME/jre/lib/amd64/jvm.cfg
 	Client模式启动速度较快，Server模式启动较慢。Client模式启动的JVM采用的是轻量级的虚拟机，Server模式启动的JVM采用的是重量级的虚拟机，对程序采用了更多的优化。
 	
+	GC日志
+		[GC (System.gc()) [PSYoungGen: 22032K->632K(29696K)] 42512K->21120K(98304K), 0.0017566 secs] [Times: user=0.00 sys=0.00, real=0.00 secs] 
+		[Full GC (System.gc()) [PSYoungGen: 632K->0K(29696K)] [ParOldGen: 20488K->526K(68608K)] 21120K->526K(98304K), 
+		[Metaspace: 2692K->2692K(1056768K)], 0.0123980 secs] [Times: user=0.02 sys=0.00, real=0.01 secs] 
+		Heap
+		 PSYoungGen      total 29696K, used 22544K [0x00000000fdf00000, 0x0000000100000000, 0x0000000100000000)
+		  eden space 25600K, 88% used [0x00000000fdf00000,0x00000000ff504208,0x00000000ff800000)
+		  from space 4096K, 0% used [0x00000000ffc00000,0x00000000ffc00000,0x0000000100000000)
+		  to   space 4096K, 0% used [0x00000000ff800000,0x00000000ff800000,0x00000000ffc00000)
+		 ParOldGen       total 68608K, used 20480K [0x00000000f9c00000, 0x00000000fdf00000, 0x00000000fdf00000)
+		  object space 68608K, 29% used [0x00000000f9c00000,0x00000000fb000010,0x00000000fdf00000)
+		 Metaspace       used 2698K, capacity 4486K, committed 4864K, reserved 1056768K
+		  class space    used 297K, capacity 386K, committed 512K, reserved 1048576K
+	JDK1.8 64位JDK server模式默认使用Parallel作为新生代收集器，默认使用Parallel Old作为老年代收集器。
+	认识GC日志：
+	GC (System.gc())表示这是通过 System.gc()触发的新生代GC，如果是由虚拟机自动触发的GC就没有(System.gc())部分，PSYoungGen表示这是新生代的Parallel收集器工作时打印
+的日志，22032K->632K(29696K)表示GC前新生代已用内存为22032K，GC后新生代使用内存为632K，括号里(29696K)表示新生代总内存大小。42512K->21120K(98304K)表示GC前堆空间已使
+用大小为42512K，GC后堆空间已使用内存大小为21120K，括号里(98304K)表示堆空间总内存大小。0.0017566 secs表示GC时间，[Times: user=0.00 sys=0.00, real=0.00 secs] 表示GC
+过程中用户线程执行时间、GC线程执行时间和总时间。
+	Full GC (System.gc())表示这是通过 System.gc()触发的新生代GC时新生代内存不足引发的老年代GC和新生代对象转移到老年代，ParOldGen表示这是Parallel Old收集器工作打印
+的日志，20488K->526K(68608K)表示GC前老年代已用内存为20488K，GC后新生代使用内存为526K，括号里(68608K)表示老年代总内存大小。
+	Metaspace表示元空间的数据，即方法区（以前的永久代）的GC数据。
+	Heap部分详细的输出了堆空间的内存内容，包括新生代的eden区和两个survivor区（from和to），以及老年代和元空间。
+	
 	ClassLoader
 	虚拟机在加载类阶段，使用几种不同的 ClassLoader 加载程序执行需要的类信息，JVM 中内置了三个重要的 ClassLoader，分别是 BootstrapClassLoader、ExtensionClassLoader 和 
 AppClassLoader。
