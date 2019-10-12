@@ -24,6 +24,14 @@ StackOverflowError，如果虚拟机栈的大小可以动态增加，当所能�
 就是 JVM 的元空间。当一个类加载器被垃圾回收器标记为不再存活，其对应的元空间会被回收。
 	直接内存不属于虚拟机规范的内容，但是在NIO中，通过Channel和Buffer进行IO操作时，就会通过 native 函数库分配一块堆外内存，堆空间中的 DirectByteBuffer
 对象直接引用这块堆外内存，所以可以通过操作 DirectByteBuffer 对象操作堆外内存提高性能。如果请求的直接内存不能被分配，就会抛出 OutOfMemoryError。
+	虚拟机参数设置：
+		java -Xmx100M -Xms50M -Xmn30M -Xss128k Demo1
+		java -jar -Xmx1024M -Xms1024M -Xmn512M Demo2.jar
+	参数：
+		-Xmx100M	//设置堆最大内存为100MB
+		-Xms50M		//设置堆初始内存为50MB
+		-Xmn30M		//设置堆中新生代内存为30MB
+		-Xss128k	//设置每个用户线程的虚拟机栈大小为128KB
 
 
 	第二章 垃圾回收
