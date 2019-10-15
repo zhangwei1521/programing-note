@@ -25,14 +25,16 @@ StackOverflowError，如果虚拟机栈的大小可以动态增加，当所能�
 	直接内存不属于虚拟机规范的内容，但是在NIO中，通过Channel和Buffer进行IO操作时，就会通过 native 函数库分配一块堆外内存，堆空间中的 DirectByteBuffer
 对象直接引用这块堆外内存，所以可以通过操作 DirectByteBuffer 对象操作堆外内存提高性能。如果请求的直接内存不能被分配，就会抛出 OutOfMemoryError。
 	虚拟机参数设置：
-		java -Xmx100M -Xms50M -Xmn30M -Xss128k Demo1
-		java -jar -Xmx1024M -Xms1024M -Xmn512M Demo2.jar
+		java -Xmx100M -Xms50M -Xmn30M -Xss128k -XX:NewRatio=2 -XX:+UseSerialGC Demo1
+		java -jar -Xmx1024M -Xms1024M -Xmn512M -XX:SurvivorRatio=8 Demo2.jar
 	参数：
 		-Xmx100M	//设置堆最大内存为100MB
 		-Xms50M		//设置堆初始内存为50MB
 		-Xmn30M		//设置堆中新生代内存为30MB
 		-Xss128k	//设置每个用户线程的虚拟机栈大小为128KB
-
+		-XX:NewRatio=2			//设置新生代和老年代空间占比为1:2
+		-XX:SurvivorRatio=8		//设置Survivor块和Eden块空间占比为1:8
+		-XX:+UseSerialGC		//设置新生代使用Serial收集器
 
 	第二章 垃圾回收
 
@@ -65,7 +67,7 @@ GC线程就会回收这个对象。一个对象的finalize只会被执行一次�
 	复制算法中堆空间（通常是新生代）被分为两部分（这两块内存可以不一样大），创建对象总是在其中一块，回收时将存活的对象复制到另一块，然后将原来创建对象的那一块
 整体清除。这种算法的问题在于保存对象的空间被人为地减小了，而且复制对象也会产生额外的开销。hotspot在新生代使用复制算法，将新生代空间分为3块：一个Eden块和两个
 Survivor块，每次都在Eden和一个Survivor中创建对象，回收时将存活的对象复制到另一个Survivor块中，然后回收前两块，下次创建对象就在保存复制对象的Survivor块和Eden块
-中进行。默认配置中，Eden块占新生代的80%，每个Survivor占10%。不够怎么划分复制空间和生产空间，都不能规避一个问题，回收后存活对象需要的空间超过了复制空间的大小。
+中进行。默认配置中，Eden块占新生代的80%，每个Survivor占10%。不管怎么划分复制空间和生产空间，都不能规避一个问题，回收后存活对象需要的空间超过了复制空间的大小。
 这种问题通常采用空间分代来解决，hotspot中使用老年代来处理。
 	标记-整理算法在回收不可用对象时不是直接清除，而是将存活对象移动到空间的一端，设置一个指针指向移动后存活对象空间的边界，然后清除该指针另一侧的空间。
 	分代收集算法不是一种新的回收方式，而是将整个堆空间根据对象的存活周期分为多个块，在各个块采用合适的收集算法。jvm一般将堆空间分为新生代和老年代，新生代采用
@@ -84,7 +86,6 @@ Survivor块，每次都在Eden和一个Survivor中创建对象，回收时将存
 		-XX:GCTimeRatio n			//大于0小于100 GC时间占比计算公式：1/(1+n)
 	Parallel开启自动调节模式：
 		-XX:+UseAdaptiveSizePolicy
-	如果老年代使用CMS收集器，新生代就只能使用ParNew收集器。
 	Serial Old是Serial的老年代版本，使用标记-整理算法。
 	Parallel Old是Parallel的老年代版本。
 	CMS收集器用于老年代的GC，采用标记-清除算法（Concurrent Mark Sweep）。CMS的目标是实现最短回收停顿时间，所以比较适合那些重视服务响应速度的应用。CMS将GC过程分为
@@ -96,10 +97,13 @@ Survivor块，每次都在Eden和一个Survivor中创建对象，回收时将存
 	CMS收集器GC的4个阶段中只有耗时较短的初始标记和重新标记需要停止用户线程，所以能获得很短的回收停顿时间。
 	CMS收集器的问题：并发清除期间可能产生浮动垃圾，需要到下一次GC才能回收；另一个问题是标记-清除算法会导致空间碎片问题。
 	CMS收集器虽然可以做到并发回收，但是并发回收也会占用CPU资源，所以仍然存在GC时系统变慢的问题。
+	如果老年代使用CMS收集器，新生代就只能使用ParNew收集器。
 	G1收集器是一种新的收集器，采用标记-整理算法，而且G1可以管理整个堆内存，也可以在使用分代模型时只管理老年代或新生代的GC。G1可以实现可预测的回收停顿，指定运行时GC
 的时间占比。
 	G1收集器将堆空间划分为多个大小相等的独立区域，称为Region，GC时不需要再对整个堆进行处理，而是只处理一部分Region。G1跟踪每个Region的垃圾堆积价值（回收空间和时间的
 经验值，即历史GC综合值），每次选择回收价值最大的Region进行GC。
+	JDK1.8 64位JDK server模式默认使用Parallel作为新生代收集器，默认使用Parallel Old作为老年代收集器。
+
 	jvm运行模式：
 	32位虚拟机默认为client模式启动，可以通过修改配置文件（JAVA_HOME/jre/lib/i386/jvm.cfg）和启动参数切换为server模式。
 	64位虚拟机默认为server模式启动，不能切换为client模式。配置文件为：JAVA_HOME/jre/lib/amd64/jvm.cfg
@@ -118,7 +122,6 @@ Survivor块，每次都在Eden和一个Survivor中创建对象，回收时将存
 		  object space 68608K, 29% used [0x00000000f9c00000,0x00000000fb000010,0x00000000fdf00000)
 		 Metaspace       used 2698K, capacity 4486K, committed 4864K, reserved 1056768K
 		  class space    used 297K, capacity 386K, committed 512K, reserved 1048576K
-	JDK1.8 64位JDK server模式默认使用Parallel作为新生代收集器，默认使用Parallel Old作为老年代收集器。
 	认识GC日志：
 	GC (System.gc())表示这是通过 System.gc()触发的新生代GC，如果是由虚拟机自动触发的GC就没有(System.gc())部分，PSYoungGen表示这是新生代的Parallel收集器工作时打印
 的日志，22032K->632K(29696K)表示GC前新生代已用内存为22032K，GC后新生代使用内存为632K，括号里(29696K)表示新生代总内存大小。42512K->21120K(98304K)表示GC前堆空间已使
