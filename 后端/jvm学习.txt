@@ -17,6 +17,10 @@ StackOverflowError，如果虚拟机栈的大小可以动态增加，当所能�
 大小必须是8字节的整数倍，对象头部分通常是8个字节，而实例数据区可能不是8字节的整数倍，所以需要填充区来补齐空间。创建对象后对象的初始数据会被设置为默认值，
 然后才根据用户代码设置对象字段的值。在堆空间中创建对象，可以设置根据线程先创建线程对象块，然后在线程对象块内创建对象，也可以设置不创建线程对象块，这样就
 需要同步创建对象的操作。堆是进程垃圾回收的主要作用区，堆一般都被设计为可扩展的，但如果可能内存被用完，就会发生 OutOfMemoryError。
+	访问对象：JVM规范没有规定虚拟机栈的reference应该以什么方式去访问引用的对象，目前主流的访问方式有使用句柄和直接指针两种。使用句柄访问实现时，虚拟机
+会在堆中创建一个句柄池，虚拟机栈的reference存储句柄池中的句柄的地址，句柄中则保存对象的实例数据和类型数据的具体地址。使用直接指针实现时，reference就直接
+保存对象的地址，这时堆中的对象就需要保存对象的类型数据的相关信息。使用句柄的好处在于当堆中对象移动后，只需要修改句柄的实例数据指针，虚拟机栈的reference不
+需要修改，使用直接指针则需要在移动对象后修改reference的内容，但是使用直接指针要比使用句柄访问对象的数据更快。Hotspot使用直接指针要访问对象数据。
 	方法区保存加载的类的信息（字段、方法等）、字节码指令、运行时常量池等。方法区可以进行垃圾回收，也可以不进行，jvm 规范没有明确规定，但是卸载掉不使用的
 类通常有助于改善程序性能。方法区内存用完且不能再分配时将抛出 OutOfMemoryError。JDK 1.8 之前 hotspot将方法区实现为堆空间中的永久代。JDK 1.8 用元数据空间
 代替了永久代，元数据空间是一个与堆不相连的本地内存区域，元空间的最大可分配空间理论上就是系统可用的内存空间，同时对元数据空间的管理独立于 JVM 对堆的管理
@@ -147,16 +151,76 @@ AppClassLoader。
 	可以通常修改 BootstrapClassLoader 的加载路径，让 BootstrapClassLoader 加载其他的类：
 		// /a:表示追加路径到 BootstrapClassLoader 的加载路径
 		java -Xbootclasspath/a:d:tem_file VmDemo1
-		
+
+
+	JVM监控工具：
+	jps(Java Virtual Machine Process Status Tool) ： jps主要用来输出JVM中运行的进程状态信息。语法格式如下：
+		jps [option] [hostid]		//不指定hostid就默认为当前主机或服务器。
+	option有效值：
+		-q 不输出类名、Jar名和传入main方法的参数
+		-m 输出传入main方法的参数
+		-l 输出main类或Jar的全限名
+		-v 输出传入JVM的参数
+	使用：
+		jps -m -l -v
 	
+	 jstack：主要用来查看某个Java进程内的线程堆栈信息。语法格式如下：
+	 	jstack [option] pid
+		jstack [option] executable core
+		jstack [option] [server-id@]remote-hostname-or-ip
+	option有效值：
+		-l long listings，打印出额外的锁信息，在发生死锁时可以用jstack -l pid来观察锁持有情况
+		-m mixed mode，输出Java堆栈信息，同时输出C/C++堆栈信息（比如Native方法）
+	使用：
+		jstack pid | grep 0xtid
+	
+	 jmap：用来查看堆内存使用状况，一般结合jhat使用，语法格式如下：
+	 	jmap [option] pid
+		jmap [option] executable core
+		jmap [option] [server-id@]remote-hostname-or-ip
+	option有效值：
+		-heap 查看进程堆内存使用情况，包括使用的GC收集器、堆配置参数和各代中堆内存使用情况。
+		-clstats 打印使用的类加载器信息
+		-histo 打印堆内存中的对象数目、大小统计柱状图（列表），-histo:live只打印存活对象数据
+		-dump:<option> 把进程内存使用情况dump到文件中
+	使用：
+		jmap -heap 7544
+		jmap -dump:format=b,file=tem_file\dump1.dat 7544
+	使用jhat查看dump出来的文件：
+		jhat -port 9998 tem_file\dump1.dat
+	如果dump文件太大，需要设置较大的可用堆空间：
+		jhat -J-Xmx512M -port 9998 tem_file\dump1.dat
+	在浏览器中访问9998端口查看dump文件内容。
 
+	jstat：JVM统计监测工具，语法格式：
+		jstat [ generalOption | outputOptions vmid [interval[s|ms] [count]] ]
+	//vmid是Java虚拟机ID，通常就是进程ID，interval是采样时间间隔。count是采样数目。
+	统计GC信息：
+		jstat -gc 7544 250 4
+		表示每隔250ms采集一次，总共采集4次。
+	输出结果(JDK8)：
+		  S0C     S1C    S0U    S1U      EC       EU        OC         OU       MC      MU     CCSC   CCSU      YGC   YGCT   FGC      FGCT     GCT
+		23040.0 23040.0  0.0    0.0   303104.0 131445.0  699392.0   46369.5   65280.0 63552.4 7936.0 7604.5     51    0.322   6      0.658    0.980
+		23040.0 23040.0  0.0    0.0   303104.0 131445.0  699392.0   46369.5   65280.0 63552.4 7936.0 7604.5     51    0.322   6      0.658    0.980
+		23040.0 23040.0  0.0    0.0   303104.0 131445.0  699392.0   46369.5   65280.0 63552.4 7936.0 7604.5     51    0.322   6      0.658    0.980
+		23040.0 23040.0  0.0    0.0   303104.0 131445.0  699392.0   46369.5   65280.0 63552.4 7936.0 7604.5     51    0.322   6      0.658    0.980
+	S0C、S1C表示Survivor0和Survivor1区总内存容量，S0U、S1U表示Survivor0和Survivor1区已使用内存容量，EC、EU表示Eden区总内存容量和已使用内存，OC、OU表示老年代
+总内存容量和已使用内存，MC、MU表示元空间总内存容量和已使用内存，CCSC、CCSU表示压缩类总内存空间大小和已使用内存，YGC、YGCT表示年轻代垃圾回收次数和消耗时间，FGC、
+FGCT表示老年代垃圾回收次数和消耗时间，GCT表示垃圾回收消耗总时间。
+	统计类加载:
+		jstat -class 7544
+	统计编译信息：
+		jstat -compiler 7544
 
-
-
-
-
-
-
+	hprof：用于展现CPU使用率，统计堆内存使用情况，语法格式：
+		java -agentlib:hprof[=options] ToBeProfiledClass
+		java -Xrunprof[:options] ToBeProfiledClass
+		javac -J-agentlib:hprof[=options] ToBeProfiledClass
+	统计CPU使用信息( CPU Usage Sampling Profiling(cpu=samples))：
+		java -agentlib:hprof=cpu=samples,interval=20,depth=3 Hello
+	//每隔20毫秒采样CPU消耗信息，堆栈深度为3，生成的profile文件名称是java.hprof.txt，保存在当前目录下。
+	CPU Usage Times Profiling(cpu=times)使用字节码注入技术,能够获得更加细粒度的CPU消耗信息:
+		javac -J-agentlib:hprof=cpu=times Hello.java
 
 
 

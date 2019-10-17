@@ -423,6 +423,7 @@ defaults 包含rw、exec、auto、nouser、async
 	~/.bash_profile是各个用户自己的配置文件，这个文件保存专用于自己使用的shell信息，当用户登录时，这个文件被读取执行一次。
 	~/.bashrc是用户的 bash shell配置文件，该文件包含专用于用户自己的bash shell的bash信息，用户登录时和每次打开新的bash shell时，
 该文件被读取执行。
+	修改bashrc文件出现错误导致ls等不可用时，可以使用export PATH=/usr/bin:/usr/sbin:/bin:/sbin先临时修改PATH使ls等可用。
 
 	使用防火墙firewalld
 	启动：
