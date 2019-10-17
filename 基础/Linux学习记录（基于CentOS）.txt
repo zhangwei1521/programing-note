@@ -287,6 +287,14 @@ defaults 包含rw、exec、auto、nouser、async
 		vi /etc/vimrc
 		新增一行：
 			set ts=2
+	以十六进制编辑二进制文件：
+	打开文件：
+		vim -b filename
+	命令模式下输入进入十六进制模式：
+		:%!xxd
+	保存后返回正常模式：
+		:%!xxd -r
+	
 
 	压缩和打包
 	gzip压缩工具：gizp [-d#] filename -d用于解压，-#用于设置压缩级别，1最差，9最好，默认为6
