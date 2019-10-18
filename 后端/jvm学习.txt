@@ -222,12 +222,250 @@ FGCT表示老年代垃圾回收次数和消耗时间，GCT表示垃圾回收消�
 	CPU Usage Times Profiling(cpu=times)使用字节码注入技术,能够获得更加细粒度的CPU消耗信息:
 		javac -J-agentlib:hprof=cpu=times Hello.java
 
+	class文件结构：
+	Java在设计初期就采用了两套规范，即Java语言规范和JVM虚拟机规范，实现平台无关的特性主要依靠虚拟机屏蔽不同硬件、操作系统间的差异，对于虚拟机而言，class文件就是
+可执行文件，虚拟机不关心也不知道class文件是如何创建的，所以完全可以使用另一种语法编写程序源码，只要能把这些源码编译为规范的class文件，JVM就能理解执行。
+	class文件是以字节（8位二进制位）为基本单位的二进制文件，字节之间遵循严格的顺序规范，逻辑单元由连续的字节构成。下面是class文件的逻辑单元：
+		ClassFile{
+			u4				magic;
+			u2				minor_version;
+			u2				major_version;
+			u2				constant_pool_count;
+			cp_info			constant_pool[constant_pool_count-1];
+			u2				access_flags;
+			u2 				this_class;
+			u2				super_class;
+			u2 				interfaces_count;
+			u2				interfaces[interfaces_count];
+			u2 				fields_count;
+			fields_info 	fields[fields_count];
+			u2 				methods_count;
+			method_info 	methods[methods_count];
+			u2 				attributes_count;
+			attribute_info 	attributes[attributes_count];
+		}
+	依次是4字节的魔数，固定为cafe babe，2字节的次版本号（通常为 0000），2字节的主版本号（jdk1.8为 0034），2字节的常量池中常量个数，然后是常量池，常量池中常量实际
+为前面的constant_pool_count-1。常量池后面是2字节的类访问限制描述符，然后是2字节的当前类名（引用常量池中常量），然后是2字节的当前类的父类类名（引用常量池中常量），然后
+是2字节的当前类接口数量，然后是当前类的接口名（每2个字节引用常量池中的一个常量表示一个接口，如果当前类没有接口就没有这段数据结构），然后是2字节的类字段和实例字段数量，
+然后是字段表，字段表后是2字节的方法数量，然后是方法表，然后是2字节的类属性表数量，然后是类的属性表（这里的属性不是类或对象的变量）。
+	常量池解析：
+	常量池中的常量，具有不同的类型，不同类型的常量结构（长度）不完全相同，但是都有一个字节作为tag信息，用于标识常量类型，下面是各种类型常量的说明：
+		CONSTANT_Utf8_info，tag为1，表示UTF-8编码的字符串，其他内容包括2字节的字符串长度部分和字符串内容部分（长度由前面的字符串长度部分决定，单位为字节）；
+		CONSTANT_Integer_info，tag为3，表示整形字面量，其他部分为4字节的int型常量值；
+		CONSTANT_Float_info，tag为4，表示浮点型字面量，其他部分为4字节的float型常量值；
+		CONSTANT_Long_info，tag为5，表示长整形字面量，其他部分为8字节的long型常量值；
+		CONSTANT_Double_info，tag为6，表示双精度字面量，其他部分为8字节的double型常量值；
+		CONSTANT_Class_info，tag为7，表示类或接口的符号引用，其他部分为2字节的类或接口全限定名常量项的索引；
+		CONSTANT_String_info，tag为8，表示字符串类型的字面量，其他部分为2字节的字符串常量项的索引；
+		CONSTANT_Fieldref_info，tag为9，表示字段的符号引用，其他部分包括2字节的字段名常量（CONSTANT_Class_info类型）索引和2字节的字段描述符常量（CONSTANT_NameAndType_info）索引；
+		CONSTANT_Methodref_info，tag为10，表示类中方法的符号引用，其他部分包括2字节的方法名常量（CONSTANT_Class_info类型）索引和2字节的方法描述符常量（CONSTANT_NameAndType_info）索引；
+		CONSTANT_InterfaceMethodref_info，tag为11，表示接口中方法的符号引用，其他部分包括2字节的方法名常量（CONSTANT_Class_info类型）索引和2字节的方法描述符常量（CONSTANT_NameAndType_info）索引；
+		CONSTANT_NameAndType_info，tag为12，表示字段和方法的名称以及类型的符号引用，其他部分包括2字节的名称常量索引和2字节的描述常量索引。
+	类(接口)访问限制描述:
+		值		内部名				含义
+		0x0001	ACC_PUBLIC		是否为public类型
+		0x0010	ACC_FINAL		是否被声明为final，只有类可以设置
+		0x0020	ACC_SUPER		JDK1.0.2以后这个标志都为真
+		0x0200	ACC_INTERFACE	标识这是一个接口
+		0x0400	ACC_ABSTRACT	是否为abstract类型，对于接口或抽象类来说，此标志值为真，其他类值为假
+		0x1000	ACC_SYNTHETIC	标识这个类并非由用户代码产生
+		0x2000	ACC_ANNOTATION	标识这是一个注解
+		0x4000	ACC_ENUM		标识这是一个枚举
+	实际的访问限制符可能有多个，比如public final，这个单元就是对应值的和，public final对应的值为0x0011，等于0x0001+0x0010
+	字段表结构解析：
+		field_info{
+			u2 				access_flags;
+			u2				name_index;
+			u2 				descriptor_index;
+			u2 				attributes_count;
+			attribute_info	attributes[attributes_count];
+		}
+	方法表结构和字段表结构完全相同。
+	字段、方法访问限制符描述：
+		值		内部名				含义
+		0x0001	ACC_PUBLIC		public类型
+		0x0002	ACC_PRIVATE		private类型
+		0x0004	ACC_PROTECTED	protected类型
+		0x0008	ACC_STATIC		static类型
+		0x0010	ACC_FINAL		final类型
+		0x0040	ACC_VOLATILE	volatile类型
+		0x0080	ACC_TRANSIENT	transient类型
+		0x1000	ACC_SYNTHETIC	标识这个字段（方法）并非由用户代码产生
+		0x4000	ACC_ENUM		枚举类型
+	属性表（attribute_info）解析(不同属性的属性格式有部分不同，下面是所有属性公有的部分)：
+		attribute_info{
+			u2 				attribute_name_index;        //属性名称索引
+			u4				attribute_length;            //属性长度
+			//...
+		}
+	有效属性：
+		属性名称			使用位置				含义
+		Code				方法表				Java代码编译成的字节码指令
+		ConstantValue		字段表				final关键字定义的常量值
+		Deprecated		类、方法表、字段表		 被声明为deprecated的方法和字段
+		Exceptions			方法表				方法抛出的异常
+		InnerClasses		类文件				内部类列表
+		LineNumberTable		Code属性			Java源码的行号与字节码指令的对应关系
+		LocalVariableTable	Code属性			方法的局部变量描述
+		SourceFile			类文件				源文件名称
+		Synthetic	类、方法表、字段表			 标识方法或字段为编译器自动生成的
+	Code属性结构解析：
+		Code_attribute{
+			u2 				attribute_name_index;
+			u4				attribute_length;
+			u2 				max_stack;
+			u2 				max_locals;
+			u4				code_length;
+			u1				code[code_length];
+			u2				exception_table_length;
+			exception_info	exception_table;
+			u2				attributes_count;
+			attribute_info	attributes[attributes_count];
+		}
+	Code属性的属性表中通常会有LineNumberTable、LocalVariableTable属性。
+	LineNumberTable属性结构解析：
+		LineNumberTable_attribute {
+			u2 				attribute_name_index;
+			u4 				attribute_length;
+			u2 				line_number_table_length;
+			{   
+				u2 start_pc;            //字节码行号
+				u2 line_number;         //java源码行号
+			} line_number_table[line_number_table_length];
+		}
+	SourceFile属性结构解析：
+		SourceFile_attribute{
+			u2 				attribute_name_index;
+			u4 				attribute_length;
+			u2  			sourcefile_index;
+		}
+	
+	实例：Hello.java
+		public class Hello {
+			private static String HELLO_WORLD = "Hello World!";
+			public static void main(String[] args) {
+				System.out.println(HELLO_WORLD);
+			}
+		}
+	编译后class文件：
+		cafe babe 0000 0034 0022 0a00 0700 1309 0014 0015 0900 0600 160a 0017 0018 0800 1907 001a 0700 1b01 000b 4845 4c4c 4f5f
+		574f 524c 4401 0012 4c6a 6176 612f 6c61	6e67 2f53 7472 696e 673b 0100 063c 696e	6974 3e01 0003 2829 5601 0004 436f 6465
+		0100 0f4c 696e 654e 756d 6265 7254 6162	6c65 0100 046d 6169 6e01 0016 285b 4c6a	6176 612f 6c61 6e67 2f53 7472 696e 673b
+		2956 0100 083c 636c 696e 6974 3e01 000a	536f 7572 6365 4669 6c65 0100 0a48 656c	6c6f 2e6a 6176 610c 000a 000b 0700 1c0c
+		001d 001e 0c00 0800 0907 001f 0c00 2000	2101 000c 4865 6c6c 6f20 576f 726c 6421	0100 0548 656c 6c6f 0100 106a 6176 612f
+		6c61 6e67 2f4f 626a 6563 7401 0010 6a61	7661 2f6c 616e 672f 5379 7374 656d 0100	036f 7574 0100 154c 6a61 7661 2f69 6f2f
+		5072 696e 7453 7472 6561 6d3b 0100 136a	6176 612f 696f 2f50 7269 6e74 5374 7265	616d 0100 0770 7269 6e74 6c6e 0100 1528
+		4c6a 6176 612f 6c61 6e67 2f53 7472 696e 673b 2956 0021 0006 0007 0000 0001 000a	0008 0009 0000 0003 0001 000a 000b 0001
+		000c 0000 001d 0001 0001 0000 0005 2ab7	0001 b100 0000 0100 0d00 0000 0600 0100	0000 0100 0900 0e00 0f00 0100 0c00 0000
+		2600 0200 0100 0000 0ab2 0002 b200 03b6	0004 b100 0000 0100 0d00 0000 0a00 0200	0000 0400 0900 0500 0800 1000 0b00 0100
+		0c00 0000 1e00 0100 0000 0000 0612 05b3	0003 b100 0000 0100 0d00 0000 0600 0100	0000 0200 0100 1100 0000 0200 12
+	根据各单元长度分段：
+		cafe babe		//magic
+		0000			//minor_version=0
+		0034			//major_version=52,即jdk1.8
+		0022			//constant_pool_count，共34-1=33个常量
+		//常量池开始
+		0a 0007 0013	1 //CONSTANT_Methodref_info,后面是方法名常量索引和方法描述符常量索引，即第7个常量和第19个常量，
+		09 0014 0015	2 //CONSTANT_Fieldref_info,后面是字段名常量索引和字段描述符常量索引，即第20个常量和第21个常量，
+		09 0006 0016	3 //CONSTANT_Fieldref_info,后面是字段名常量索引和字段描述符常量索引，即第6个常量和第22个常量，
+		0a 0017 0018 	4 //CONSTANT_Methodref_info,后面是方法名常量索引和方法描述符常量索引，即第23个常量和第24个常量，
+		08 0019 		5 //CONSTANT_String_info,后面是字符串常量索引，即第25个索引，即 Hello World!
+		07 001a 		6 //CONSTANT_Class_info，后面是类或接口全限定名常量项索引，即第26个常量，即 Hello
+		07 001b			7 //CONSTANT_Class_info，后面是类或接口全限定名常量项索引，即第27个常量，即 java/lang/Object
+		01 000b 4845 4c4c 4f5f 574f 524c 44								8	HELLO_WORLD
+		01 0012 4c6a 6176 612f 6c61 6e67 2f53 7472 696e 673b			9	Ljava/lang/String;
+		01 0006 3c69 6e69 743e											10	<init>
+		01 0003 2829 56													11	()V
+		01 0004 436f 6465												12	Code
+		01 000f 4c69 6e65 4e75 6d62 6572 5461 626c 65					13	LineNumberTable
+		01 0004 6d61 696e												14	main
+		01 0016 285b 4c6a 6176 612f 6c61 6e67 2f53 7472 696e 673b 2956	15	([Ljava/lang/String;)V
+		01 0008 3c63 6c69 6e69 743e										16	<clinit>
+		01 000a 536f 7572 6365 4669 6c65 								17	SourceFile
+		01 000a 4865 6c6c 6f2e 6a61 7661								18	Hello.java
+		0c 000a 000b	19 //CONSTANT_NameAndType_info，后面是名称常量索引和描述常量索引，即第10个常量和第11个常量，即 <init>和()V
+		07 001c 		20 //CONSTANT_Class_info，后面是类或接口全限定名常量项索引，即第28个常量，即 java/lang/System
+		0c 001d 001e	21 //CONSTANT_NameAndType_info，后面是名称常量索引和描述常量索引，即第29个常量和第30个常量，即 out和Ljava/io/PrintStream;
+		0c 0008 0009	22 //CONSTANT_NameAndType_info，后面是名称常量索引和描述常量索引，即第8个常量和第9个常量，即 HELLO_WORLD和Ljava/lang/String;
+		07 001f 		23 //CONSTANT_Class_info，后面是类或接口全限定名常量项索引，即第31个常量，即 java/io/PrintStream
+		0c 0020 0021	24 //CONSTANT_NameAndType_info，后面是名称常量索引和描述常量索引，即第32个常量和第32个常量，即 println和(Ljava/lang/String;)V
+		01 000c 4865 6c6c 6f20 576f 726c 6421							25	Hello World!
+		01 0005 4865 6c6c 6f 											26	Hello
+		01 0010 6a61 7661 2f6c 616e 672f 4f62 6a65 6374					27	java/lang/Object
+		01 0010 6a61 7661 2f6c 616e 672f 5379 7374 656d					28	java/lang/System
+		01 0003 6f75 74													29	out
+		01 0015 4c6a 6176 612f 696f 2f50 7269 6e74 5374 7265 616d 3b	30	Ljava/io/PrintStream;
+		01 0013 6a61 7661 2f69 6f2f 5072 696e 7453 7472 6561 6d			31	java/io/PrintStream
+		01 0007 7072 696e 746c 6e										32	println
+		01 0015 284c 6a61 7661 2f6c 616e 672f 5374 7269 6e67 3b29 56	33	(Ljava/lang/String;)V
+		//常量池结束
+		0021			//this_class access_flags，0021=0001+0020，即 public
+		0006			//this_class， 即第6个常量，即 Hello
+		0007			//super_class，即第7个常量，即 java/lang/Object
+		0000			//interfaces_count，接口数为 0
+		0001			//fields_count ，字段数为 1
+		000a 			//field access_flags，000a=0002+0008,即 private static
+		0008 			//field name_index,即第8个常量，即 HELLO_WORLD
+		0009			//field descriptor_index,即第9个常量，即 Ljava/lang/String;
+		0000 			//field attributes_count,属性数为0
+		0003			//methods_count,方法数为 3 
 
+		0001			//method access_flags,即 public 
+		000a			//method name_index,即第10个常量，即 <init>
+		000b 			//method descriptor_index,即第11个常量，即 ()V
+		0001			//method attributes_count,这个方法有一个属性 
+		000c			//index，第12个常量，即	Code属性，	
+		0000 001d		//code属性长度，不包括这里的4个字节和index的2个字节，这里code属性总长为29个字节 
+		0001 			//max_stack=1，
+		0001 			//max_locals=1，
+		0000 0005 		//code_length,表示接下来的5个字节为方法的内容
+		2ab7 0001 b1 
+		0000			// method exception_table_length,这里异常表长度为0，所以后面没有异常表内容。 
+		0001			// code属性的属性表长度，这里为1
+		000d 			// name_index,即第13个常量，即LineNumberTable
+		0000 0006 		// attribute_length,这里LineNumberTable长度为6个字节
+		0001			// line_number_table_length;这里为1，即只有1组源码、字节码行号映射
+		0000 0001 		// 表示字节码行号0000对应源码行号0001
+		
+		0009 			// 0009=0001+0008，即 public static
+		000e 			// 第14个常量，即 main
+		000f 			// 第15个常量，即 ([Ljava/lang/String;)V
+		0001 			// 这个方法有1个属性
+		000c 			// Code属性
+		0000 0026 		// 这里code属性总长为38个字节
+		0002 			// max_stack=2，
+		0001 			// max_locals=1，
+		0000 000a 		// code_length,表示接下来的10个字节为方法的内容
+		b200 02b2 0003 b600 04b1 
+		0000 			// 异常表长度为0
+		0001 			// code属性的属性表长度，这里为1
+		000d 			// LineNumberTable
+		0000 000a 		// 这里LineNumberTable长度为10个字节
+		0002 			// 2组源码、字节码行号映射
+		0000 0004 		// 字节码行号0000对应源码行号0004
+		0009 0005 		// 字节码行号0009对应源码行号0005
 
-
-
-
-
+		0008 			// static
+		0010 			// <clinit>
+		000b 			// ()V
+		0001 			// 这个方法有1个属性
+		000c 			// Code属性
+		0000 001e 		// 这里code属性总长为30个字节
+		0001 			// max_stack=1，
+		0000 			// max_locals=0，
+		0000 0006 		// code_length,表示接下来的6个字节为方法的内容
+		1205 b300 03b1 
+		0000 			// 异常表长度为0
+		0001  			// code属性的属性表长度，这里为1
+		000d 			// LineNumberTable
+		0000 0006 		// 这里LineNumberTable长度为6个字节
+		0001 			// 1组源码、字节码行号映射
+		0000 0002 		// 字节码行号0000对应源码行号0002
+			
+		0001 			// this_class attributes_count 类属性数量为1
+		0011 			// 属性名常量索引，第十七个常量，即 SourceFile
+		0000 0002 		// 属性长度：2个字节
+		0012			// sourcefile_index,第18个常量，即 Hello.java
 
 
 
