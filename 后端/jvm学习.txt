@@ -436,7 +436,10 @@ FGCT表示老年代垃圾回收次数和消耗时间，GCT表示垃圾回收消�
 		0002 			// max_stack=2，
 		0001 			// max_locals=1，
 		0000 000a 		// code_length,表示接下来的10个字节为方法的内容
-		b200 02b2 0003 b600 04b1 
+		b200 02b2 0003 b600 04b1 	//0xb2即getstatic指令，用于访问静态数据，后面的2个字节0002表示第二个常量，第二个常量引用了第20个和
+									//第21个常量，即System和PrintStream；后面的字节b2和0003表示访问第三个常量，即Hello类的HELLO_WORLD,
+									//字节b6是invokevirtual指令，后面的0004表示第4个常量，即PrintStream类的实例方法println，这里就是将
+									//HELLO_WORLD作为参数传递给println方法执行；字节b1表示return指令。
 		0000 			// 异常表长度为0
 		0001 			// code属性的属性表长度，这里为1
 		000d 			// LineNumberTable
