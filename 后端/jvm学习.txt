@@ -136,24 +136,8 @@ Survivor块，每次都在Eden和一个Survivor中创建对象，回收时将存
 	Metaspace表示元空间的数据，即方法区（以前的永久代）的GC数据。
 	Heap部分详细的输出了堆空间的内存内容，包括新生代的eden区和两个survivor区（from和to），以及老年代和元空间。
 	
-	ClassLoader
-	虚拟机在加载类阶段，使用几种不同的 ClassLoader 加载程序执行需要的类信息，JVM 中内置了三个重要的 ClassLoader，分别是 BootstrapClassLoader、ExtensionClassLoader 和 
-AppClassLoader。
-	BootstrapClassLoader 负责加载 JVM 运行时核心类，这些类位于 $JAVA_HOME/lib/rt.jar 文件中，java.util.*、java.io.* 等内置类就由BootstrapClassLoader加载。
-	ExtensionClassLoader 负责加载 JVM 扩展类，比如 swing 系列、内置的 js 引擎、xml 解析器 等等，这些库名通常以 javax 开头，它们的 jar 包位于 $JAVA_HOME/lib/ext/*.jar
-中，有很多 jar 包。
-	AppClassLoader 加载 Classpath 环境变量里定义的路径中的 jar 包和目录。
-	jdk 内置一个 URLClassLoader，用于加载位于网络上静态文件服务器提供的 jar 包和 class文件。
-	双亲委派：AppClassLoader 在加载一个未知的类名时，首先将这个类名交给父加载器 ExtensionClassLoader 加载，如果 ExtensionClassLoader 可以加载，那么 AppClassLoader 就不
-需要自己加载，否则就需要在Classpath查找这个类，能找到就进行加载，否则就抛出异常。ExtensionClassLoader 在加载一个未知的类名时，也是首先将类名交给父加载器 BootstrapClassLoader 
-加载，如果BootstrapClassLoader 不能加载，就自己去加载。
-	class文件被加载后，jvm根据它构造出对应的 class 对象，这个class对象持有加载它的ClassLoader的引用。但是使用 BootstrapClassLoader 加载的class获取的classLoader引用为null。
-	可以通常修改 BootstrapClassLoader 的加载路径，让 BootstrapClassLoader 加载其他的类：
-		// /a:表示追加路径到 BootstrapClassLoader 的加载路径
-		java -Xbootclasspath/a:d:tem_file VmDemo1
-
-
-	JVM监控工具：
+	
+	第三章 JVM监控工具：
 	jps(Java Virtual Machine Process Status Tool) ： jps主要用来输出JVM中运行的进程状态信息。语法格式如下：
 		jps [option] [hostid]		//不指定hostid就默认为当前主机或服务器。
 	option有效值：
@@ -222,7 +206,8 @@ FGCT表示老年代垃圾回收次数和消耗时间，GCT表示垃圾回收消�
 	CPU Usage Times Profiling(cpu=times)使用字节码注入技术,能够获得更加细粒度的CPU消耗信息:
 		javac -J-agentlib:hprof=cpu=times Hello.java
 
-	class文件结构：
+
+	第四章 class文件结构：
 	Java在设计初期就采用了两套规范，即Java语言规范和JVM虚拟机规范，实现平台无关的特性主要依靠虚拟机屏蔽不同硬件、操作系统间的差异，对于虚拟机而言，class文件就是
 可执行文件，虚拟机不关心也不知道class文件是如何创建的，所以完全可以使用另一种语法编写程序源码，只要能把这些源码编译为规范的class文件，JVM就能理解执行。
 	class文件是以字节（8位二进制位）为基本单位的二进制文件，字节之间遵循严格的顺序规范，逻辑单元由连续的字节构成。下面是class文件的逻辑单元：
@@ -469,6 +454,24 @@ FGCT表示老年代垃圾回收次数和消耗时间，GCT表示垃圾回收消�
 		0011 			// 属性名常量索引，第十七个常量，即 SourceFile
 		0000 0002 		// 属性长度：2个字节
 		0012			// sourcefile_index,第18个常量，即 Hello.java
+	注：常量池中字符串字面量常量如果含有中文，则采用UTF-8编码占用3个字节（实际上class文件中字符串常量默认使用UTF-8编码）
+
+	第五章 ClassLoader
+	虚拟机在加载类阶段，使用几种不同的 ClassLoader 加载程序执行需要的类信息，JVM 中内置了三个重要的 ClassLoader，分别是 BootstrapClassLoader、ExtensionClassLoader 和 
+AppClassLoader。
+	BootstrapClassLoader 负责加载 JVM 运行时核心类，这些类位于 $JAVA_HOME/lib/rt.jar 文件中，java.util.*、java.io.* 等内置类就由BootstrapClassLoader加载。
+	ExtensionClassLoader 负责加载 JVM 扩展类，比如 swing 系列、内置的 js 引擎、xml 解析器 等等，这些库名通常以 javax 开头，它们的 jar 包位于 $JAVA_HOME/lib/ext/*.jar
+中，有很多 jar 包。
+	AppClassLoader 加载 Classpath 环境变量里定义的路径中的 jar 包和目录。
+	jdk 内置一个 URLClassLoader，用于加载位于网络上静态文件服务器提供的 jar 包和 class文件。
+	双亲委派：AppClassLoader 在加载一个未知的类名时，首先将这个类名交给父加载器 ExtensionClassLoader 加载，如果 ExtensionClassLoader 可以加载，那么 AppClassLoader 就不
+需要自己加载，否则就需要在Classpath查找这个类，能找到就进行加载，否则就抛出异常。ExtensionClassLoader 在加载一个未知的类名时，也是首先将类名交给父加载器 BootstrapClassLoader 
+加载，如果BootstrapClassLoader 不能加载，就自己去加载。
+	class文件被加载后，jvm根据它构造出对应的 class 对象，这个class对象持有加载它的ClassLoader的引用。但是使用 BootstrapClassLoader 加载的class获取的classLoader引用为null。
+	可以通常修改 BootstrapClassLoader 的加载路径，让 BootstrapClassLoader 加载其他的类：
+		// /a:表示追加路径到 BootstrapClassLoader 的加载路径
+		java -Xbootclasspath/a:d:tem_file VmDemo1
+
 
 
 

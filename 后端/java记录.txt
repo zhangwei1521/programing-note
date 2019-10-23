@@ -30,6 +30,10 @@ Internet上的服务器的硬件设施和操作系统的多样性要求开发的
 				 //从jdk1.6开始，不需要再配置 classpath环境变量
 
 	编译程序：javac Example.java
+	注：编译程序需要注意，Windows中文下使用javac编译默认会以GBK编码解析源文件，如果源文件使用了其他编码，如UTF-8，就会报错：
+		错误:编码GBK的不可映射字符
+	可以通过修改文件编码为GBK（ANSI）解决这个问题，也可以通过参数告知编译器源码编码：
+		javac -encoding UTF-8 Example.java
 	运行程序：java Example
 	打印classpath：System.out.println(System.getProperty("java.class.path"));
 	关于dt.jar和tools.jar、rt.jar：
