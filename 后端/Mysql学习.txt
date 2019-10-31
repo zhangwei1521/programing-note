@@ -102,7 +102,11 @@ mysql数据类型：
 		mediumblob		-- 最大16MB
 		longblob		-- 最大4GB
 	
-	
+	获取当前时间戳(timestamp)：
+		select current_timestamp();	或
+		select current_timestamp;
+	获取当前时间(datetime)：
+		select now();
 触发器
 	准备：
 	create table goods(
