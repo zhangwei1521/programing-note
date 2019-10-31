@@ -475,7 +475,7 @@ FGCT表示老年代垃圾回收次数和消耗时间，GCT表示垃圾回收消�
 		void spin();
 		  Code:
 			 0: iconst_0            
-			 1: istore_1            
+			 1: istore_1      
 			 2: iload_1             
 			 3: bipush        100   
 			 5: if_icmpge     14    
@@ -487,9 +487,13 @@ FGCT表示老年代垃圾回收次数和消耗时间，GCT表示垃圾回收消�
 			line 7: 14              
 	每条指令基本格式如下：
 		<index> <opcode> [<operand1> [<operand2>...]] [<comment>]
+	注：实例方法写局部变量表都是从索引为1开始，第一个slot用于保存实例方法所在对象的this引用，对于静态方法，则是索引0开始使用。
 	<index>是指令操作码在方法字节码指令数组中的索引，即方法的Code属性的code[]数组中的索引，code[]数组紧跟在Code属性的code_length后，长度由code_length指定。<index>可以
 作为控制转移指令的跳转目标。
-	<opcode>是指令的操作码助记符，指令16进制-助记符表：
+	<opcode>是指令的操作码助记符.
+	<operandN>是指令操作数，一条指令可以有0至多个操作数，iconst_0没有操作数，bipush有1个操作数，iinc有2个操作数。如果操作数是常量池中的常量，操作数前会有一个#号。
+	<comment>是指令行尾的注释，注释内容通常以//开始。
+	指令16进制-助记符表：
 		0x00		nop					None
 		0x01		aconst_null			将null推送至栈顶
 		0x02		iconst_m1			将int型-1推送至栈顶
@@ -500,7 +504,7 @@ FGCT表示老年代垃圾回收次数和消耗时间，GCT表示垃圾回收消�
 		0x10		bipush				将单字节的常量值(-128~127)推送至栈顶
 		0x11		sipush				将一个短整型常量(-32768~32767)推送至栈顶
 		0x12		ldc					将int,float或String型常量值从常量池中推送至栈顶
-		0x13		ldc_w				将int,float或String型常量值从常量池中推送至栈顶(宽索引)
+		0x13		ldc_w				将int,float或String型常量值从常量池中推送至栈顶(宽索引，即后面的1个操作数占2个字节)
 		0x14		ldc2_w				将long或double型常量值从常量池中推送至栈顶(宽索引)
 		0x15		iload				将指定的int型本地变量推送至栈顶
 		0x16		lload				将指定的long型本地变量推送至栈顶
@@ -538,20 +542,50 @@ FGCT表示老年代垃圾回收次数和消耗时间，GCT表示垃圾回收消�
 		0x54		bastore				将栈顶boolean或byte型数值存入指定数组的指定索引位置
 		0x55		castore				将栈顶char型数值存入指定数组的指定索引位置
 		0x56		sastore				将栈顶short型数值存入指定数组的指定索引位置
+		0x59		dup					复制栈顶数值并将复制值压入栈顶
 		.........
 		0x63		dadd				将栈顶两double型数值相加并将结果压入栈顶
-		0x84		iinc				将指定int型变量增加指定值(如i++, i--, i+=2等)
+		0x82		ixor				将栈顶两int型数值"按位异或"并将结果压入栈顶
+		0x83		lxor				将栈顶两long型数值"按位异或"并将结果压入栈顶
+		0x84		iinc				将指定int型变量增加指定值(如i++, i--, i+=2等: iinc 1,1)，在所有字节码指令中，只有此指令可直接用于操作局部变量。
 		0x93		i2s					将栈顶int型数值强制转换为short型数值并将结果压入栈顶
+		0x97		dcmpl				比较栈顶两double型数值大小, 并将结果(1, 0或-1)压入栈顶; 当其中一个数值为NaN时, 将-1压入栈顶
 		0x98		dcmpg				比较栈顶两double型数值大小, 并将结果(1, 0或-1)压入栈顶; 当其中一个数值为NaN时, 将1压入栈顶
 		0x9b		iflt				当栈顶int型数值小于0时跳转
+		0x9c		ifge				当栈顶int型数值大于等于0时跳转（ifge 10，跳转到10号索引处指令，操作数10占2个字节）
 		0xa2		if_icmpge			比较栈顶两int型数值大小, 当结果大于等于0时跳转
+		0xac		ireturn				从当前方法返回操作数栈栈顶int型变量
 		0xa7		goto				无条件跳转
+		0xb0		areturn				从当前方法返回对象引用
 		0xb1		return				从当前方法返回void
+		0xb4		getfield			获取指定类的实例域, 并将其压入栈顶（操作数是字段在常量中的索引：getfield     #18）
+		0xb5		putfield			为指定类的实例字段赋值（操作数是字段在常量中的索引：putfield      #18）
+		0xb6		invokevirtual		调用实例方法
+		0xb7		invokespecial		调用调用实例初始化方法、私有方法和父类方法，需要以this作为首个参数
+		0xb8		invokestatic		调用静态方法
+		0xbb		new					创建一个对象, 并将其引用引用值压入栈顶
+		0xc6		ifnull				为null时跳转（ifnull        6）
 		.........
-	<operandN>是指令操作数，一条指令可以有0至多个操作数，iconst_0没有操作数，bipush有1个操作数，iinc有2个操作数。如果操作数是常量池中的常量，操作数前会有一个#号。
-	<comment>是指令行尾的注释，注释内容通常以//开始。
-	
-	
+	JVM规范没有设计取反指令，而是使用异或指令来实现取反，对一个数进行取反，相当于-1与该数进行异或：~x = -1^x
+	NaN：表示未定义或不可表示的值，在java中只要有操作数是NaN，那么对它进行任何数值比较和等值测试都会返回false。任何数值与NaN进行不等值比较都会返回true：
+		NaN==10;	//false
+		NaN>10;		//false
+		NaN<10;		//false
+		NaN!=10;	//true
+	new指令执行后，并没有完成一个对象实例创建的全部过程，只有执行和完成了实例初始化方法后，实例才算创建完全：
+			Object create() {
+				return new Object();
+			}
+		字节码指令：
+			java.lang.Object create()：
+			0: new           #3 // class java/lang/Object. 创建对象，并将其引用值压入栈顶
+			3: dup              // 复制栈顶引用值，并将复制值压入栈顶
+			4: invokespecial #8 // Method java/lang/Object."<init>":()V. 调用实例初始化方法,从栈顶弹出一个引用
+			7: areturn          // 从当前方法返回对象引用，返回栈顶引用
+	invokevirtual指令用于调用对象的实例方法，带有一个表示索引的参数，占2个字节，表示运行时常量池中的索引，该索引处是某个方法的符号引用（提供类名称、方法名称及方法描述符信息）。
+这条指令执行后会将调用方法返回的结果压入操作数栈顶。
+	invokestatic指令表示调用静态方法，不需要传入实例引用this，因此不需要压入栈。
+
 	
 	第五章 ClassLoader
 	虚拟机在加载类阶段，使用几种不同的 ClassLoader 加载程序执行需要的类信息，JVM 中内置了三个重要的 ClassLoader，分别是 BootstrapClassLoader、ExtensionClassLoader 和 
