@@ -459,7 +459,7 @@ FGCT表示老年代垃圾回收次数和消耗时间，GCT表示垃圾回收消�
 		javap --help 显示javap用法；
 		javap -v Demo1	输出常量池、方法表信息
 		javap -c Demo1  输出反汇编后的代码，主要就是方法和静态代码块（可能是由编译器产生的）
-		javap -l Demo1	输出方法行号表（LineNumberTable）
+		javap -l Demo1	输出方法行号表（LineNumberTable）和本地变量表（LocalVariableTable，需要使用javac -g 编译源码）
 
 	JVM指令
 	JVM的指令操作码占用一个字节，所以最多只能提供256条指令。一些指令不需要操作数（操作码中已经包含了操作数），另外一些指令后面带有一个或多个操作数。JVM使用操作数栈而

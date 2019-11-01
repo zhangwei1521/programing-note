@@ -52,7 +52,13 @@ Internet上的服务器的硬件设施和操作系统的多样性要求开发的
 	manifest.txt最后一行为空行，并且manifest.txt文件换行符需要使用linux的换行符(windows回车换行符：\r\n无效，linux换行符：\n)
 	打包命令：jar -cvfm aa.jar manifest.txt com
 	执行jar：java -jar aa.jar
-	
+	编译自动生成包目录：
+		在任意目录下新建类:com.zhangwei.javademo1.MainClass
+		在该目录下编译： javac -d . *.java	//将编译结果输出到其他目录 javac -d /tem_file/demo1 *.java
+		在该目录下会生成包目录和class文件：com/zhangwei/javademo1/MainClass
+		在该目录下执行：java com.zhangwei.javademo1.MainClass
+		执行其他目录下的class文件：java -classpath e:/tem_file/demo1 com.zhangwei.javademo1.MainClass 
+		
 
 										第三章 数据类型
 
