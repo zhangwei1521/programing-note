@@ -179,5 +179,164 @@ A的新值还没有提交，就会导致线程Y拿到脏数据。需要说明的
     在单核处理器上，只有静态编译重排序会产生有序性问题，其他类型的重排序都不会产生有序性问题，这是因为单核处理器在切换线程时会提交当前线程
 执行的结果（提交到高速缓存，不同线程使用不同的高速缓存，所以仍然存在可见性问题）。
     在java中，volatile、synchronized关键字可以保证有序性，屏蔽了禁止重排序的具体细节做法。
-
-
+    线程上下文切换：在多线程程序中，通常线程的数量要比处理器（核心）的数量多得多，所以必须采用时间分片的方法来实现多线程并发执行，当一个正
+在执行的线程的时间片用完或者该线程主动暂停执行，又或者线程调度器提前暂停该线程执行，当线程暂停执行时，操作系统就会保存其暂停前的运行期数据，
+主要是寄存器中的数据（通用寄存器和PC寄存器）被保存到内存中，当该线程下次执行时，操作系统就把保存的数据从内存恢复到寄存器中。
+    对java程序来说，线程上下文切换就是一个线程在RUNNABLE状态和非RUNNABLE状态之间的一次切换。
+    java多线程程序触发自发性上下文切换的方法：Thread.sleep方法、Object.wait方法、Thread.yield方法、Thread.join方法，LockSupport.park
+方法等。线程执行阻塞式IO操作和等待锁也会触发自发性上下文切换。
+    非自发性上下文切换一般是由于时间片用完导致的，也可能是线程调用器遇到了一个更高优先级的线程。在java程序中，JVM在GC时，通常需要停止用户线
+程的执行。
+    线程上下文切换的开销：主要包括处理器保存和重新加载线程运行期寄存器数据的时间开销、线程调度器选择新执行线程的开销、高速缓存重新加载的开销，
+通常一次线程上下文切换的时间开销在us级。
+    因为存在上下文切换的开销，所以可能出现多线程的效率反而比单线程更低。
+    在linux下，perf命令可以统计java程序运行期间发生的线程上下文切换次数，windows下可以使用perfmon工具监控程序的线程上下文切换信息。
+    线程活性故障：程序中的线程都处于非RUNNABLE状态或者线程处于RUNNABLE状态但是其任务无法完成。
+    线程活性故障的几种类型：
+    死锁：两个或多个线程都在等待对方持有的锁（资源），同时都不释放自己持有的锁（资源），导致线程处于RUNNABLE状态但是无法完成任务。
+    锁死：一个线程一直等待被唤醒。
+    活锁：线程处于RUNNABLE状态但是任务没有进展。
+    饥饿：一个线程无法获得其等待的资源。
+    高并发：一段时间内，处于运行状态的线程越多，并发程度就越高，即高并发。高并发会增加资源争用的概率，即多个线程都去请求一个排他性资源，如处理器
+时间。
+    资源调度通常会使用排队策略，即把申请某资源失败的线程加入一个队列，当该资源被释放后，就唤醒队列头部的线程使其获得资源。
+    公平调度：先申请排他性资源的线程总是比后申请的线程先获得该资源的独占权，但是其吞吐率较低，因为公平调度通常需要更多的上下文切换。公平调度适合
+用在线程持有资源时间较长或线程申请资源时间间隔较长或者要求各个线程公平获得资源使用权的场景下。
+    非公平调度：允许后申请排他性资源的线程比先申请的线程先获得该资源的独占权，其吞吐率较高，因为非公平调度时有些线程不需要进行上下文切换，但是可能
+导致饥饿问题。非公平调度是大多数场景下的默认选择，其吞吐率更高。
+    
+    第三章 java中的线程同步机制
+    线程同步机制指的是用于协调线程间的数据访问和活动以保障线程安全和正确执行的机制。
+    java平台提供的线程同步机制包括：锁、volatile关键字、final关键字、static关键字和一些相关的API，如Object.wait/Object.notify等。
+    锁可以看成是线程共享数据的访问许可证，使用锁保护共享数据时，在任何线程访问共享数据前都需要先获取对应的锁，访问结束后应该释放持有的锁。
+    临界区：在获得锁和释放锁之间线程执行的代码（指令）。临界区一次只能被一个线程执行，所以在临界区内访问共享数据就变成了串行访问，就可以避免线程安
+全性问题。
+    如果多个线程访问同一个锁保护的共享数据，就称这些线程同步在这个锁上，这些线程执行的临界区称为这个锁所引导的临界区。
+    锁大多数都具有排他性，即一次只能被一个线程持有，如内部锁（synchronized实现），这些锁称为排它锁或互斥锁。
+    java虚拟机提供两种锁实现，即内部锁和显式锁，内部锁是通过synchronized关键字实现的（java语法层面），显式锁是通过java.concurrent.locks.Lock接口
+的实现类实现的。
+    锁是通过排他性（互斥性）保障原子性的，其可见性保障是隐含的，即获得锁时隐含进行了刷新处理器缓存，释放锁隐含进行了冲刷处理器缓存，使用锁保护共享数据
+也可以保障有序性，即使可能会有执行指令重排序，其执行结果对其他线程仍然是和代码约定顺序一致的。
+    使用锁保证线程安全性，需要注意：线程访问共享数据时必须使用同一个锁，这里的访问包括仅进行读操作。
+    可重入性：一个线程在已获得某个锁时，还能继续申请该锁。这样的锁称为可重入锁，否则称为非可重入锁。
+    锁其实相当于一种排他性资源，所以申请锁也存在锁调度策略。
+    一个锁保护的共享数据的数量大小称为锁的粒度，共享数据的数量大就称锁的粒度粗，否则称锁的粒度细。锁的粒度太粗会导致不必要的执行阻塞，粒度太细则会导致
+调度开销增加。
+    使用锁需要注意锁的释放，忘记释放锁将导致锁泄漏，即其他线程一直无法获取锁。
+    锁这种同步机制本身是非常粗粒度的。
+    在java中，任何一个对象都可以作为锁，当作为锁使用时，称为监视器或内部锁，将对象作为锁是通过synchronized关键字实现的。
+    synchronized关键字修饰的方法称为同步方法，其修饰的代码块称为同步代码块，同步方法的方法体就是一个临界区，同步代码块内的代码也是一个临界区。同步静态
+方法（即使用synchronized修饰的静态方法）默认使用静态方法所在类的class对象作为锁，同步实例方法默认使用实例方法所在对象作为锁，同步代码块需要指定一个锁
+句柄，该句柄引用一个对象作为锁，锁句柄通常需要使用private final修饰以保障该句柄不会被修改（如果锁句柄被修改就会无法保障同步代码块的线程安全性，这样就会
+会引发竞态），这些锁对象称为引导锁。
+    javac编译器在编译同步方法和同步代码块时，会对临界区内抛出而程序没有处理的异常进行特殊处理，使得抛出异常不会妨碍内部锁的释放，所以内部锁不会导致锁泄漏。
+    java虚拟机会为每个内部锁创建一个入口集（它的实现由虚拟机实现决定），这个入口集用于记录等待该锁的线程，当这个锁被释放后，虚拟机就从这些等待线程中选择
+一个线程参与该锁的申请，选择等待线程的算法由虚拟机实现自己决定，而选择的线程不是直接获得该锁，因为内部锁的申请都是使用非公平调度，所以选中的等待线程可能
+会重新回到入口集中。
+    显式锁是在JDK1.5才引入的，一个显式锁是一个java.util.concurrent.locks.Lock接口的一个实例对象，设计显式锁不是要替换内部锁，而是作为内部锁的一种补充，
+增加锁应用范围的灵活性。
+    类java.util.concurrent.locks.ReentrantLock是Lock接口的默认实现，它是一个可重入锁。
+    Lock接口中的lock方法用于申请锁，unlock方法用于释放锁。临界区代码放在lock方法和unlock方法之间。临界区代码通常使用try包裹，并将unlucky方法放在try后面
+的finally块中，这样就可以避免锁泄漏。
+        public class SafeCircularSeqGenerator {
+            private final Lock lock = new ReentrantLock();
+            private short sequence = -1;
+            public short nextSequence() {
+                lock.lock();
+                try {
+                    if(sequence>=999) {
+                        sequence = 0;
+                    }
+                    else {
+                        sequence++;
+                    }
+                    return sequence;
+                } finally {
+                    lock.unlock();
+                }
+            }
+        }
+    ReentrantLock支持公平调度和非公平调度两种调度策略，这是显式锁和内部锁的区别之一。
+        private final Lock lock = new ReentrantLock(true);
+        //默认为非公平调度
+    Lock接口的tryLock方法用于尝试申请一个锁，如果申请不成功就跳过临界区代码继续，这样就不需要暂停执行线程。tryLock方法另一个重载版本允许设置一个等待时间，
+即在该时间值内申请，超出该时间后不再等待该锁。
+        public short nextSequence() {
+                if(lock.tryLock()) {
+                    try {
+                        if(sequence>=999) {
+                            sequence = 0;
+                        }
+                        else {
+                            sequence++;
+                        }
+                        return sequence;
+                    } finally {
+                        lock.unlock();
+                    }
+                }
+                System.out.println(Thread.currentThread().getName()+" locked? "+((ReentrantLock)lock).isLocked());
+                return -1;
+            }
+    ReentrantLock提供一个isLocked方法，可检查该锁是否被某个线程持有，提供一个getQueueLength方法，可获取等待该锁的线程的数量。
+    在决定选用内部锁还是显式锁时，比较保守的做法是默认使用内部锁，仅在需要使用显式锁提供的新特性的地方使用显式锁。另一种做法是尽量选用显式锁，毕竟显式锁更加
+灵活和可控。
+    只读线程：对共享变量仅进行读取操作的同步线程。
+    写线程：对共享变量进行更新的同步线程。
+    读写锁：允许多个只读线程同时读取共享变量，但是一次只允许一个线程对共享变量更新，即有一个线程在更新共享变量时，其他线程都不能访问共享数据，这样的锁称为
+读写锁。读写锁是一种改进型的排它锁，也称共享/排它锁。
+    读写锁不是两个锁（对象），而是一个锁对象扮演两个角色，即读锁和写锁。只读线程在访问共享数据前申请读锁，写线程在访问共享数据前申请写锁。读锁是共享的，而
+写锁是独占的。
+    java.util.concurrent.locks.ReadWriteLock接口是读写锁的抽象，ReentrantReadWriteLock是其默认实现类，它也是一个可重入锁。
+    ReadWriteLock接口中的方法readLock返回读锁，writeLock方法返回写锁。
+        public class HostConfig {
+            private ReadWriteLock readWriteLock = new ReentrantReadWriteLock(false);
+            
+            private String ip = "192.168.1.1";
+            
+            private int port = 80;
+            
+            public String getHostConfig(){
+                Lock readLock = readWriteLock.readLock();
+                readLock.lock();
+                String config = "ip: "+ip+"; port: "+port;
+                readLock.unlock();
+                return config;
+            }
+            
+            public void setHostConfig(String ip,int port) {
+                Lock writeLock = readWriteLock.writeLock();
+                writeLock.lock();
+                this.ip = ip;
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                this.port = port;
+                writeLock.unlock();
+            }
+        }
+    public class HostTask implements Runnable{
+        private HostConfig hostConfig = new HostConfig();
+        
+        @Override
+        public void run() {
+            long threadId = Thread.currentThread().getId();
+            if(threadId%3==0) {
+                hostConfig.setHostConfig("192.168.1.2", 81);
+            }
+            else if(threadId%4==0) {
+                hostConfig.setHostConfig("192.168.1.3", 82);
+            }
+            else {
+                String config = hostConfig.getHostConfig();
+                System.out.println(threadId+": "+config);
+            }
+        }
+    }
+    读写锁适用场景：
+        只读操作比写（更新）操作要频繁得多；
+        读线程持有锁的时间比较长。
+    ReentrantReadWriteLock支持锁的降级，即一个线程在持有写锁的情况下，可以继续获取相应的读锁，但是不支持锁的升级，即持有读锁期间不能获得写锁。
+    java虚拟机使用内存屏障指令实现刷新处理器缓存和冲刷处理器缓存，这时java各种线程同步机制的底层实现机制。
