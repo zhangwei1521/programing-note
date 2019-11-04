@@ -236,7 +236,7 @@ A的新值还没有提交，就会导致线程Y拿到脏数据。需要说明的
     显式锁是在JDK1.5才引入的，一个显式锁是一个java.util.concurrent.locks.Lock接口的一个实例对象，设计显式锁不是要替换内部锁，而是作为内部锁的一种补充，
 增加锁应用范围的灵活性。
     类java.util.concurrent.locks.ReentrantLock是Lock接口的默认实现，它是一个可重入锁。
-    Lock接口中的lock方法用于申请锁，unlock方法用于释放锁。临界区代码放在lock方法和unlock方法之间。临界区代码通常使用try包裹，并将unlucky方法放在try后面
+    Lock接口中的lock方法用于申请锁，unlock方法用于释放锁。临界区代码放在lock方法和unlock方法之间。临界区代码通常使用try包裹，并将unluck方法放在try后面
 的finally块中，这样就可以避免锁泄漏。
         public class SafeCircularSeqGenerator {
             private final Lock lock = new ReentrantLock();
@@ -339,4 +339,4 @@ A的新值还没有提交，就会导致线程Y拿到脏数据。需要说明的
         只读操作比写（更新）操作要频繁得多；
         读线程持有锁的时间比较长。
     ReentrantReadWriteLock支持锁的降级，即一个线程在持有写锁的情况下，可以继续获取相应的读锁，但是不支持锁的升级，即持有读锁期间不能获得写锁。
-    java虚拟机使用内存屏障指令实现刷新处理器缓存和冲刷处理器缓存，这时java各种线程同步机制的底层实现机制。
+    java虚拟机使用内存屏障指令实现刷新处理器缓存和冲刷处理器缓存，这是java各种线程同步机制的底层实现机制。
