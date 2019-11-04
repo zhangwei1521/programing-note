@@ -291,13 +291,15 @@ A的新值还没有提交，就会导致线程Y拿到脏数据。需要说明的
     ReadWriteLock接口中的方法readLock返回读锁，writeLock方法返回写锁。
         public class HostConfig {
             private ReadWriteLock readWriteLock = new ReentrantReadWriteLock(false);
-            
+            Lock readLock = readWriteLock.readLock();
+            Lock writeLock = readWriteLock.writeLock();
+
             private String ip = "192.168.1.1";
             
             private int port = 80;
             
             public String getHostConfig(){
-                Lock readLock = readWriteLock.readLock();
+                
                 readLock.lock();
                 String config = "ip: "+ip+"; port: "+port;
                 readLock.unlock();
@@ -305,7 +307,7 @@ A的新值还没有提交，就会导致线程Y拿到脏数据。需要说明的
             }
             
             public void setHostConfig(String ip,int port) {
-                Lock writeLock = readWriteLock.writeLock();
+                
                 writeLock.lock();
                 this.ip = ip;
                 try {
