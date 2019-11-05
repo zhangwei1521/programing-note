@@ -193,6 +193,11 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 	redis使用一个52位的geohash编码保存geo集合元素的坐标。可以实现低于1m的精度，当然不可能完全准确，
 所以保存的坐标和使用geopos返回的坐标有极小的差别。
 	
+	分库：
+	redis默认提供0-15共16个库，这些库实际上是没有提供任何隔离机制的，只是作为命名空间使用。进入redis后默认在
+0号库操作数据，使用 select n选择切换n号库。
+	通常不建议使用多库，因为每次操作都需要select库，需要区分不同的业务数据可以使用不同的Key前缀来实现。
+
 	键管理：
 	获取redis中键的个数：dbsize
 	返回所有的键：keys * 或 scan 0(遵循scan语法)
@@ -201,6 +206,9 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 	获取键对应的数据类型：type key	(使用这个命令就可以看出来geo集合就是有序集合)
 	重命名键：rename key-old key-new
 	使用keys和del都可能导致阻塞，所以对于大数据量的操作建议使用scan和unlink
+	以上命令都是针对当前库的操作。
+	flushdb: 删除当前所选数据库的所有键。此命令永远不会失败。（使用需谨慎）
+	flushall: 删除所有数据库的所有键。此命令永远不会失败。（使用需谨慎）
 
 	位图：
 	位图是一种使用一个比特位代表是或否状态，比如某个用户是否点赞：假如系统中有n个用户，现在要为某一作品
@@ -335,8 +343,82 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
         script exists bfad2c674ad8f2e76b4b3961fc80e386423d1f63
     redis服务器重启后需要重新登记脚本，因为登记脚本只是将脚本保存在服务器进程的脚本缓存空间中。
     
+	使用jedis连接redis：
+	jedis的maven坐标：
+		<dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>3.1.0</version>
+        </dependency>
+	简单使用：
+		public class RedisClient {
+			public static boolean setStr(String key,String value){
+				Jedis jedis = new Jedis("192.168.56.2",6379);
+				jedis.set(key,value);
+				jedis.close();
+				return true;
+			}
 
-		
+			public static String getStr(String key){
+				Jedis jedis = new Jedis("192.168.56.2",6379);
+				String value = jedis.get(key);
+				jedis.close();
+				return value;
+			}
+		}
+	如果redis没有部署在本机上，需要修改redis配置，因为redis默认开启了保护模式，只允许设置的ip访问：
+		bind 127.0.0.1
+		protected-mode yes
+	可以关闭保护模式，也可以添加redis服务器对外ip到bind：
+		bind 192.168.56.2
+		或
+		protected-mode no
+	修改配置文件设置日志文件保存位置：
+		logfile /usr/local/redis/redis.log
+	使用连接池：
+		public class RedisClient {
+			private JedisPool jedisPool;
+
+			private RedisClient(){}
+
+			private static class RedisClientHolder{
+				private static final RedisClient instance = new RedisClient();
+			}
+
+			public static RedisClient getInstance(){
+				return RedisClientHolder.instance;
+			}
+
+			private synchronized void initialize(){
+				JedisPoolConfig config = new JedisPoolConfig();
+				config.setMaxIdle(10);
+				config.setMaxTotal(20);
+				jedisPool = new JedisPool(config,"192.168.56.2",6379,2000,null);
+			}
+
+			private Jedis getJedis(){
+				if(jedisPool==null){
+					initialize();
+				}
+				Jedis jedis = jedisPool.getResource();
+				return jedis;
+			}
+
+			public boolean setStrVal(String key,String value){
+				Jedis jedis = getJedis();
+				jedis.set(key,value);
+				jedis.close();
+				return true;
+			}
+
+			public String getStrVal(String key){
+				Jedis jedis = getJedis();
+				String value = jedis.get(key);
+				jedis.close();
+				return value;
+			}
+		}
+	
 		
 		
 	
