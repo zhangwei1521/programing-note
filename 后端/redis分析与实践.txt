@@ -366,7 +366,7 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 				return value;
 			}
 		}
-	如果redis没有部署在本机上，需要修改redis配置，因为redis默认开启了保护模式，只允许设置的ip访问：
+	如果redis没有部署在本机上，需要修改redis配置，因为redis默认开启了保护模式，只允许本机ip访问：
 		bind 127.0.0.1
 		protected-mode yes
 	可以关闭保护模式，也可以添加redis服务器对外ip到bind：
