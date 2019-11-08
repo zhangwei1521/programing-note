@@ -590,9 +590,8 @@ FGCT表示老年代垃圾回收次数和消耗时间，GCT表示垃圾回收消�
 	第五章 ClassLoader
 	虚拟机在加载类阶段，使用几种不同的 ClassLoader 加载程序执行需要的类信息，JVM 中内置了三个重要的 ClassLoader，分别是 BootstrapClassLoader、ExtensionClassLoader 和 
 AppClassLoader。
-	BootstrapClassLoader 负责加载 JVM 运行时核心类，这些类位于 $JAVA_HOME/lib/rt.jar 文件中，java.util.*、java.io.* 等内置类就由BootstrapClassLoader加载。
-	ExtensionClassLoader 负责加载 JVM 扩展类，比如 swing 系列、内置的 js 引擎、xml 解析器 等等，这些库名通常以 javax 开头，它们的 jar 包位于 $JAVA_HOME/lib/ext/*.jar
-中，有很多 jar 包。
+	BootstrapClassLoader 负责加载 JVM 运行时核心类，这些类位于 $JAVA_HOME/jre/lib/rt.jar 文件中，如：java.util.*、java.io.*等。
+	ExtensionClassLoader 负责加载 JVM 扩展类，位于 $JAVA_HOME/jre/lib/ext/*.jar 文件内。
 	AppClassLoader 加载 Classpath 环境变量里定义的路径中的 jar 包和目录。
 	jdk 内置一个 URLClassLoader，用于加载位于网络上静态文件服务器提供的 jar 包和 class文件。
 	双亲委派：AppClassLoader 在加载一个未知的类名时，首先将这个类名交给父加载器 ExtensionClassLoader 加载，如果 ExtensionClassLoader 可以加载，那么 AppClassLoader 就不
@@ -603,9 +602,27 @@ AppClassLoader。
 		// /a:表示追加路径到 BootstrapClassLoader 的加载路径
 		java -Xbootclasspath/a:d:tem_file VmDemo1
 
-
-
-
+	类加载过程：加载、连接、初始化，其中连接可以细分为验证、准备、解析三个阶段。
+	加载：类加载器根据一个类的全限定名读取此类的二进制字节流保存在JVM的运行期方法区中，然后JVM根据保存的二进制数据创建一个java.lang.Class对象。
+	连接：对已保存在方法区中的类数据进行验证，然后为静态变量分配内存并设为初始值，然后将常量池中所有的符号引用转为直接引用。
+		验证：格式验证（检查加载的二进制流数据（通常是class文件）符合jvm规范）、语义分析（检查是否违反语义规范，如没有实现接口中的方法）、字节码验证（goto指令的操作数是否超出方法
+边界）、符合引用验证（检查符合引用对应的直接引用是否存在，将延后到解析阶段进行）；验证的目的是为了确保Class文件的字节流中包含的信息符合当前虚拟机的要求，并且不会危害虚拟机自身的安全。
+		准备：为类中的所有静态变量分配内存空间，并为其设置一个初始值（对于非final变量，这个值是虚拟机默认设置好的，例如int为0，对于final变量，这个值就是代码中设置的值）
+		解析：将常量池中所有的符号引用转为直接引用（得到类或者字段、方法在内存中的指针或者偏移量，以便直接调用该方法）。这个阶段可能在初始化之后再执行。
+	初始化：将一个类中所有被static关键字标识的代码统一执行一遍，如果执行的是静态变量，那么就会使用用户指定的值覆盖之前在准备阶段设置的初始值；如果执行的是static代码块，那么在初始化
+阶段，JVM就会执行static代码块中定义的所有操作。
+	虚拟机规范中并没有强制约束何时进行类的加载，但是规范严格规定了有且只有下列五种情况必须对类进行初始化（加载、验证、准备都会随着发生）：
+		1、遇到 new、getstatic、putstatic、invokestatic 这四条字节码指令时，如果类没有进行过初始化，则必须先触发其初始化。最常见的生成这4条指令的场景是：使用 new 关键字实例化对象
+的时候；读取或设置一个类的静态字段（被 final 修饰、已在编译器把结果放入常量池的静态字段除外）的时候；以及调用一个类的静态方法的时候。
+		2、使用 java.lang.reflect 包的方法对类进行反射调用的时候，如果类没有进行初始化，则需要先触发其初始化。
+		3、当初始化一个类的时候，如果发现其父类还没有进行过初始化，则需要先触发其父类的初始化。
+		4、当虚拟机启动时，用户需要指定一个要执行的主类（包含 main() 方法的那个类），虚拟机会先初始化这个主类。
+		5、当使用 JDK.7 的动态语言支持时，如果一个 java.lang.invoke.MethodHandle 实例最后的解析结果为REF_getStatic, REF_putStatic, REF_invokeStatic 的方法句柄，并且这个方法
+句柄所对应的类没有进行过初始化，则需要先触发其初始化。
+	这5种场景中的行为称为对一个类进行主动引用。除此之外，所有引用类的方式都不会触发初始化，称为被动引用。被动引用的常见例子包括：
+		通过子类引用父类的静态字段，不会导致子类初始化；
+		通过数组定义来引用类，不会触发此类的初始化。该过程会对数组类进行初始化，数组类是一个由虚拟机自动生成的、直接继承自 Object 的子类，其中包含了数组的属性和方法。
+		常量在编译阶段会存入调用类的常量池中，本质上并没有直接引用到定义常量的类，因此不会触发定义常量的类的初始化。
 
 
 
