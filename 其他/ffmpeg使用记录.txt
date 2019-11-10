@@ -1,4 +1,6 @@
                                                 ffmpeg使用记录
+    查看视频信息：
+        ffprobe input.mp4
     从视频中提取音频：
         ffmpeg -i sea.flv -vn -y -acodec copy sea.aac
     转换flv到mp4:
@@ -11,3 +13,30 @@
 		file 'input3.flv'
 	执行命令：
 		ffmpeg -f concat -i filelist.txt -c copy output.flv
+
+    将输入的视频先转换成所有的帧都为关键帧的视频(就是将所有的帧的编码方式转为帧内编码):
+        ffmpeg -i input.mp4 -strict -2  -qscale 0 -intra output.mp4
+    剪切音频、视频：
+        ffmpeg -i input.mp3 -ss hh:mm:ss -t hh:mm:ss -acodec copy output.mp3
+        ffmpeg -i input.mp4 -ss hh:mm:ss -t hh:mm:ss -acodec copy output.mp4
+        -ss表示开始时间，-t表示持续时长
+    获取单独的视频流，去除音频:
+        ffmpeg -i input.mp4 -vcodec copy -an output.mp4
+    混合两段音频：
+        ffmpeg -i input1.mp3 -i input2.mp3 -filter_complex amix=inputs=2:duration=first:dropout_transition=2 -f mp3 remix.mp3
+    循环视频：
+        ffmpeg -i input_audio -f concat -i <(for i in {1..n}; do printf "file '%s'\n" input_video; done) -c:v copy -c:a copy -shortest output_video
+    windows下的一种替代做法：使用合并的方式实现，输入文件中引用同一个视频多次
+    视频（含音频）倒放：
+        ffmpeg -i output5.mp4 -vf reverse -af areverse -preset superfast output6.mp4
+    合并音频和视频：
+        ffmpeg -i video.mp4 -i audio.wav -c:v copy -c:a aac -strict experimental output.mp4
+    裁剪视频画面：
+        ffmpeg -i input.mp4 -strict -2 -vf crop=width:height:x:y output.mp4
+        width 和height 表示裁剪后的尺寸，x:y 表示裁剪区域的左上角坐标
+        例子：ffmpeg -i output4.mp4 -strict -2 -vf crop=1280:500:0:120 output5.mp4
+    调整播放速度：
+        2倍速：
+        ffmpeg -i input.mp4 -filter:v "setpts=0.5*PTS" output.mp4
+        0.5倍速：
+        ffmpeg -i input.mp4 -filter:v "setpts=2*PTS" output.mp4
