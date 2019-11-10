@@ -114,10 +114,22 @@ Survivor块，每次都在Eden和一个Survivor中创建对象，回收时将存
 	Client模式启动速度较快，Server模式启动较慢。Client模式启动的JVM采用的是轻量级的虚拟机，Server模式启动的JVM采用的是重量级的虚拟机，对程序采用了更多的优化。
 	
 	GC日志
+    与GC日志有关的参数：
+        -XX:+PrintGC 输出简要GC日志 
+        -verbose:gc
+        -XX:+PrintGCDetails 输出详细GC日志 
+        -Xloggc:gc.log  输出GC日志到文件
+        -XX:+PrintGCTimeStamps 输出GC的时间戳（以JVM启动到当期的总时长的时间戳形式） 
+        -XX:+PrintGCDateStamps 输出GC的时间戳（以日期的形式，如 2018-05-04T21:53:59.234+0800） 
+        -XX:+PrintHeapAtGC 在进行GC的前后打印出堆的信息        
+        -XX:+PrintReferenceGC 打印年轻代各个引用（SoftReference，WeakReference，FinalReference等）的数量以及清理时长
+    实际上，-verbose:gc是一个标准的选项， -XX:+PrintGC是一个实验的选项，在JDK1.8中 -verbose:gc和-XX:+PrintGC是等价的，但是在JDK 9中 -XX:+PrintGC被标记为deprecated
+    GC日志样例：
 		[GC (System.gc()) [PSYoungGen: 22032K->632K(29696K)] 42512K->21120K(98304K), 0.0017566 secs] [Times: user=0.00 sys=0.00, real=0.00 secs] 
 		[Full GC (System.gc()) [PSYoungGen: 632K->0K(29696K)] [ParOldGen: 20488K->526K(68608K)] 21120K->526K(98304K), 
 		[Metaspace: 2692K->2692K(1056768K)], 0.0123980 secs] [Times: user=0.02 sys=0.00, real=0.01 secs] 
-		Heap
+	程序退出前的内存情况：
+        Heap
 		 PSYoungGen      total 29696K, used 22544K [0x00000000fdf00000, 0x0000000100000000, 0x0000000100000000)
 		  eden space 25600K, 88% used [0x00000000fdf00000,0x00000000ff504208,0x00000000ff800000)
 		  from space 4096K, 0% used [0x00000000ffc00000,0x00000000ffc00000,0x0000000100000000)
@@ -587,30 +599,18 @@ FGCT表示老年代垃圾回收次数和消耗时间，GCT表示垃圾回收消�
 	invokestatic指令表示调用静态方法，不需要传入实例引用this，因此不需要压入栈。
 
 	
-	第五章 ClassLoader
-	虚拟机在加载类阶段，使用几种不同的 ClassLoader 加载程序执行需要的类信息，JVM 中内置了三个重要的 ClassLoader，分别是 BootstrapClassLoader、ExtensionClassLoader 和 
-AppClassLoader。
-	BootstrapClassLoader 负责加载 JVM 运行时核心类，这些类位于 $JAVA_HOME/jre/lib/rt.jar 文件中，如：java.util.*、java.io.*等。
-	ExtensionClassLoader 负责加载 JVM 扩展类，位于 $JAVA_HOME/jre/lib/ext/*.jar 文件内。
-	AppClassLoader 加载 Classpath 环境变量里定义的路径中的 jar 包和目录。
-	jdk 内置一个 URLClassLoader，用于加载位于网络上静态文件服务器提供的 jar 包和 class文件。
-	双亲委派：AppClassLoader 在加载一个未知的类名时，首先将这个类名交给父加载器 ExtensionClassLoader 加载，如果 ExtensionClassLoader 可以加载，那么 AppClassLoader 就不
-需要自己加载，否则就需要在Classpath查找这个类，能找到就进行加载，否则就抛出异常。ExtensionClassLoader 在加载一个未知的类名时，也是首先将类名交给父加载器 BootstrapClassLoader 
-加载，如果BootstrapClassLoader 不能加载，就自己去加载。
-	class文件被加载后，jvm根据它构造出对应的 class 对象，这个class对象持有加载它的ClassLoader的引用。但是使用 BootstrapClassLoader 加载的class获取的classLoader引用为null。
-	可以通常修改 BootstrapClassLoader 的加载路径，让 BootstrapClassLoader 加载其他的类：
-		// /a:表示追加路径到 BootstrapClassLoader 的加载路径
-		java -Xbootclasspath/a:d:tem_file VmDemo1
-
+	第五章 类的加载
 	类加载过程：加载、连接、初始化，其中连接可以细分为验证、准备、解析三个阶段。
 	加载：类加载器根据一个类的全限定名读取此类的二进制字节流保存在JVM的运行期方法区中，然后JVM根据保存的二进制数据创建一个java.lang.Class对象。
 	连接：对已保存在方法区中的类数据进行验证，然后为静态变量分配内存并设为初始值，然后将常量池中所有的符号引用转为直接引用。
 		验证：格式验证（检查加载的二进制流数据（通常是class文件）符合jvm规范）、语义分析（检查是否违反语义规范，如没有实现接口中的方法）、字节码验证（goto指令的操作数是否超出方法
-边界）、符合引用验证（检查符合引用对应的直接引用是否存在，将延后到解析阶段进行）；验证的目的是为了确保Class文件的字节流中包含的信息符合当前虚拟机的要求，并且不会危害虚拟机自身的安全。
+边界等）、符号引用验证（检查符号引用对应的直接引用是否存在，将延后到解析阶段进行）；验证的目的是为了确保Class文件的字节流中包含的信息符合当前虚拟机的要求，并且不会危害虚拟机自身的安全。
 		准备：为类中的所有静态变量分配内存空间，并为其设置一个初始值（对于非final变量，这个值是虚拟机默认设置好的，例如int为0，对于final变量，这个值就是代码中设置的值）
 		解析：将常量池中所有的符号引用转为直接引用（得到类或者字段、方法在内存中的指针或者偏移量，以便直接调用该方法）。这个阶段可能在初始化之后再执行。
 	初始化：将一个类中所有被static关键字标识的代码统一执行一遍，如果执行的是静态变量，那么就会使用用户指定的值覆盖之前在准备阶段设置的初始值；如果执行的是static代码块，那么在初始化
 阶段，JVM就会执行static代码块中定义的所有操作。
+    验证阶段对于虚拟机的类加载机制来说，不一定是必要的阶段。如果所运行的全部代码确认是安全的，可以使用-Xverify：none参数来关闭大部分的类验证措施，以缩短虚拟机类加载时间。
+    初始化阶段是执行类构造器<clinit>()方法的过程。<clinit>()方法是由编译器自动收集类中的所有类变量的赋值动作和静态语句块(static{}块)中的语句合并产生的。
 	虚拟机规范中并没有强制约束何时进行类的加载，但是规范严格规定了有且只有下列五种情况必须对类进行初始化（加载、验证、准备都会随着发生）：
 		1、遇到 new、getstatic、putstatic、invokestatic 这四条字节码指令时，如果类没有进行过初始化，则必须先触发其初始化。最常见的生成这4条指令的场景是：使用 new 关键字实例化对象
 的时候；读取或设置一个类的静态字段（被 final 修饰、已在编译器把结果放入常量池的静态字段除外）的时候；以及调用一个类的静态方法的时候。
@@ -624,7 +624,98 @@ AppClassLoader。
 		通过数组定义来引用类，不会触发此类的初始化。该过程会对数组类进行初始化，数组类是一个由虚拟机自动生成的、直接继承自 Object 的子类，其中包含了数组的属性和方法。
 		常量在编译阶段会存入调用类的常量池中，本质上并没有直接引用到定义常量的类，因此不会触发定义常量的类的初始化。
 
+    虚拟机在加载类阶段，使用几种不同的 ClassLoader 加载程序执行需要的类信息，JVM 中内置了三个重要的 ClassLoader，分别是 BootstrapClassLoader、ExtensionClassLoader 和 
+AppClassLoader。
+	BootstrapClassLoader 负责加载 JVM 运行时核心类，这些类位于 $JAVA_HOME/jre/lib/rt.jar 文件中，如：java.util.*、java.io.*等。
+	ExtensionClassLoader 负责加载 JVM 扩展类，位于 $JAVA_HOME/jre/lib/ext/*.jar 文件内。
+	AppClassLoader 加载 Classpath 环境变量里定义的路径中的 jar 包和目录。
+	jdk 内置一个 URLClassLoader，用于加载位于网络上静态文件服务器提供的 jar 包和 class文件。
+	双亲委派：AppClassLoader 在加载一个未知的类名时，首先将这个类名交给父加载器 ExtensionClassLoader 加载，如果 ExtensionClassLoader 可以加载，那么 AppClassLoader 就不
+需要自己加载，否则就需要在Classpath查找这个类，能找到就进行加载，否则就抛出异常。ExtensionClassLoader 在加载一个未知的类名时，也是首先将类名交给父加载器 BootstrapClassLoader 
+加载，如果BootstrapClassLoader 不能加载，就自己去加载。
+	class文件被加载后，jvm根据它构造出对应的 class 对象，这个class对象持有加载它的ClassLoader的引用。但是使用 BootstrapClassLoader 加载的class获取的classLoader引用为null。
+	可以通常修改 BootstrapClassLoader 的加载路径，让 BootstrapClassLoader 加载其他的类：
+		// /a:表示追加路径到 BootstrapClassLoader 的加载路径
+		java -Xbootclasspath/a:d:tem_file VmDemo1
+    双亲委派加载模式是java推荐采用的类加载方式，所以现在如果要实现自己的类加载器，只需要继承ClassLoader(这是一个抽象类)并重写findClass方法就可以了，ClassLoader类的loadClass方法
+会检查该类是否已加载，没有加载才会调用父加载器的loadClass方法尝试加载，只有当父加载器加载失败才会调用自己的findClass方法来进行加载。
+    打印几种类加载器：（启动类加载器无法获取，将得到null）
+        public class JvmDemo3 {
+            public static void main(String[] args) {
+                System.out.println(JvmDemo6.class.getClassLoader());
+                System.out.println(Object.class.getClassLoader());
+                System.out.println(JButton.class.getClassLoader());
+                System.out.println(ZipFileSystem.class.getClassLoader());
+            }
+        }
+    自定义类加载器，重写loadClass方法，将会重复加载已经加载的类：
+        public class JvmDemo4 {
+            public static void main(String[] args) throws Exception{
+                MyClassLoader myClassLoader = new MyClassLoader();
+                Object obj = myClassLoader.loadClass("com.zhangwei.javabase.jvm.JvmDemo4").newInstance();
+                System.out.println(obj.getClass());
+                System.out.println(obj.getClass()==JvmDemo4.class);
+                System.out.println(obj instanceof com.zhangwei.javabase.jvm.JvmDemo4);
+                //输出：
+                //class com.zhangwei.javabase.jvm.JvmDemo4
+                //false
+                //使用自定义的类加载器加载类创建的对象，打印加载的类名仍是当前类，但是由于当前类已经被AppClassLoader加载，
+                //所以使用instance运算符检查显示两个类型并不相同
+            }
+        }
 
+        class MyClassLoader extends ClassLoader{
+            @Override
+            public Class<?> loadClass(String name) throws ClassNotFoundException {
+                try {
+                    String fileName = name.substring(name.lastIndexOf('.')+1)+".class";
+                    InputStream is = getClass().getResourceAsStream(fileName);
+                    if(is==null){
+                        return super.loadClass(name);
+                    }
+                    byte[] b = new byte[is.available()];
+                    is.read(b);
+                    Class clazz = defineClass(name,b,0,b.length);
+                    return clazz;
+                } catch (IOException e){
+                    throw new ClassNotFoundException(name);
+                }
+            }
+        }
+    自定义类加载器，重写findClass方法，不会重新加载已加载的类：
+        public class JvmDemo5 {
+            public static void main(String[] args) throws Exception{
+                NewClassLoader newClassLoader = new NewClassLoader();
+                Object obj = newClassLoader.loadClass("com.zhangwei.javabase.jvm.JvmDemo7").newInstance();
+                System.out.println(obj.getClass());
+                System.out.println(obj.getClass()==JvmDemo7.class);
+                System.out.println(obj instanceof com.zhangwei.javabase.jvm.JvmDemo7);
+                //输出：
+                //class com.zhangwei.javabase.jvm.JvmDemo7
+                //true
+                //true
+                //不重写loadClass方法，只重写findClass，已经加载的类不会重复加载
+            }
+        }
+
+        class NewClassLoader extends ClassLoader{
+            @Override
+            protected Class<?> findClass(String name) throws ClassNotFoundException {
+                try {
+                    String fileName = name.substring(name.lastIndexOf('.')+1)+".class";
+                    InputStream is = getClass().getResourceAsStream(fileName);
+                    if(is==null){
+                        return super.loadClass(name);
+                    }
+                    byte[] b = new byte[is.available()];
+                    is.read(b);
+                    Class clazz = defineClass(name,b,0,b.length);
+                    return clazz;
+                } catch (IOException e){
+                    throw new ClassNotFoundException(name);
+                }
+            }
+        }
 
 
 

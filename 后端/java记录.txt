@@ -948,7 +948,9 @@ Object引用所有类型对象，这样的方式并不安全，比如手动类�
         for(LogWriter logWriter : logWriterList){
             logWriter.log("lllllll");
         }
-						
+    实际上，SPI也可以用在类上，即获取一个父类的子类实例对象。
+
+
 											第十二章 lambda表达式
 
 	lambda表达式提升了java的表达能力。
