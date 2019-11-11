@@ -106,6 +106,10 @@ Survivor块，每次都在Eden和一个Survivor中创建对象，回收时将存
 的时间占比。
 	G1收集器将堆空间划分为多个大小相等的独立区域，称为Region，GC时不需要再对整个堆进行处理，而是只处理一部分Region。G1跟踪每个Region的垃圾堆积价值（回收空间和时间的
 经验值，即历史GC综合值），每次选择回收价值最大的Region进行GC。
+	查看虚拟机默认参数：
+		java -XX:+PrintCommandLineFlags -version
+	查看默认的垃圾收集器：
+		java -XX:+PrintGCDetails -version
 	JDK1.8 64位JDK server模式默认使用Parallel作为新生代收集器，默认使用Parallel Old作为老年代收集器。
 
 	jvm运行模式：
@@ -124,27 +128,38 @@ Survivor块，每次都在Eden和一个Survivor中创建对象，回收时将存
         -XX:+PrintHeapAtGC 在进行GC的前后打印出堆的信息        
         -XX:+PrintReferenceGC 打印年轻代各个引用（SoftReference，WeakReference，FinalReference等）的数量以及清理时长
     实际上，-verbose:gc是一个标准的选项， -XX:+PrintGC是一个实验的选项，在JDK1.8中 -verbose:gc和-XX:+PrintGC是等价的，但是在JDK 9中 -XX:+PrintGC被标记为deprecated
-    GC日志样例：
-		[GC (System.gc()) [PSYoungGen: 22032K->632K(29696K)] 42512K->21120K(98304K), 0.0017566 secs] [Times: user=0.00 sys=0.00, real=0.00 secs] 
-		[Full GC (System.gc()) [PSYoungGen: 632K->0K(29696K)] [ParOldGen: 20488K->526K(68608K)] 21120K->526K(98304K), 
-		[Metaspace: 2692K->2692K(1056768K)], 0.0123980 secs] [Times: user=0.02 sys=0.00, real=0.01 secs] 
+	测试代码：
+		public class JvmDemo1 {
+			public static void main(String[] args) {
+				byte[] bArr1 = new byte[2*1024*1024];
+				byte[] bArr2 = new byte[2*1024*1024];
+				byte[] bArr3 = new byte[2*1024*1024];
+				byte[] bArr4 = new byte[4*1024*1024];
+			}
+		}
+	JVM参数：
+		-verbose:gc -XX:+PrintGCDetails -Xmx20M -Xms20M -Xmn10M -XX:SurvivorRatio=8 -XX:+UseSerialGC
+	GC日志：
+		[GC (Allocation Failure) [DefNew: 7292K->628K(9216K), 0.0029765 secs] 7292K->6772K(19456K), 0.0032015 secs] 
+		[Times: user=0.00 sys=0.02, real=0.02 secs]
+	使用默认的Parallel收集器时，这段代码运行时没有发生GC，这应该是由于最后的4MB大于新生代可用空间，所以直接将其放到了老年代
+	将最后一行代码改为：byte[] bArr4 = new byte[3*1024*1024]; 然后使用Parallel收集器将输出下面的GC日志：
+		[GC (Allocation Failure) [PSYoungGen: 7292K->736K(9216K)] 7292K->6888K(19456K), 0.0103966 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+		[Full GC (Ergonomics) [PSYoungGen: 736K->0K(9216K)] [ParOldGen: 6152K->6771K(10240K)] 6888K->6771K(19456K), 
+			[Metaspace: 2564K->2564K(1056768K)], 0.0175492 secs] [Times: user=0.00 sys=0.00, real=0.02 secs]
+	这里发生了两次GC，第二次GC触发了Stop The World（STW）。第一次GC将Eden区的对象（数组）内容部分转移到老年代，将额外信息转移到一个survivor区，第二次GC又将survivor
+区的内容也转移到老年代。
 	程序退出前的内存情况：
-        Heap
-		 PSYoungGen      total 29696K, used 22544K [0x00000000fdf00000, 0x0000000100000000, 0x0000000100000000)
-		  eden space 25600K, 88% used [0x00000000fdf00000,0x00000000ff504208,0x00000000ff800000)
-		  from space 4096K, 0% used [0x00000000ffc00000,0x00000000ffc00000,0x0000000100000000)
-		  to   space 4096K, 0% used [0x00000000ff800000,0x00000000ff800000,0x00000000ffc00000)
-		 ParOldGen       total 68608K, used 20480K [0x00000000f9c00000, 0x00000000fdf00000, 0x00000000fdf00000)
-		  object space 68608K, 29% used [0x00000000f9c00000,0x00000000fb000010,0x00000000fdf00000)
-		 Metaspace       used 2698K, capacity 4486K, committed 4864K, reserved 1056768K
-		  class space    used 297K, capacity 386K, committed 512K, reserved 1048576K
-	认识GC日志：
-	GC (System.gc())表示这是通过 System.gc()触发的新生代GC，如果是由虚拟机自动触发的GC就没有(System.gc())部分，PSYoungGen表示这是新生代的Parallel收集器工作时打印
-的日志，22032K->632K(29696K)表示GC前新生代已用内存为22032K，GC后新生代使用内存为632K，括号里(29696K)表示新生代总内存大小。42512K->21120K(98304K)表示GC前堆空间已使
-用大小为42512K，GC后堆空间已使用内存大小为21120K，括号里(98304K)表示堆空间总内存大小。0.0017566 secs表示GC时间，[Times: user=0.00 sys=0.00, real=0.00 secs] 表示GC
-过程中用户线程执行时间、GC线程执行时间和总时间。
-	Full GC (System.gc())表示这是通过 System.gc()触发的新生代GC时新生代内存不足引发的老年代GC和新生代对象转移到老年代，ParOldGen表示这是Parallel Old收集器工作打印
-的日志，20488K->526K(68608K)表示GC前老年代已用内存为20488K，GC后新生代使用内存为526K，括号里(68608K)表示老年代总内存大小。
+		Heap
+			PSYoungGen      total 9216K, used 7456K [0x00000000ff600000, 0x0000000100000000, 0x0000000100000000)
+				eden space 8192K, 91% used [0x00000000ff600000,0x00000000ffd48160,0x00000000ffe00000)
+				from space 1024K, 0% used [0x00000000fff00000,0x00000000fff00000,0x0000000100000000)
+				to   space 1024K, 0% used [0x00000000ffe00000,0x00000000ffe00000,0x00000000fff00000)
+			ParOldGen       total 10240K, used 4096K [0x00000000fec00000, 0x00000000ff600000, 0x00000000ff600000)
+				object space 10240K, 40% used [0x00000000fec00000,0x00000000ff000010,0x00000000ff600000)
+			Metaspace       used 2570K, capacity 4486K, committed 4864K, reserved 1056768K
+				class space    used 282K, capacity 386K, committed 512K, reserved 1048576K
+	PSYoungGen即表示使用Parallel( Scavenge)收集器的年轻代，ParOldGen表示使用Parallel Old收集器的老年代。
 	Metaspace表示元空间的数据，即方法区（以前的永久代）的GC数据。
 	Heap部分详细的输出了堆空间的内存内容，包括新生代的eden区和两个survivor区（from和to），以及老年代和元空间。
 	

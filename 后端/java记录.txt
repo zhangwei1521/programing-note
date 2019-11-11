@@ -186,7 +186,26 @@ long型，有float参与就提升为float型，有double参与就提升为double
 父类属性所分配的内存空间。
 	如果子类中定义了父类中已有的属性或方法，还是可以使用super访问父类中的对应属性或方法。
 	方法的重写和重载是不一样的概念，重写是指子类的方法签名和父类的方法签名完全相同时隐藏父类方法的机制，而重载的方法
-的签名是不同的。
+的签名是不同的（方法名相同，但是参数类型不同）。
+	子类重写父类的方法时，返回值类型不需要和父类保持完全相同，只需要是父类方法返回值类型的子类型就可以（称为 协变返回类型）：
+		class MyList<E> extends ArrayList<E>{
+			//重写了父类中的Object[] toArray()方法
+			public Integer[] toArray(){
+				return new Integer[]{1,2};
+			}
+
+			public Object getObj(){
+				return 1;
+			}
+		}
+
+		class SubList<E> extends MyList<E>{
+			//重写父类中的Object getObj()方法
+			public Integer getObj(){
+				return 2;
+			}
+		}
+	其实，java的方法签名只包括 方法名和参数，并不包括方法返回值。
 	方法的重写是java动态方法调度的基础。所谓动态方法调度其实就是运行时多态，运行时根据对象实例的类型决定使用哪一个
 重写方法。
 	方法重写提供了“一个接口，多种方法”的特性。
