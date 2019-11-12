@@ -1722,6 +1722,8 @@ preparedstatement在执行的时候，每次均会命中cache，使用已存在�
 			}
 			return setInitialValue();
 		}
+	其实可以看出，线程绑定数据其实是保存在线程持有的ThreadLocalMap对象中，只不过不能直接访问线程的这个对象，而是需要借助ThreadLocal来
+访问线程绑定数据。
 	为什么线程的threadlocals中key保存的是threadlocal的弱引用？
 	弱引用的特点是，不会干扰GC，也就是说如果某个threadlocal对象没有强引用（持有threadlocal的对象已经回收），这里尽管线程的threadlocals
 持有该threadlocal的弱引用，这个threadlocals还是会被GC。

@@ -754,9 +754,9 @@ reference，局部变量就只能从slot 1开始存放。静态方法不需要�
             //int b = 12;
             System.gc();
         }
-    所以某些时候可以通过将引用大对象的变量置为null来回收其对象，但是不应该依赖这种写法，毕竟它需要开发者了解slot重用原理，并且会导致不会的
+    所以某些时候可以通过将引用大对象的变量置为null来回收其对象，但是不应该依赖这种写法，毕竟它需要开发者了解slot重用原理，并且会导致不好的
 编码风格。
-    操作数栈的栈元素可以是任意类型数据（32位和64位），32位数据占用1个单位容量，64位数据占用2个单位容量，操作数栈的总容量在编译器确定。操作数
+    操作数栈的栈元素可以是任意类型数据（32位和64位），32位数据占用1个单位容量，64位数据占用2个单位容量，操作数栈的总容量在编译期确定。操作数
 栈中元素的数据类型总是和字节码指令的序列严格匹配，这是在编译期和加载验证期得到保证的。
     在虚拟机的实际实现时，某些虚拟机会令两个相邻的栈帧共用一部分数据，这样可以减少参数复制的开销。
     动态连接：
@@ -764,8 +764,69 @@ reference，局部变量就只能从slot 1开始存放。静态方法不需要�
 当前方法抛出异常时，虚拟机会在此方法的异常表中查找匹配的异常处理器，找到了就使用其保存的返回地址设置PC寄存器的值，然后继续执行，否则就退出方法。
 这里还需要继续查资料。。。
     栈帧还可以保存一些附加信息，如调试信息等。
-    
+    方法调用：确定被调用方法的版本（从符号引用到直接引用）。class字节码中方法调用指令后面的操作数是一个常量池索引，当类被加载到内存中时，部分方
+法调用指令的操作数可以直接被替换为直接引用（方法在方法区中的地址），另外一些方法调用指令需要在运行期间执行方法调用时动态去获取方法的直接引用(称为
+动态连接)。
+	可以在加载期间确定方法版本的方法主要是静态方法和私有方法，静态方法总是和类型直接绑定，私有方法只能在定义类内部访问，不会被子类重写，所以可以
+在加载期间替换为直接引用。非私有实例方法、接口方法需要在运行时才能确定方法版本，即方法属于哪个类型。final方法不能被重写，所以也可以在加载期间确定
+其直接引用。
+	方法重载解析（静态分派）：重载方法的方法签名是不同的，所以在编译时就已经唯一确定了各个重载方法。
+		public class JvmDemo8 {
+			static class Animal{}
+			static class Dog extends Animal{}
 
+			public static void main(String[] args) {
+				JvmDemo8 demo8 = new JvmDemo8();
+				Animal animal = new Animal();
+				Animal dog = new Dog();
+				demo8.testRun(dog);
+				demo8.testRun(animal);
+			}
+
+			public void testRun(Animal animal){
+				System.out.println("hi,annimal");
+			}
+
+			//这个方法不会被引用
+			public void testRun(Dog dog){
+				System.out.println("hi,dog");
+			}
+		}
+		输出：
+			hi,annimal
+			hi,annimal
+	方法重写解析（动态分派）：jvm在程序运行时，根据对象的实际类型动态地获取方法的直接引用。
+		public class JvmDemo8 {
+			static class Animal{
+				public void run(){
+					System.out.println("animal run....");
+				}
+			}
+			static class Dog extends Animal{
+				public void run(){
+					System.out.println("Dog run....");
+				}
+			}
+			public static void main(String[] args) {
+				JvmDemo8 demo8 = new JvmDemo8();
+				Animal animal = new Animal();
+				Animal dog = new Dog();
+				demo8.testRun(dog);
+				demo8.testRun(animal);
+			}
+			public void testRun(Animal animal){
+				//这里根据animal的实际类型去动态解析方法版本
+				animal.run();
+			}
+		}
+		输出：
+			Dog run....
+			animal run....
+	动态分派的过程：方法调用时，执行 invokevirtual 0x0004指令前，首先根据操作数栈栈顶reference找到方法所在对象，然后找该对象对应的方法区类型
+数据（加载到方法区的class文件数据）的方法（的描述符和简单方法名、参数），并和指令操作数0x0004对应的常量池中的方法常量对比，匹配成功就返回找到的
+类型数据中的方法地址。如果找不到匹配的方法就去对象类型的父类型的类型数据中去查找。
+	静态分派需要依据调用方法的对象变量的静态类型和方法的参数类型进行选择方法（的符号引用）版本，称为静态多分派；动态分派只需要根据方法所在对象的实际类型
+选择方法（的直接引用）版本，称为动态单分派。
 
 
 
