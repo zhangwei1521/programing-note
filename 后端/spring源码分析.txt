@@ -1,0 +1,40 @@
+包：
+	org.springframework.core.io
+		接口：
+			InputStreamSource
+				表示字节流的提供者
+				提供方法：
+					InputStream getInputStream() throws IOException;
+			Resource
+				继承InputStreamSource
+				表示一个资源抽象
+				提供方法：
+					boolean exists();
+					boolean isReadable();
+					boolean isOpen();
+					URL getURL() throws IOException;
+					URI getURI() throws IOException;
+					File getFile() throws IOException;
+					long contentLength() throws IOException;
+					long lastModified() throws IOException;
+					Resource createRelative(String relativePath) throws IOException;
+					String getFilename();
+					String getDescription();
+			ResourceLoader
+				从classpath和文件系统加载资源的资源加载器抽象
+				提供字符串变量（常量）：
+					CLASSPATH_URL_PREFIX="classpath:"
+				提供方法：
+					Resource getResource(String location);
+					ClassLoader getClassLoader();
+			ProtocolResolver
+				协议解析器
+				提供方法：
+					Resource resolve(String location, ResourceLoader resourceLoader);
+		类：
+			DefaultResourceLoader
+				实现ResourceLoader接口
+				表示默认的资源加载器实现
+				私有变量：
+					private ClassLoader classLoader;
+					private final Set<ProtocolResolver> protocolResolvers = new LinkedHashSet<ProtocolResolver>(4);
