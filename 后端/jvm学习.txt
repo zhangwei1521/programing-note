@@ -590,6 +590,7 @@ FGCT表示老年代垃圾回收次数和消耗时间，GCT表示垃圾回收消�
 		0xb6		invokevirtual		调用实例方法
 		0xb7		invokespecial		调用调用实例初始化方法、私有方法和父类方法，需要以this作为首个参数
 		0xb8		invokestatic		调用静态方法
+		0xba		invokedynamic		调用动态方法
 		0xbb		new					创建一个对象, 并将其引用引用值压入栈顶
 		0xc6		ifnull				为null时跳转（ifnull        6）
 		.........
@@ -737,13 +738,13 @@ AppClassLoader。
 实际的字节码执行引擎可能使用解释执行、编译执行、解释编译混合执行等模式。在java语言层面上，字节码执行引擎执行的是java类的方法中的代码，
 在字节码层面，执行的是字节码指令。
     虚拟机字节码执行引擎采用 栈帧 作为进行方法调用和方法执行的数据结构，它是虚拟机栈的栈元素，其内部存储了方法的局部变量表、操作数栈、
-动态连接和方法返回地址等信息，方法调用开始对应一个栈帧入栈，方法执行结束（返回）对应该栈帧出栈。栈帧中的局部变量表大小、操作数栈大小在
-编译器就已经可以完全确定了，并且保存在方法code属性中（max_locals和max_stack）。当前执行方法的栈帧位于线程的虚拟机栈栈顶，称为当前栈帧。
+动态链接和方法返回地址等信息，方法调用开始对应一个栈帧入栈，方法执行结束（返回）对应该栈帧出栈。栈帧中的局部变量表大小、操作数栈大小在
+编译期就已经可以完全确定了，并且保存在方法code属性中（max_locals和max_stack）。当前执行方法的栈帧位于线程的虚拟机栈栈顶，称为当前栈帧。
 执行引擎执行的字节码指令都是针对当前栈帧进行操作。
     局部变量表存储方法的参数和方法内的局部变量，其容量以slot为单位，一个slot至少能保存一个boolean、byte、char、short、int、float、
 reference、returnAddress类型，也就是说一个slot至少要有32位。reference可能是32位，也可能是64位。对于64位的long和double型变量，一定要
 使用两个slot来保存，即使slot为64位。
-    虚拟机使用索引方位局部变量表，索引从0到length-1，实例方法第一个slot即索引为0的slot会在进入方法时就存入this，表示该方法所在对象的
+    虚拟机使用索引定位局部变量表，索引从0到length-1，实例方法第一个slot即索引为0的slot会在进入方法时就存入this，表示该方法所在对象的
 reference，局部变量就只能从slot 1开始存放。静态方法不需要保存this。
     slot重用：当PC寄存器的值超出了某个变量的作用域后，那这个变量占用的slot就可以给其他变量使用。
         private static void test02(){
@@ -759,7 +760,7 @@ reference，局部变量就只能从slot 1开始存放。静态方法不需要�
     操作数栈的栈元素可以是任意类型数据（32位和64位），32位数据占用1个单位容量，64位数据占用2个单位容量，操作数栈的总容量在编译期确定。操作数
 栈中元素的数据类型总是和字节码指令的序列严格匹配，这是在编译期和加载验证期得到保证的。
     在虚拟机的实际实现时，某些虚拟机会令两个相邻的栈帧共用一部分数据，这样可以减少参数复制的开销。
-    动态连接：
+    动态链接：保存方法执行期间动态连接得到的其他方法的直接引用。
     方法返回地址：保存上层方法调用当前方法时的PC寄存器的值，这样当当前方法正常返回后就可以根据保存的这个值恢复PC寄存器，让程序正常继续。如果
 当前方法抛出异常时，虚拟机会在此方法的异常表中查找匹配的异常处理器，找到了就使用其保存的返回地址设置PC寄存器的值，然后继续执行，否则就退出方法。
 这里还需要继续查资料。。。
@@ -827,7 +828,40 @@ reference，局部变量就只能从slot 1开始存放。静态方法不需要�
 类型数据中的方法地址。如果找不到匹配的方法就去对象类型的父类型的类型数据中去查找。
 	静态分派需要依据调用方法的对象变量的静态类型和方法的参数类型进行选择方法（的符号引用）版本，称为静态多分派；动态分派只需要根据方法所在对象的实际类型
 选择方法（的直接引用）版本，称为动态单分派。
+	MethodHandle是jdk1.7新增的java.lang.invoke包下的一个类，表示一个方法的引用：
+		public class JvmDemo9 {
+			public static void main(String[] args) throws Throwable {
+				Object printer = System.currentTimeMillis()%2==0 ? new MyPrinter() : System.out;
+				testPrint(printer);
+			}
 
+			private static void testPrint(Object printer) throws Throwable{
+				//这里需要调用printer对象的print方法，动态方法可以直接调用，但是java不允许调用参数对象的类型里没有的方法
+				//这里传统做法有两种：一种是强制类型转换，另一种是采用反射
+				//jdk1.7新增MethodHandle提供了另一种方案
+
+				//MethodType表示方法类型抽象，包括返回值类型、参数（列表）类型
+				MethodType methodType = MethodType.methodType(void.class,String.class);
+				//MethodHandles.Lookup表示一个方法查找器
+				MethodHandles.Lookup lookup = MethodHandles.lookup();
+				//MethodHandle表示一个方法的引用，这里findVirtual表示查找一个实例方法，第一个参数表示在运行时的printer的实际类型中去查找
+				MethodHandle methodHandle = lookup.findVirtual(printer.getClass(),"print",methodType);//.bindTo(printer);
+				//调用方法有两种，invokeExact只需要传入参数，但是需要在上面获取MethodHandle时绑定实际执行对象，
+				//invoke调用方法需要传入方法所在对象和参数
+				//methodHandle.invokeExact("hello methodHandle invokeExact");
+				methodHandle.invoke(printer,"hello methodHandle invoke");
+			}
+		}
+
+		class MyPrinter{
+			public void print(String msg) {
+				System.err.println(msg);
+			}
+		}
+	invokedynamic是jdk1.7新增的一条方法调用执行，这条指令主要是给那些动态语言使用的，也就是说运行在JVM上的动态语言的静态编译器可以产生这条指令，
+用来支持对象方法的动态解析。一个粗浅的理解是，这条指令的操作数是一个bootstrap方法的地址，在执行到这个指令时，会去执行那个bootstrap方法，该方法执行
+后返回这条指令对应的实际方法的地址，然后就可以去调用这条指令代表的方法了。
+	虚拟机字节码执行引擎的解释执行模型：执行引擎使用操作数栈代替传统的寄存器，执行操作总是将数据压入操作数栈或从操作数栈出栈执行运算或保存到局部变量表。
 
 
 
