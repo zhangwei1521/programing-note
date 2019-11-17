@@ -14,7 +14,7 @@
 		#注释原PATH
 		PATH=$PATH:$ERLANG_HOME/bin
 	下载rabbitmq：
-		wget https://github.com/rabbitmq/rabbitmq-server/archive/rabbitmq_v3_6_10.tar.gz
+		wget https://www.rabbitmq.com/releases/rabbitmq-server/v3.6.12/rabbitmq-server-generic-unix-3.6.12.tar.xz
 	解压缩后配置环境变量，编辑 /etc/bashrc，添加：
 		RABBITMQ_HOME=/usr/local/rabbitmq
 		PATH=$PATH:$RABBITMQ_HOME/sbin
@@ -34,11 +34,136 @@
 	启用web gui插件：
 		rabbitmq-plugins enable rabbitmq_management
 	添加用户：
-		rabbitmqctl add_user admin admin
+        标准格式：
+            rabbitmqctl add_user Username Password
+        添加用户 admin
+		    rabbitmqctl add_user admin admin
+    删除用户：
+        标准格式：
+            rabbitmqctl delete_user Username
+        删除用户 admin
+            rabbitmqctl delete_user admin
+    查看当前用户列表:
+        rabbitmqctl list_users
+    rabbitmq用户角色可分为五类，超级管理员, 监控者, 策略制定者, 普通管理者以及其他：
+        administrator：
+            可登陆管理控制台(启用management plugin的情况下)，可查看所有的信息，并且可以对用户，策略(policy)进行操作。
+        monitoring：
+            可登陆管理控制台(启用management plugin的情况下)，同时可以查看rabbitmq节点的相关信息（进程数，内存使用等）。
+        policymaker：
+            可登陆管理控制台(启用management plugin的情况下), 同时可以对policy进行管理。但无法查看节点的相关信息。
+        management：
+            仅可登陆管理控制台(启用management plugin的情况下)，无法看到节点信息，也无法对策略进行管理。
+        other：
+            无法登陆管理控制台，通常就是普通的生产者和消费者。
 	设置角色：
-		rabbitmqctl set_user_tags admin administrator
+        标准格式：
+            rabbitmqctl set_user_tags User Tag
+        设置用户 admin 为 administrator：
+		    rabbitmqctl set_user_tags admin administrator
+        可以给同一用户设置多个角色
+            rabbitmqctl set_user_tags admin monitoring policymaker
+    rabbitmq中，用户权限指的是用户对exchange，queue的操作权限，包括配置权限，读权限、写权限。
+        配置权限控制exchange，queue的声明和删除。
+        读权限控制向exchange发送消息以及queue和exchange的绑定(bind)操作。
+        写权限控制到从queue里取消息。
+    设置用户权限：
+        标准格式：
+            rabbitmqctl set_permissions -p VHostPath User ConfP WriteP ReadP
+        为用户 admin 添加所有权限：
+            rabbitmqctl set_permissions -p / admin ".*" ".*" ".*"
+    查看(指定hostpath)所有用户的权限信息：
+        rabbitmqctl list_permissions [-p VHostPath]
+    查看指定用户的权限信息：
+        rabbitmqctl list_user_permissions User
+    清除用户的权限信息
+        rabbitmqctl clear_permissions [-p VHostPath] User
 	访问web控制界面：
 		192.168.56.2:15672
+    
+    第一个java连接rabbitmq实例：
+    rabbitmq客户端maven依赖：
+        <dependency>
+            <groupId>com.rabbitmq</groupId>
+            <artifactId>amqp-client</artifactId>
+            <version>4.2.1</version>
+        </dependency>
+    消息生产者：
+        import java.io.IOException;
+        import java.util.concurrent.TimeoutException;
+
+        import com.rabbitmq.client.Channel;
+        import com.rabbitmq.client.Connection;
+        import com.rabbitmq.client.ConnectionFactory;
+        import com.rabbitmq.client.MessageProperties;
+
+        public class SimpleMessageProducer {
+
+            private static final String EXCHANGE_NAME = "exchange_demo";
+            private static final String QUEUE_NAME = "queue_demo";
+            private static final String ROUTING_KEY = "routingkey_demo";
+            private static final String IP_ADDRESS = "192.168.137.2";
+            private static final int PORT = 5672;
+            
+            public static void main(String[] args) throws IOException, TimeoutException {
+                ConnectionFactory factory = new ConnectionFactory();
+                factory.setHost(IP_ADDRESS);
+                factory.setPort(PORT);
+                factory.setUsername("admin");
+                factory.setPassword("admin");
+                Connection connection = factory.newConnection();
+                Channel channel = connection.createChannel();
+                channel.exchangeDeclare(EXCHANGE_NAME, "direct",true,false,null);
+                channel.queueDeclare(QUEUE_NAME, true, false, false, null);
+                channel.queueBind(QUEUE_NAME, EXCHANGE_NAME, ROUTING_KEY);
+                String message = "hello rabbitmq";
+                channel.basicPublish(EXCHANGE_NAME, ROUTING_KEY, 
+                        MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes());
+                channel.close();
+                connection.close();		
+            }
+        }
+    消息消费者：
+        import java.io.IOException;
+        import java.util.concurrent.TimeoutException;
+
+        import com.rabbitmq.client.AMQP;
+        import com.rabbitmq.client.Address;
+        import com.rabbitmq.client.Channel;
+        import com.rabbitmq.client.Connection;
+        import com.rabbitmq.client.ConnectionFactory;
+        import com.rabbitmq.client.Consumer;
+        import com.rabbitmq.client.DefaultConsumer;
+        import com.rabbitmq.client.Envelope;
+
+        public class SimpleMessageConsumer {
+
+            private static final String QUEUE_NAME = "queue_demo";
+            private static final String IP_ADDRESS = "192.168.137.2";
+            private static final int PORT = 5672;
+            
+            public static void main(String[] args) throws IOException, TimeoutException, InterruptedException {
+                Address[] addresses = new Address[] {new Address(IP_ADDRESS,PORT)};
+                ConnectionFactory factory = new ConnectionFactory();
+                factory.setUsername("admin");
+                factory.setPassword("admin");
+                Connection connection = factory.newConnection(addresses);
+                Channel channel = connection.createChannel();
+                channel.basicQos(64);
+                Consumer consumer = new DefaultConsumer(channel) {
+                    @Override
+                    public void handleDelivery(String consumerTag,Envelope envelope,
+                            AMQP.BasicProperties properties,byte[] body) throws IOException {
+                        System.out.println("receive message : "+new String(body));
+                        channel.basicAck(envelope.getDeliveryTag(), false);
+                    }
+                };
+                channel.basicConsume(QUEUE_NAME, consumer);
+                Thread.sleep(10000);
+                channel.close();
+                connection.close();
+            }
+        }
 	
 
 	
