@@ -1,0 +1,122 @@
+												jdk源码分析
+
+接口：
+	Iterable<T>
+		表示遍历功能抽象,某个类实现这个类，就表示该类声明自己（的对象）具有遍历功能。
+		提供方法：
+			Iterator<T> iterator();
+				表示声明具有遍历功能的类需要提供这个方法，以返回一个对象内部数据的遍历器。
+		默认方法：
+			default void forEach(Consumer<? super T> action){...}
+				表示声明具有遍历功能的类（对象）都可以使用此方法操作对象内部（可遍历）数据。
+			default Spliterator<T> spliterator() {...}
+				表示声明具有遍历功能的类（对象）都可以使用此方法获取到一个对象内部数据的并行遍历器。
+				Spliterator（并行遍历器）待续...
+	Iterator<E>
+		表示顺序遍历器抽象
+			提供方法：
+				boolean hasNext();
+					表示一个顺序遍历器对象需要具有这个方法以判断是否还有未遍历的元素。
+				E next();
+					表示一个顺序遍历器对象需要具有此方法以返回下一个可遍历（待处理）的元素。
+			默认方法：
+				default void remove() { throw new UnsupportedOperationException("remove");}
+					表示一个顺序遍历器调用此方法默认抛出不支持删除异常（运行实现类重写此方法）
+				default void forEachRemaining(Consumer<? super E> action) {...}
+					表示一个顺序遍历器可以调用此方法操作剩下的所有待遍历元素（数据）
+	Collection<E>
+		表示集合抽象，继承Iterable<T>接口。
+		提供方法：
+			int size();
+				一个集合对象使用此方法返回集合中元素的数量
+			boolean isEmpty();
+				判断集合对象是否为空
+			boolean contains(Object o);
+				判断集合对象是否含有某个元素（对象）
+			Iterator<E> iterator();
+				来自Iterable<T>接口，返回集合的顺序遍历器对象
+			Object[] toArray();
+				以数组的形式返回集合内的元素
+			<T> T[] toArray(T[] a);
+				填充集合内的元素到指定类型的数组并返回该数组
+			boolean add(E e);
+				添加一个元素到集合中
+			boolean remove(Object o);
+				从集合中移出指定元素
+			boolean containsAll(Collection<?> c);
+				判断集合是否包含另一个集合中的所有元素
+			boolean addAll(Collection<? extends E> c);
+				添加另一个集合中的所有元素到此集合中
+			boolean removeAll(Collection<?> c);
+				从此集合中移出另一个集合中的所有元素
+			boolean retainAll(Collection<?> c);
+				保留此集合中所有包含于另一集合的元素
+			void clear();
+				清空集合
+			boolean equals(Object o);
+				判断此集合是否和另一对象是否“相等”
+			int hashCode();
+				返回此集合对象的hashcode
+		默认方法：
+			default boolean removeIf(Predicate<? super E> filter){...}
+				删除集合中满足给定条件的元素
+			default Spliterator<E> spliterator(){...}
+				来自Iterable<T>接口，返回集合的并行遍历器对象
+			default Stream<E> stream(){...}
+				返回集合的流抽象模型
+			default Stream<E> parallelStream(){...}
+				返回集合的并行流抽象模型
+	List<E>
+		顺序表（位序集合抽象）抽象，继承 Collection<E>接口。
+		提供方法：
+			Collection<E>接口中的方法；
+			boolean addAll(int index, Collection<? extends E> c);
+				从指定索引（位序）开始保存另一个集合中的所有元素
+			E get(int index);
+				返回表中指定索引（位序）的元素
+			E set(int index, E element);
+				设置表中指定索引处的元素
+			void add(int index, E element);
+				在表中指定索引处插入元素
+			E remove(int index);
+				删除表中指定索引处的元素（该索引后一个元素将前移）
+			int indexOf(Object o);
+				返回某个对象在表中第一次出现的索引
+			int lastIndexOf(Object o);
+				返回某个对象在表中最后一次出现的索引
+			ListIterator<E> listIterator();
+				返回顺序表遍历器
+			ListIterator<E> listIterator(int index);
+				返回从指定索引处开始逻辑子表的顺序表遍历器
+			List<E> subList(int fromIndex, int toIndex);
+				返回指定索引之间的子表			
+		默认方法：
+			default void replaceAll(UnaryOperator<E> operator) {...}
+				使用指定规则替换表中所有元素
+			default void sort(Comparator<? super E> c) {...}
+				使用指定规则对表中元素进行排序
+	ListIterator<E>	
+		表示顺序表遍历器抽象，继承Iterator<E>
+		提供方法：
+			boolean hasNext();
+				来自Iterator,返回是否存在下一个可遍历元素
+			E next();
+				来自Iterator,返回遍历器下一个可遍历元素
+			boolean hasPrevious();
+				返回遍历器所在索引处是否存在前一个元素
+			E previous();
+				返回遍历器所在索引处前一个元素
+			int nextIndex();
+				返回遍历器下一个可遍历元素的索引
+			int previousIndex();
+				返回遍历器所在索引前一个元素的索引
+			void remove();
+				删除遍历器所在索引处的元素
+			void set(E e);
+				设置（替换）遍历器所在索引处的元素
+			void add(E e);
+				在遍历器所在索引处添加一个元素(next方法将跳过添加的元素)
+类
+	ArrayList<E>
+		基于数组的List
+	
