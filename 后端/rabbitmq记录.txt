@@ -6,7 +6,7 @@
 		wget https://github.com/erlang/otp/archive/OTP-19.3.6.12.tar.gz
 	编译安装erlang，执行：
 		./otp_build autoconf
-		./configure prefer=/usr/local/erlang
+		./configure --prefix=/usr/local/erlang
 		make
 		make install
 	配置环境变量，编辑 /etc/bashrc，添加：
