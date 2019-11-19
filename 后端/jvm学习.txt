@@ -645,7 +645,20 @@ AppClassLoader。
 	BootstrapClassLoader 负责加载 JVM 运行时核心类，这些类位于 $JAVA_HOME/jre/lib/rt.jar 文件中，如：java.util.*、java.io.*等。
 	ExtensionClassLoader 负责加载 JVM 扩展类，位于 $JAVA_HOME/jre/lib/ext/*.jar 文件内。
 	AppClassLoader 加载 Classpath 环境变量里定义的路径中的 jar 包和目录。
-	jdk 内置一个 URLClassLoader，用于加载位于网络上静态文件服务器提供的 jar 包和 class文件。
+	jdk 内置一个 URLClassLoader，用于加载位于网络上静态文件服务器提供的 jar 包和 class文件，AppClassLoader和ExtensionClassLoader其实都扩展自这个加载器。
+	使用URLClassLoader加载网络上的类：
+		public class JvmDemo11 {
+			public static void main(String[] args) {
+				try {
+					URL[] urls={new URL("http://127.0.0.1/base.jar")};
+					URLClassLoader classLoader = new URLClassLoader(urls);
+					StringUtils stringUtils = (StringUtils)classLoader.loadClass("com.zhangwei.javabase.string.StringUtils").newInstance();
+					System.out.println(stringUtils.isEmpty("12"));
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
 	双亲委派：AppClassLoader 在加载一个未知的类名时，首先将这个类名交给父加载器 ExtensionClassLoader 加载，如果 ExtensionClassLoader 可以加载，那么 AppClassLoader 就不
 需要自己加载，否则就需要在Classpath查找这个类，能找到就进行加载，否则就抛出异常。ExtensionClassLoader 在加载一个未知的类名时，也是首先将类名交给父加载器 BootstrapClassLoader 
 加载，如果BootstrapClassLoader 不能加载，就自己去加载。

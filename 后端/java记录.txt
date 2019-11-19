@@ -2490,6 +2490,16 @@ test方法返回true时，filter方法也返回原Optional对象，test方法返
 	根据测试结果可以知道，iterate迭代会造成stream处理变慢，这是因为iterate迭代的后一个迭代依赖前一个迭代的结果，在使用iterate迭代时再启用多线程并行处理，需要线程间
 	传递迭代变量，所以变得更慢。使用LongStream.rangeClosed(1L,n)则可以实现分段处理，然后再启用并行处理，就可以实现更快的处理。
 		
+	补充：使用Class实例和ClassLoader实例加载资源文件：
+	Class.getResource(String path)方法可加载执行此方法的代码的classpath下的资源，参数path不以’/'开头时，默认是从此类所在的包下取资源；如果参数 path 以’/'开头，
+则是从ClassPath根下获取：
+		URL url = IODemo7.class.getResource("/database.properties");	//从classpath根路径下获取资源文件
+		URL url = IODemo7.class.getResource("database.properties");		//从classpath下的IODemo7所在包下获取资源文件
+	ClassLoader.getResource(String path)参数path不能以'/'开始，默认就是在classpath根路径下加载资源：
+		URL url2 = IODemo7.class.getClassLoader().getResource("database.properties");
+	即 IODemo7.class.getClassLoader().getResource("database.properties") === IODemo7.class.getResource("/database.properties")
+	Class和ClassLoader的实例方法：getResourceAsStream加载资源模式和getResource方法相同，只是返回对象是一个InputStream对象。
+
 		
 
 
