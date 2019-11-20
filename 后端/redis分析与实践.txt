@@ -467,3 +467,69 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 		# repl-ping-slave-period 10
 		# 主实例ping从实例和从实例发送ack请求到主实例、同步复制的超时时间，如果超时就会断开连接。
 		# repl-timeout 60
+
+	持久化机制
+	redis提供两种持久化方式：RDB和AOF。
+	RDB机制使用RDB文件来保存redis实例运行时内存中的数据到磁盘中，RDB文件是（触发）执行SAVE或BGSAVE命令时刻的redis数据快照。
+	配置文件中save参数决定了触发SAVE的时机：
+		save 900 1		#最近900s内至少有1条数据发生变化
+		save 300 10		#最近300s内至少有10条数据发生变化
+		save 60 10000	#最近60s内至少有10000条数据发生变化
+	可以在运行时修改save参数：
+		config set save "900 1 300 10 60 10000"
+	运行时禁用RDB持久化：
+		config set save ""
+	如果在配置文件中注释了save参数，再启动redis实例就不会再出发RDB持久化
+	运行时查看save参数：
+		config get save
+	运行时手动执行RDB快照：
+		save
+	启动一个新的子进程来执行RDB转储：
+		bgsave	#bgsave不会阻塞redis实例的写入
+	查看持久化的相关指标和状态：
+		info persistence
+	其他参数：
+		#当bgsave失败时，redis服务器停止接受写入操作
+		stop-writes-on-bgsave-error yes
+		#压缩转储RDB文件
+		rdbcompression yes
+		#在RDB文件末尾添加CRC64校验和
+		rdbchecksum yes
+		#转储RDB文件名
+		dbfilename
+		#保存RDB文件路径
+		dir
+	RDB文件默认以rdb作为后缀名。
+	RDB持久化机制不能提供非常强的一致性保障，因为RDB总是基于某个时间点的数据，如果在该时间点后redis崩溃，那么新数据就丢失了。
+	AOF是一种只记录redis写入命令的追加式日志文件，每个写入命令都会被追加到该文件中，所以能很好保障数据的一致性。
+	运行时启用/禁用AOF:
+		config set appendonly yes/no
+	redis默认没有启用AOF，修改配置文件启用/禁用AOF：
+		appendonly yes/no
+	AOF启用后将在数据目录中创建AOF文件，AOF文件默认名为appendonly.aof,可以通过参数修改：
+		appendfilename redisaof.aof
+	redis使用一个缓冲区来保存将写入AOF文件的写入命令，使用参数 appendfsync调整冲刷缓冲区数据到磁盘文件的频率：
+		appendfsync always		#只丢失崩溃时的一个命令
+		appendfsync everysec	#只丢失崩溃时一秒内的命令
+		appendfsync no 			#由操作系统决定冲刷频率，通常是30秒一次
+	每次关闭redis服务器实例时，冲刷缓冲区总会执行。
+	AOF重写：执行bgrewriteaof，将会去除AOF文件中无效的命令（键值被多个命令更新，只需要保留最新那个命令，过期键的写入命令不需要
+再保留）以实现压缩AOF文件(新文件会替换原aof文件)。
+	执行bgrewriteaof会创建一个子进程来执行AOF重写。
+	自动重写AOF文件参数：
+		#aof文件超过此值后就触发AOF重写
+		auto-aof-rewrite-min-size 64MB
+		#新AOF文件相比上次重写的AOF文件增大的百分比大于此值就触发AOF重写
+		auto-aof-rewrite-percentage 100
+	redis-check-aof是一个redis提供的用于修复损坏AOF文件的工具：
+		redis-check-aof --fix appendonly.aof
+	RDB的优势在于文件格式更紧凑，所以占用磁盘空间更小，而且其使用redis内部格式，所以恢复数据时要比AOF快得多，缺点是
+数据一致性不能得到很好的保障。
+	实际中，可以同时使用RDB和AOF持久化。
+	redis4.0开始提供参数：
+		aof-use-rdb-preamble yes
+	这个参数设为yes后，再进行aof重写就会把原AOF文件的内容转为RDB格式保存到重写的AOF文件中，新的写入命令还是按照命令格式写入。
+	redis保证不会进行RDB转储和AOF重写。
+	redis优先使用AOF文件恢复数据。
+	
+
