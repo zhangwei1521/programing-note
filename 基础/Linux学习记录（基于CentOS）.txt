@@ -479,12 +479,36 @@ work.xml，即9个规则集。public.xml内容入下：
 	可以看出zone中引用了service，一个service表示一个firewalld中配置的服务，它是在service目录配置的，/usr/lib/firewalld/service/目录下提供了
 很多配置文件，包括了常用的各种服务，如果需要修改，可以复制相应的文件到/etc/firewalld/service/下修改，如果需要新增服务，也可以添加一个service文件。
 
+	nohup命令
+	nohup命令用于不挂断(no hang up)地运行命令，即退出账号登录和终端（terminal）后程序能一直执行。
+	用法：
+		nohup Command [ Arg ... ] [　& ]
+	实例：
+		nohup redis-server --port 6379 --bind 127.0.0.1 --dbfilename master.rdb > master.out &
+	最后面的 & 表示后台运行。
+	> master.out 表示将输出重定向到master.out 文件中。
+	操作系统中有三个常用的流：
+	　　0：标准输入流 stdin
+	　　1：标准输出流 stdout
+	　　2：标准错误流 stderr
+　　上面的 > master.out，实际是 1 > master.out的省略用法；< input.txt ，实际是 0 < input.txt的省略用法。
+	如果要将错误输出也保存到标准输出中，可以这样写：>master.out 2>&1
 
-
-
-
-
-
+	下载netcat源码：
+		wget https://nchc.dl.sourceforge.net/project/netcat/netcat/0.7.1/netcat-0.7.1.tar.gz
+	查看开放端口： 
+		nc -z -v -n 127.0.0.1 21-25
+	-z表示使用0 IO，即连接后就关闭连接，不进行数据交换。
+	-v表示输出详细信息
+	-n表示不使用DNS反向查询IP的域名。
+	查看使用指定开放端口的服务的banner信息（只有部分服务会提供banner信息）
+		nc -v 127.0.0.1 22
+	安装iptables防火墙:
+		yum install iptables-services
+	iptables配置文件路径：
+		/etc/sysconfig/iptables
+	启用iptables服务（需要先停止在用的firewalld服务）：
+		systemctl restart iptables.service
 
 
 

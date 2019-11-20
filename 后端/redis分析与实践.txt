@@ -419,7 +419,51 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 			}
 		}
 	
-		
-		
-	
-		
+	复制机制
+	redis提供一个复制机制，可以将数据从redis主服务器（master，主实例）复制到一个或多个redis从服务器
+（slave，从实例）。
+	复制可以提高系统的容错能力，也可以用于系统的水平扩展。
+	复制机制是redis cluster（集群）的基础，但是cluster具有高可用特性，复制不能提供高可用能力。
+	操作：
+		复制配置文件：cp redis.conf redis-slave.conf
+		创建slave目录：mkdir ./slave
+		修改slave配置文件：
+			port 6380
+			pidfile /var/run/redis_6380.pid
+			dir ./slave
+			slaveof 127.0.0.1 6379
+		启动主实例：redis-server redis.conf
+		连接主实例：redis-cli -p 6379
+		启动从实例：redis-server redis-slave.conf
+		连接从实例：redis-cli -p 6380
+		查看主从实例连接信息：info replication
+		上面这个命令可以在主实例、从实例中执行，输出中比较重要的两个信息是：
+			master_replid:a8123fddd5e44d48b8d5226f66ad8df40e2f0598
+			master_repl_offset:1316
+		master_replid用于标识主实例，master_repl_offset标识复制流中的一个偏移标记。
+	slaveof可以在redis-cli直接使用来动态改变从实例的mater。
+	当主从实例成功建立了复制关系后，如果是从实例第一次连接主实例，主实例会将所有数据转储到一个RDB文件，
+然后发送该文件给从实例，从实例收到RDB文件后就删除自己内存中的所有数据，然后将RDB文件中的数据导入；
+如果不是第一次连接，从实例首先将(master_replid;master_repl_offset)发送给主实例，主实例将根据配置决
+定是否接受部分重新同步，如果接受就从收到的(master_replid;master_repl_offset)处开始增量地同步写入命令，
+否则就会进行完全重新同步。
+	当主实例收到新的写入命令后，它会转发一份该命令给从实例，这样就实现了数据同步。
+	主实例上的同步操作时完全异步的，所以不会阻塞客户端写入数据到主实例。
+	上面配置的从实例是只读实例，不能直接写数据到从实例中。
+	从实例可以提升为主实例，这时其他的从实例需要与新主实例重新同步，redis4.0开始这种同步只需要部分同步。
+	当从实例与主实例失去连接时，redis主实例会使用一个缓冲区来保存新的写入命令，这个缓冲区称为replication backlog，
+其默认大小是1M。
+		#repl-backlog-size 1mb
+	在从实例重新连接上主实例时，如果主实例写入的数据量超过了replication backlog的容量，就会触发
+一次完全重新同步，否则主实例就只需将replication backlog中保存的命令发送给从实例进行部分重新同步。
+	其他参数：
+		#所有从实例都与主实例断开连接后，主实例保留replication backlog的时间，其默认值是3600秒。
+		# repl-backlog-ttl 3600	
+		#是否合并小数据包为大包，默认为否，设为yes可以减小带宽使用，但是可能造成复制延迟
+		repl-disable-tcp-nodelay no
+		#是否启用无磁盘复制，设为yes就在完全重新同步时不将RDB文件写到磁盘上，直接将内存中的RDB文件发送给从实例。
+		repl-diskless-sync no
+		#主实例ping从实例的时间间隔（秒），从实例美秒都会像主实例发送RELPCONF ACK{offset}
+		# repl-ping-slave-period 10
+		# 主实例ping从实例和从实例发送ack请求到主实例、同步复制的超时时间，如果超时就会断开连接。
+		# repl-timeout 60
