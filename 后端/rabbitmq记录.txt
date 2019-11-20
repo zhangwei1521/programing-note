@@ -164,6 +164,49 @@
                 connection.close();
             }
         }
+    
+    
+    第二部分 核心概念
+    rabbitmq的工作：接收消息、存储消息、转发消息。
+    生产者（Producer）投递的消息一般包含2个部分：标签和消息体，可以类比为http请求的请求头和请求数据。标签用于描述消息，如消息要投递的交换器和
+消息的路由键等。
+    消费者（Consumer）订阅rabbitmq的消息队列，消费队列中的消息时，消息的标签不会被传输给消费者，传输的只有消息体，所以消费者不知道消息的投递者
+是谁，从设计上来看，消费者也不需要知道生产者。
+    rabbitmq服务节点称为Broker。
+    队列（Queue）是Broker内存储消息的结构，多个消费者可以订阅同一个队列，但是一个队列中的一个消息不会被分发给多个消费者，这些消费者是轮流消费
+队列中的消息的。
+    交换器（Exchange）是Broker内部接收生产者投递消息的对象，交换器收到消息后再将消息路由到一个或多个队列中，如果路由不到接收队列，就会将消息返
+回生产者或丢弃该消息。
+    路由器（RoutingKey）是生产者投递消息时设置的消息标签的一部分（某些消息可以不设置）。交换器根据消息的路由键和自身和队列的绑定键决定路由路径。
+    绑定（Binding）是交换器和队列的关系描述，通常通过绑定键（BindingKey）来表达。队列A和队列B可以使用同一个绑定键绑定同一个交换机。
+    rabbitmq常用的交换器类型有4种：fanout、direct、topic、headers。AMQP协议中提供了另外2种交换器：System和自定义。
+    fanout交换器无视消息的路由键，将收到的所有消息路由到所有绑定的队列。
+    direct交换器将消息路由到绑定键和消息路由键完全匹配的队列。
+    topic交换器匹配消息的路由键和自身的绑定键时，采用模糊匹配规则：
+        约定BingdingKey使用.分割的字符串可以使用*和#，*表示一个字符串，#表示0或多个字符串
+        例子：
+            绑定键：*.key1.* 匹配 a.key1.b
+            绑定键：#.key2.* 匹配 a.b.key2.c
+    headers交换器不使用路由键匹配路由，而是使用消息的headers属性（一个键值对）来路由，headers交换器的绑定键也使用键值对。headers交换器基本不会使用。
+    生产者连接rabbitmq Broker投递消息流程：
+    与Broker建立Connection，然后打开Channel，然后声明一个Exchange，然后声明一个Queue，然后绑定Exchange和Queue，然后发送消息（消息携带要投递的交换
+器和路由键），投递成功后关闭Channel，然后关闭Connection。
+    消费者消费消息流程：
+    与Broker建立Connection，然后打开Channel，然后发送消费请求（同时指定回调函数），Broker发送消息给消费者，消费者收到消息后发送确认信息给Broker，然
+后Broker从队列中删除已确认收到的消息，然后关闭Channel，然后关闭Connection。
+    Connection是一个实际的TCP连接，而Channel是建立在Connection上的虚拟连接，发送给Broker的AMQP指令都是通过Channel完成的。
+    使用Channel传递消息比起直接使用Connection，可以减小频繁建立和释放TCP连接的性能开销。当每个Channel内的流量较大时，这样做也会导致新的问题，这时需
+要增加Connection数量。
+    AMQP协议：
+    AMQP协议是Rabbitmq实现的主要协议，也是消息队列系统的规范协议。rabbitmq的核心概念其实都来自AMQP协议。
+    AMQP协议分为三层：
+        Module Layer主要是定义客户端可以调用的命令，即服务端提供给客户端的功能接口，例如Queue.Declare命令用于声明一个队列；
+        Session Layer主要是描述客户端和服务端连接的通信模型，例如通信同步机制和错误处理；
+        Transport Layer主要是描述底层二进制数据流的处理，比如信道复用等。
+    当客户端执行 factory.newConnection() 时，客户端将发送一个AMQP request给Broker，该请求包括一个Protocal Header 0-9-1请求头，标识建立的连接使用
+AMQP 0-9-1协议，Broker将返回一个包含Connection.Start响应头的response。
+
+
 	
 
 	
