@@ -269,4 +269,5 @@ git status 查看冲突文件，冲突文件看起来像是这样：
 	git cherry-pick --abort 前分支恢复到cherry-pick前的状态
 	如果在git cherry-pick后加一个分支名，则表示将该分支顶端提交进cherry-pick
 	
-	
+	Git更新远程分支列表:
+		git remote update origin --prune
