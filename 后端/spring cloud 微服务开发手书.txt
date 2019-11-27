@@ -611,6 +611,11 @@ title为任意值，点击monitor stream查看端点提供的hystrix信息
 	feign.compression.request.mime-types=text/xml,application/xml,application/json
 	#指定开启请求压缩的最小值
 	feign.compression.request.min-request-size=2048
+	超时参数：
+		连接超时时间：
+			ribbon.ConnectTimeout=20000
+		请求超时时间：
+			ribbon.ReadTimeout=30000
 	让feign打印日志：
 	在feign配置类：HelloFeignConfig 中新增一个bean：
 		@Bean

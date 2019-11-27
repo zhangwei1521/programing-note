@@ -204,4 +204,10 @@ update table_name t set
                end)
 where t.id in ('1017295088217186304','1017292933557084160','1017293041459748864','1017295398008479744');
 
+将table1的数据加入table2：
+	insert into table2 select * from table1;
 
+查询重复数据：
+	select a.id from T_JW_XJGL_XSJTCYXX a where a.field1 in (
+		select t.field1 from table1 t group by t.field1,t.field2 having count(1)>1
+	) order by a.field1,a.field2;
