@@ -123,4 +123,248 @@ a>=1,b>1,k>=0,p为实数;
 	这个算法的时间复杂度：T(n)=2T(n-1)+c ; 根据递归求解主定理，可以得到：T(n)=O(2^n);
 	根据这个算法可以很容易地写出生成n位k进制字符串的算法。
 	
+	第三章 链表
+	什么是链表？链表是集合的一种，集合中的元素没有特别的关系，除了同处一个集合外几乎没有其他关系，而链表中的元素则具有
+前后顺序关系，实际上这种顺序关系的定义来自顺序表，集合、顺序表、链表的关系如下：
+		链表-----扩展（继承）----->顺序表-----扩展（继承）----->集合
+	链表的特性：
+		相邻元素通过指针连接；
+		最后一个元素的后继指针为NULL（针对非循环链表）；
+		链表的长度可以方便地动态调整；
+		链表中没有空置的空间
+	链表的抽象数据类型（所提供功能接口的表达体）：
+		{
+			插入：...;	// 头部插入为O(1)，非头部插入则为O(n)
+			删除：...;	// 头部删除为O(1)，非头部删除则为O(n)
+			清空：...；	// O(1)
+			计数：...；	// O(n)
+			查找：...;	// O(n)
+		}
+	链表和数组都是顺序表，都用于存储具有线性顺序关系的数据，二者各有优缺点，而且它们的优缺点是互相对立的：
+		数组的长度通常不能动态调整（动态数组除外），链表则可以非常方便的调整长度；
+		数组访问指定索引处的元素非常方便，可以以O(1)的时间复杂度访问元素，但是链表只能通过顺序遍历访问元素；
+		数组在非尾部添加、删除元素很麻烦，需要移动插入、删除位置开始的元素，而链表则是在头部插入、删除元素很方便，非头部则需要先
+			顺序遍历链表找到需要插入、删除的位置；
+		数组可能存在空间空置，而链表则没有空置空间。
+	单向链表的简单实现：
+		顺序表接口定义：
+			public interface SimpleList<T> {
+
+				int size();
+
+				T add(T t);
+
+				T add(T t,int index);
+
+				int remove(T t);
+
+				int removeAll(T t);
+
+				T get(int index);
+
+				int indexOf(T t);
+
+				MyLinkedList clear();
+			}
+		单向链表实现：
+		public class MyLinkedList<T> implements SimpleList<T>{
+
+			private static class ListNode<T>{
+				private T data;
+				private ListNode<T> next;
+
+				ListNode(T t){
+					this.data = t;
+				}
+
+				public void setData(T data) {
+					this.data = data;
+				}
+
+				public T getData() {
+					return data;
+				}
+
+				public void setNext(ListNode<T> next) {
+					this.next = next;
+				}
+
+				public ListNode<T> getNext() {
+					return next;
+				}
+			}
+
+			private ListNode<T> head;
+
+			private int size;
+
+			public String toString(){
+				StringBuilder sb = new StringBuilder();
+				sb.append('[');
+				ListNode<T> node = head;
+				while (node!=null){
+					sb.append(node.getData()).append(',');
+					node = node.next;
+				}
+				sb.deleteCharAt(sb.length()-1);
+				sb.append(']');
+				return sb.toString();
+			}
+
+			public int size(){
+				return size;
+			}
+
+			public T add(T t){
+				if(head==null){
+					head = new ListNode<>(t);
+				}
+				else {
+					ListNode<T> tail = new ListNode<>(t);
+					ListNode<T> pre = head;
+					while (pre.next!=null){
+						pre = pre.next;
+					}
+					pre.setNext(tail);
+				}
+				size++;
+				return t;
+			}
+
+			public T add(T t,int index){
+				if(head==null){
+					if(index!=0){
+						throw new RuntimeException("parameter error");
+					}
+					head = new ListNode<>(t);
+				}
+				else {
+					if(index<0){
+						throw new RuntimeException("parameter error");
+					}
+					ListNode<T> node = new ListNode<>(t);
+					ListNode<T> pre = head;
+					int i = 0;
+					while (i<index-1){
+						pre = pre.next;
+						i++;
+						if(pre==null){
+							throw new RuntimeException("parameter error");
+						}
+					}
+					if(index==0){
+						node.setNext(head);
+						head = node;
+					}
+					else {
+						node.setNext(pre.getNext());
+						pre.setNext(node);
+					}
+				}
+				size++;
+				return t;
+			}
+
+			public int remove(T t){
+				int count;
+				if(head==null){
+					count = 0;
+				}
+				else {
+					ListNode<T> pre = head;
+					ListNode<T> node = pre;
+					while (node != null){
+						if(node.getData().equals(t)){
+							break;
+						}
+						else {
+							pre = node;
+							node = node.getNext();
+						}
+					}
+					if(node!=null){
+						if(node==head){
+							head = head.next;
+						}
+						else {
+							pre.setNext(node.getNext());
+						}
+						count = 1;
+						size--;
+					}
+					else {
+						count = 0;
+					}
+				}
+				return count;
+			}
+
+			public int removeAll(T t){
+				int count = 0;
+				if(head==null){
+					count = 0;
+				}
+				else {
+					ListNode<T> p = null;
+					ListNode<T> node = head;
+					while (node!=null){
+						if(node.getData().equals(t)){
+							if(node==head){
+								head = head.getNext();
+							}
+							else {
+								p.setNext(node.getNext());
+							}
+							count++;
+						}
+						else {
+							p = node;
+						}
+						node = node.next;
+					}
+				}
+				size -= count;
+				return count;
+			}
+
+			public T get(int index){
+				int count = 0;
+				ListNode<T> node = head;
+				while (node!=null){
+					if(count==index){
+						break;
+					}
+					node = node.getNext();
+					count++;
+				}
+				if(node==null){
+					throw new RuntimeException("parameter error : index should be less than list size");
+				}
+				else {
+					return node.getData();
+				}
+			}
+
+			public int indexOf(T t){
+				int count = 0;
+				ListNode<T> node = head;
+				while (node!=null){
+					if(node.getData().equals(t)){
+						break;
+					}
+					node = node.getNext();
+					count++;
+				}
+				if(node==null){
+					return -1;
+				}
+				return count;
+			}
+
+			public MyLinkedList clear(){
+				head = null;
+				size = 0;
+				return this;
+			}
+		}
 	
