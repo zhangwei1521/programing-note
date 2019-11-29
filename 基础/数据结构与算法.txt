@@ -167,204 +167,204 @@ a>=1,b>1,k>=0,p为实数;
 				MyLinkedList clear();
 			}
 		单向链表实现：
-		public class MyLinkedList<T> implements SimpleList<T>{
+			public class MyLinkedList<T> implements SimpleList<T>{
 
-			private static class ListNode<T>{
-				private T data;
-				private ListNode<T> next;
+				private static class ListNode<T>{
+					private T data;
+					private ListNode<T> next;
 
-				ListNode(T t){
-					this.data = t;
-				}
-
-				public void setData(T data) {
-					this.data = data;
-				}
-
-				public T getData() {
-					return data;
-				}
-
-				public void setNext(ListNode<T> next) {
-					this.next = next;
-				}
-
-				public ListNode<T> getNext() {
-					return next;
-				}
-			}
-
-			private ListNode<T> head;
-
-			private int size;
-
-			public String toString(){
-				StringBuilder sb = new StringBuilder();
-				sb.append('[');
-				ListNode<T> node = head;
-				while (node!=null){
-					sb.append(node.getData()).append(',');
-					node = node.next;
-				}
-				sb.deleteCharAt(sb.length()-1);
-				sb.append(']');
-				return sb.toString();
-			}
-
-			public int size(){
-				return size;
-			}
-
-			public T add(T t){
-				if(head==null){
-					head = new ListNode<>(t);
-				}
-				else {
-					ListNode<T> tail = new ListNode<>(t);
-					ListNode<T> pre = head;
-					while (pre.next!=null){
-						pre = pre.next;
+					ListNode(T t){
+						this.data = t;
 					}
-					pre.setNext(tail);
-				}
-				size++;
-				return t;
-			}
 
-			public T add(T t,int index){
-				if(head==null){
-					if(index!=0){
-						throw new RuntimeException("parameter error");
+					public void setData(T data) {
+						this.data = data;
 					}
-					head = new ListNode<>(t);
+
+					public T getData() {
+						return data;
+					}
+
+					public void setNext(ListNode<T> next) {
+						this.next = next;
+					}
+
+					public ListNode<T> getNext() {
+						return next;
+					}
 				}
-				else {
-					if(index<0){
-						throw new RuntimeException("parameter error");
+
+				private ListNode<T> head;
+
+				private int size;
+
+				public String toString(){
+					StringBuilder sb = new StringBuilder();
+					sb.append('[');
+					ListNode<T> node = head;
+					while (node!=null){
+						sb.append(node.getData()).append(',');
+						node = node.next;
 					}
-					ListNode<T> node = new ListNode<>(t);
-					ListNode<T> pre = head;
-					int i = 0;
-					while (i<index-1){
-						pre = pre.next;
-						i++;
-						if(pre==null){
+					sb.deleteCharAt(sb.length()-1);
+					sb.append(']');
+					return sb.toString();
+				}
+
+				public int size(){
+					return size;
+				}
+
+				public T add(T t){
+					if(head==null){
+						head = new ListNode<>(t);
+					}
+					else {
+						ListNode<T> tail = new ListNode<>(t);
+						ListNode<T> pre = head;
+						while (pre.next!=null){
+							pre = pre.next;
+						}
+						pre.setNext(tail);
+					}
+					size++;
+					return t;
+				}
+
+				public T add(T t,int index){
+					if(head==null){
+						if(index!=0){
 							throw new RuntimeException("parameter error");
 						}
-					}
-					if(index==0){
-						node.setNext(head);
-						head = node;
+						head = new ListNode<>(t);
 					}
 					else {
-						node.setNext(pre.getNext());
-						pre.setNext(node);
+						if(index<0){
+							throw new RuntimeException("parameter error");
+						}
+						ListNode<T> node = new ListNode<>(t);
+						ListNode<T> pre = head;
+						int i = 0;
+						while (i<index-1){
+							pre = pre.next;
+							i++;
+							if(pre==null){
+								throw new RuntimeException("parameter error");
+							}
+						}
+						if(index==0){
+							node.setNext(head);
+							head = node;
+						}
+						else {
+							node.setNext(pre.getNext());
+							pre.setNext(node);
+						}
 					}
+					size++;
+					return t;
 				}
-				size++;
-				return t;
-			}
 
-			public int remove(T t){
-				int count;
-				if(head==null){
-					count = 0;
-				}
-				else {
-					ListNode<T> pre = head;
-					ListNode<T> node = pre;
-					while (node != null){
-						if(node.getData().equals(t)){
-							break;
-						}
-						else {
-							pre = node;
-							node = node.getNext();
-						}
-					}
-					if(node!=null){
-						if(node==head){
-							head = head.next;
-						}
-						else {
-							pre.setNext(node.getNext());
-						}
-						count = 1;
-						size--;
-					}
-					else {
+				public int remove(T t){
+					int count;
+					if(head==null){
 						count = 0;
 					}
+					else {
+						ListNode<T> pre = head;
+						ListNode<T> node = pre;
+						while (node != null){
+							if(node.getData().equals(t)){
+								break;
+							}
+							else {
+								pre = node;
+								node = node.getNext();
+							}
+						}
+						if(node!=null){
+							if(node==head){
+								head = head.next;
+							}
+							else {
+								pre.setNext(node.getNext());
+							}
+							count = 1;
+							size--;
+						}
+						else {
+							count = 0;
+						}
+					}
+					return count;
 				}
-				return count;
-			}
 
-			public int removeAll(T t){
-				int count = 0;
-				if(head==null){
-					count = 0;
+				public int removeAll(T t){
+					int count = 0;
+					if(head==null){
+						count = 0;
+					}
+					else {
+						ListNode<T> p = null;
+						ListNode<T> node = head;
+						while (node!=null){
+							if(node.getData().equals(t)){
+								if(node==head){
+									head = head.getNext();
+								}
+								else {
+									p.setNext(node.getNext());
+								}
+								count++;
+							}
+							else {
+								p = node;
+							}
+							node = node.next;
+						}
+					}
+					size -= count;
+					return count;
 				}
-				else {
-					ListNode<T> p = null;
+
+				public T get(int index){
+					int count = 0;
+					ListNode<T> node = head;
+					while (node!=null){
+						if(count==index){
+							break;
+						}
+						node = node.getNext();
+						count++;
+					}
+					if(node==null){
+						throw new RuntimeException("parameter error : index should be less than list size");
+					}
+					else {
+						return node.getData();
+					}
+				}
+
+				public int indexOf(T t){
+					int count = 0;
 					ListNode<T> node = head;
 					while (node!=null){
 						if(node.getData().equals(t)){
-							if(node==head){
-								head = head.getNext();
-							}
-							else {
-								p.setNext(node.getNext());
-							}
-							count++;
+							break;
 						}
-						else {
-							p = node;
-						}
-						node = node.next;
+						node = node.getNext();
+						count++;
 					}
-				}
-				size -= count;
-				return count;
-			}
-
-			public T get(int index){
-				int count = 0;
-				ListNode<T> node = head;
-				while (node!=null){
-					if(count==index){
-						break;
+					if(node==null){
+						return -1;
 					}
-					node = node.getNext();
-					count++;
+					return count;
 				}
-				if(node==null){
-					throw new RuntimeException("parameter error : index should be less than list size");
-				}
-				else {
-					return node.getData();
-				}
-			}
 
-			public int indexOf(T t){
-				int count = 0;
-				ListNode<T> node = head;
-				while (node!=null){
-					if(node.getData().equals(t)){
-						break;
-					}
-					node = node.getNext();
-					count++;
+				public MyLinkedList clear(){
+					head = null;
+					size = 0;
+					return this;
 				}
-				if(node==null){
-					return -1;
-				}
-				return count;
 			}
-
-			public MyLinkedList clear(){
-				head = null;
-				size = 0;
-				return this;
-			}
-		}
 	
