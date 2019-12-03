@@ -510,9 +510,21 @@ work.xml，即9个规则集。public.xml内容入下：
 	启用iptables服务（需要先停止在用的firewalld服务）：
 		systemctl restart iptables.service
 
-
-
-
+	升级Linux内核：
+		1、导入key
+			rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
+		2、安装yum源，使用elrepo源
+			rpm -Uvh http://www.elrepo.org/elrepo-release-7.0-3.el7.elrepo.noarch.rpm
+		3、安装内核
+			yum --enablerepo=elrepo-kernel install kernel-ml-devel kernel-ml -y
+		4、更改内核默认启动顺序
+			grub2-set-default 0
+		5、重启
+			reboot
+		6、查看
+			uname -r
+	查看centos发布版本：
+		 cat /etc/redhat-release
 
 
 
