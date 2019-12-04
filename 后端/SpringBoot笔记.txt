@@ -454,7 +454,18 @@ com.zhangwei.springboot.dao.master包下的dao类处理master数据源的操作�
 			UserTransaction userTransaction = new UserTransactionImp();
 			return new JtaTransactionManager(userTransaction, userTransactionManager);
 		}
-
+	
+	补充：在打包后的jar包中读取文件
+	在打包后的jar包中使用传统的方式读取文件会出现读取失败的问题：
+		File docxFile = new File(getClass().getClassLoader().getResource("ftl/template.zip").getFile());
+		报错：
+		java.io.FileNotFoundException: class path resource [ftl/template.zip] cannot be resolved to absolute file path because it does not reside in 
+		the file system: jar:file:/E:/zhangwei/code/study-alarm/aggrYuJing/aggreYuJing-server/target/aggr-server.jar!/BOOT-INF/classes!/ftl/template.zip
+	一种有效的方法是先以流的形式读取该文件资源，再将读到的流写入一个临时文件（这里使用spring的ClassPathResource抽象资源）：
+		ClassPathResource docxResource = new ClassPathResource("ftl/template.zip");
+		InputStream docxStream = docxResource.getInputStream();
+		File docxFile = File.createTempFile("template",".zip");
+		FileUtils.copyInputStreamToFile(docxStream,docxFile);	//FileUtils来自org.apache.commons.io.FileUtils
 
 
 
