@@ -165,6 +165,12 @@ a>=1,b>1,k>=0,p为实数;
 				int indexOf(T t);
 
 				MyLinkedList clear();
+
+				int replace(T oldVal,T newVal);
+
+				int replaceAll(T oldVal,T newVal);
+
+				SimpleList sort(Comparator<T> comparator);
 			}
 		单向链表实现：
 			public class MyLinkedList<T> implements SimpleList<T>{
@@ -274,7 +280,7 @@ a>=1,b>1,k>=0,p为实数;
 						ListNode<T> pre = head;
 						ListNode<T> node = pre;
 						while (node != null){
-							if(node.getData().equals(t)){
+							if(equals(node.getData(),t)){
 								break;
 							}
 							else {
@@ -308,7 +314,7 @@ a>=1,b>1,k>=0,p为实数;
 						ListNode<T> p = null;
 						ListNode<T> node = head;
 						while (node!=null){
-							if(node.getData().equals(t)){
+							if(equals(node.getData(),t)){
 								if(node==head){
 									head = head.getNext();
 								}
@@ -349,7 +355,7 @@ a>=1,b>1,k>=0,p为实数;
 					int count = 0;
 					ListNode<T> node = head;
 					while (node!=null){
-						if(node.getData().equals(t)){
+						if(equals(node.getData(),t)){
 							break;
 						}
 						node = node.getNext();
@@ -366,5 +372,312 @@ a>=1,b>1,k>=0,p为实数;
 					size = 0;
 					return this;
 				}
+
+				public int replace(T oldVal, T newVal) {
+					int count=0;
+					if(head!=null){
+						ListNode<T> node = head;
+						while (node!=null){
+							if(equals(node.getData(),oldVal)){
+								node.setData(newVal);
+								count = 1;
+								break;
+							}
+							node = node.next;
+						}
+					}
+					return count;
+				}
+
+				public int replaceAll(T oldVal, T newVal) {
+					int count=0;
+					if(head!=null){
+						ListNode<T> node = head;
+						while (node!=null){
+							if(equals(node.getData(),oldVal)){
+								node.setData(newVal);
+								count++;
+							}
+							node = node.next;
+						}
+					}
+					return count;
+				}
+
+				public SimpleList sort(Comparator<T> comparator) {
+					bubbleSort(comparator);
+					return this;
+				}
+
+				private boolean equals(T t1,T t2){
+					boolean result = false;
+					if(t1==t2){
+						result = true;
+					}
+					else if(t1!=null && t1.equals(t2)){
+						result = true;
+					}
+					return result;
+				}
+
+				//冒泡排序
+				private void bubbleSort(Comparator<T> comparator){
+					for(int i=0;i<size;i++){
+						int j=0;
+						ListNode<T> pre = head;
+						ListNode<T> node = head;
+						while (j<size-i){
+							if(comparator.compare(pre.getData(),node.getData())>0){
+								T t = pre.getData();
+								pre.setData(node.getData());
+								node.setData(t);
+							}
+							pre=node;
+							node = node.getNext();
+							j++;
+						}
+					}
+				}
 			}
+		双向链表实现：
+			public class MyDDLinkedList<T> implements SimpleList<T>{
+
+				private static class DDListNode<T>{
+					private T data;
+					private DDListNode<T> pre;
+					private DDListNode<T> next;
+
+					DDListNode(T t){
+						data = t;
+					}
+				}
+
+				private DDListNode<T> head;
+
+				private int size;
+
+				@Override
+				public String toString(){
+					StringBuilder sb = new StringBuilder();
+					sb.append('[');
+					MyDDLinkedList.DDListNode<T> node = head;
+					while (node!=null){
+						sb.append(node.data).append(',');
+						node = node.next;
+					}
+					sb.deleteCharAt(sb.length()-1);
+					sb.append(']');
+					return sb.toString();
+				}
+
+				@Override
+				public int size() {
+					return size;
+				}
+
+				@Override
+				public T add(T t) {
+					if(head==null){
+						head = new DDListNode<>(t);
+					}
+					else {
+						DDListNode<T> tail = new DDListNode<>(t);
+						DDListNode<T> before = head;
+						while (before.next!=null){
+							before = before.next;
+						}
+						before.next = tail;
+						tail.pre = before;
+					}
+					size++;
+					return t;
+				}
+
+				@Override
+				public T add(T t, int index) {
+					if(index<0 || index>size){
+						throw new RuntimeException("parameter error");
+					}
+					if(head==null){
+						if(index!=0){
+							throw new RuntimeException("parameter error");
+						}
+						head = new DDListNode<>(t);
+					}
+					else {
+						DDListNode<T> node = new DDListNode<>(t);
+						DDListNode<T> before = head;
+						int i = 0;
+						while (i<index-1){
+							before = before.next;
+							i++;
+						}
+						if(index==0){
+							node.next = head;
+							head.pre=node;
+							head = node;
+						}
+						else {
+							DDListNode<T> point = before.next;
+							before.next = node;
+							node.pre = before;
+							if(point!=null){
+								node.next = point;
+								point.pre = node;
+							}
+						}
+					}
+					size++;
+					return t;
+				}
+
+				@Override
+				public int remove(T t) {
+					int count;
+					if(head==null){
+						count = 0;
+					}
+					else {
+						DDListNode<T> point = head;
+						while (point != null){
+							if(equals(point.data,t)){
+								break;
+							}
+							else {
+								point = point.next;
+							}
+						}
+						if(point!=null){
+							if(point.pre!=null){
+								point.pre.next = point.next;
+							}
+							if(point.next!=null){
+								point.next.pre = point.pre;
+							}
+							if(point==head){
+								head = head.next;
+							}
+							count = 1;
+							size--;
+						}
+						else {
+							count = 0;
+						}
+					}
+					return count;
+				}
+
+				@Override
+				public int removeAll(T t) {
+					int count = 0;
+					if (head == null) {
+						count = 0;
+					}
+					else {
+						DDListNode<T> point = head;
+						while (point != null){
+							if(equals(point.data,t)){
+								if(point.pre!=null){
+									point.pre.next = point.next;
+								}
+								if(point.next!=null){
+									point.next.pre = point.pre;
+								}
+								if(point==head){
+									head = head.next;
+								}
+								count++;
+							}
+							point = point.next;
+						}
+					}
+					size -= count;
+					return count;
+				}
+
+				@Override
+				public T get(int index) {
+					if(index<0 || index>=size){
+						throw new RuntimeException("parameter error");
+					}
+					int count = 0;
+					DDListNode<T> point = head;
+					while (count < index){
+						point = point.next;
+						count++;
+					}
+					return point.data;
+				}
+
+				@Override
+				public int indexOf(T t) {
+					int count = 0;
+					DDListNode<T> point = head;
+					while (point!=null){
+						if(equals(point.data,t)){
+							break;
+						}
+						point = point.next;
+						count++;
+					}
+					if(point==null){
+						return -1;
+					}
+					return count;
+				}
+
+				@Override
+				public SimpleList clear() {
+					head = null;
+					size = 0;
+					return this;
+				}
+
+				@Override
+				public int replace(T oldVal, T newVal) {
+					int count=0;
+					if(head!=null){
+						DDListNode<T> point = head;
+						while (point!=null){
+							if(equals(point.data,oldVal)){
+								point.data = newVal;
+								count = 1;
+								break;
+							}
+							point = point.next;
+						}
+					}
+					return count;
+				}
+
+				@Override
+				public int replaceAll(T oldVal, T newVal) {
+					int count=0;
+					if(head!=null){
+						DDListNode<T> point = head;
+						while (point!=null){
+							if(equals(point.data,oldVal)){
+								point.data = newVal;
+								count++;
+							}
+							point = point.next;
+						}
+					}
+					return count;
+				}
+
+				@Override
+				public SimpleList sort(Comparator<T> comparator) {
+					//....
+					return this;
+				}
+
+				private boolean equals(T t1,T t2){
+					//和前面的单向链表相同
+				}
+			}
+	
+	
+	第四章 栈
+	
 	
