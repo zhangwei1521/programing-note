@@ -377,3 +377,174 @@ LoadLoad+LoadStore内存屏障指令来确保程序顺序上排在volatile变量
 	普通共享变量的访问不会使用内存屏障指令，volatile变量则总是需要内存屏障指令，内存屏障指令本身执行时会同步数据到高速缓存，所以会造成一定的开销。由于内存
 屏障指令的存在，所以volatile变量的访问相当于直接访问主存而没有使用寄存器。所以volatile变量的访问开销要比普通共享变量的开销要大。
 	基于volatile提供的可见性、有序性保障，可以使用volatile来实现对象的安全发布（即保证创建并返回的对象是完整的对象）。
+
+	CAS指令
+	CAS（Compare and Swap）是对一类处理器指令的指称，java的多线程实现通常都是通过CAS指令实现的。
+	CAS指令能将read-modify-write和check-and-act操作转换为原子操作。
+	check-and-act例子：
+		private int count;
+		public void increment(){
+			count++;
+		}
+	上面increment方法中对共享变量count的修改是一种read-modify-write操作，类似于：
+		int temp1 = count;
+		int temp2 = temp1+1;
+		count = temp2;
+	在多线程环境中，可以使用加锁的方式来同步，保证访问count的安全性，但是锁本身是非常粗粒度的，而使用volatile关键字并不能保证这种复合操作的原子性。
+	利用CAS指令来转换这种操作：
+		public class CASBasedCounter {
+			private volatile long count;
+			private final AtomicLongFieldUpdater<CASBasedCounter> fieldUpdater = null;
+
+			public CASBasedCounter() throws SecurityException, NoSuchFieldException {
+				fieldUpdater = AtomicLongFieldUpdater.newUpdater(CASBasedCounter.class,"count");
+			}
+
+			public long vaule() {
+				return count;
+			}
+
+			public void increment() {
+				long oldValue;
+				long newValue;
+				do {
+					oldValue = count;// 读取共享变量当前值
+					newValue = oldValue + 1;// 计算共享变量的新值
+				} while (/* 调用CAS来更新共享变量的值 */!compareAndSwap(oldValue, newValue));
+			}
+
+			private boolean compareAndSwap(long oldValue, long newValue) {
+				boolean isOK = fieldUpdater.compareAndSet(this, oldValue, newValue);
+				return isOK;
+			}
+		}
+	这里fieldUpdater是使用CAS指令实现的共享变量操作"代理"，各个线程在修改共享变量时委托fieldUpdater去修改，基本模式入下：
+		do {
+			oldValue = V.get();
+			newValue = modify(oldValue);
+		} while (!compareAndSwap(oldValue, newValue));
+	compareAndSwap执行时，先检查共享变量的值是否等于oldValue，如果相等，说明共享变量没有被其他线程修改，然后就更新共享变量的值为newValue，然后返回true；
+do...while循环就退出；如果共享变量的值不等于oldValue，说明共享变量已经被其他线程修改，这时就返回false，do...while循环继续，这里的共享需要使用volatile修饰，
+这样可以保证修改共享变量失败的线程能在下一次循环时读到共享变量的最新值。
+	实际上，通常不会使用AtomicLongFieldUpdater，而是使用标准库的并发包下的原子变量来利用CAS指令。
+
+	原子变量：原子变量类都是基于CAS指令实现的能保障多线程对共享变量进行read-modify-write的原子性和可见性的工具类，包括：
+		基础数据类型：	AtomicInteger、AtomicLong、AtomicBoolean
+		数组类型：		AtomicIntegerArray、AtomicLongArray、AtomicReferrenceArray
+		字段更新器：	AtomicIntegerFieldUpdater、AtomicLongFieldUpdater、AtomicReferenceFieldUpdater
+		引用型：		AtomicReferrence、AtomicStampedReference、AtomicMarkableReferrence
+	使用AtomicLong：
+		import java.util.concurrent.atomic.AtomicLong;
+		class Indicator{
+			private static final Indicator INSTANCE = new Indicator();
+
+			private final AtomicLong count = new AtomicLong(0);
+
+			private Indicator(){}
+
+			public static Indicator getInstance(){
+				return INSTANCE;
+			}
+
+			public void increment(){
+				count.incrementAndGet();
+			}
+
+			public long get(){
+				return count.get();
+			}
+		}
+		
+		public class AtomicLongDemo1 {
+			private final Indicator indicator = Indicator.getInstance();
+			public static void main(String[] args) throws Exception{
+				AtomicLongDemo1 demo1 = new AtomicLongDemo1();
+				for (int i=0;i<20;i++){
+					Thread thread = new Thread(()->{
+						demo1.indicator.increment();
+					});
+					thread.start();
+				}
+				Thread.sleep(50);
+				System.out.println("total count : "+demo1.indicator.get());
+			}
+		}
+	使用AtomicBoolean保证某个方法（操作）只被执行一次：
+		import java.util.concurrent.atomic.AtomicBoolean;
+		class OnceBox{
+			private final AtomicBoolean status = new AtomicBoolean(false);
+
+			public void work(){
+				if(status.compareAndSet(false,true)){
+					System.out.println("work start, then it will be destroyed");
+				}
+			}
+		}
+
+		public class AtomicBooleanDemo1 {
+			public static void main(String[] args) {
+				OnceBox onceBox = new OnceBox();
+				for (int i=0;i<20;i++){
+					Thread thread = new Thread(()->{
+						onceBox.work();
+					});
+					thread.start();
+				}
+			}
+		}
+	虽然上面的work方法也可以使用加锁实现一样的效果，但是锁的开销要比使用原子变量大得多。
+	ABA问题：compareAndSet在比较传入的oldValue和共享变量的最新值时，不能保证共享变量没有被其他线程更新，即共享变量可能发生了如下变化：
+		oldValue --> newValue1 --> oldValue
+	ABA问题可能不算问题，但是在某些场景下不能忽略这类问题，所以引入了AtomicStampedReference类，这个类是基于修订号的思想设计的，即在每次
+更新时都会更新一个关联的修订号。
+
+	对象发布：使对象能被其作用域外的线程访问。常见的对象发布形式包括：使用public修饰对象引用，在非private方法中返回对象，调用其他类的方法
+时传入共享对象，创建内部类在其内部访问外部对象变量。
+	static关键字修饰变量，除了定义变量的作用域为类作用域外，还保证了访问线程在访问此静态变量已经被初始化过。
+	final关键字修饰变量，除了限定变量不能修改外，还保证了访问线程在访问对象的final变量时，该变量已经初始化完成，如果final变量引用一个对象，
+则该引用对象也是已经初始化完成的。在构造对象时，非final变量可能被重排序到对象引用赋值后，所以其他线程可能访问到未初始化的变量，而虚拟机会保障
+final变量的初始化不会被重排序到对象引用赋值之后。
+	对象逸出：广义上，一个不应该被发布的内部对象被错误地发布出去都是对象逸出，狭义上，通常指一个没有构造完成的对象被提前发布。
+	典型的构造函数内this逸出：
+		public class EscapeDemo{
+			private int value;
+			public EscapeDemo(){
+				new Thread(()->{
+					doSomething();
+				}).start();
+				//初始化
+				value = 7;
+			}
+			
+			public void doSomething(){
+				System.out.println(value);
+			}
+		}
+	上面的代码中构造方法里在对象初始化之前就把对象发布出去，就导致了不符合预期的结果，由于重排序的原因，即使把初始化代码（即value = 7;)写到发布代码前
+也不能保证发布的对象是一个初始化完成的对象。
+	为了实现上面的程序语义，可以改写成如下形式：
+		public class EscapeDemo{
+			private int value;
+			private EscapeDemo(){
+				value = 7;
+			}
+			private void init(){
+				new Thread(()->{
+					doSomething();
+				}).start();
+			}
+
+			public EscapeDemo getInstance(){
+				EscapeDemo instance = new EscapeDemo();
+				init(instance);
+				return instance;
+			}
+		}
+	几种安全发布对象的方法：
+		使用static修饰引用要发布对象的变量；			 //访问发布对象时，static保证发布对象已经初始化完成
+		使用final修饰引用要发布对象的变量；				 //访问发布对象时，final保证发布对象已经初始化完成
+		使用volatile修饰引用要发布对象的变量；			 //volatile保证对象引用赋值的代码不会被重排序到初始化代码之前
+		使用AtomicReferrence变量引用要发布对象；		//AtomicReferrence保证对象的构造过程的原子性
+		对访问发布对象的代码加锁。
+	
+
