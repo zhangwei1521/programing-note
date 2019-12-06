@@ -2507,6 +2507,14 @@ test方法返回true时，filter方法也返回原Optional对象，test方法返
 	即 IODemo7.class.getClassLoader().getResource("database.properties") === IODemo7.class.getResource("/database.properties")
 	Class和ClassLoader的实例方法：getResourceAsStream加载资源模式和getResource方法相同，只是返回对象是一个InputStream对象。
 
+	补充：获取系统属性和手动设置系统属性：
+		//获取临时目录
+		System.out.println(System.getProperty("java.io.tmpdir"));
+		//获取处理器数量
+        System.out.println(Runtime.getRuntime().availableProcessors());
+		//手动设置一个系统属性
+        System.setProperty("x.dt.conn.timeout", String.valueOf(2000));
+        System.out.println(System.getProperty("x.dt.conn.timeout"));
 		
 
 
