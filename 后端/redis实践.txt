@@ -1,4 +1,4 @@
-										Redis分析与实践
+										Redis实践
 	Redis入门：
 	Redis是一个基于内存的轻量级键值数据库，或者说是一个数据结构服务器。Redis在内存中中实现了多种数据
 结构的存储，并提供了操作这些数据结构的API。
@@ -221,6 +221,7 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 		按位或: bitop or artA/B artA artB	(为artA或artB点赞)
 		按位异或：bitop xor artA|B artA artB	(只为artA或artB之一点赞)
 		按位取反：bitop not art_A artA
+	
 	设置键的过期时间：expire artAB 60	60秒后artAB将过期
 	使用 ttl artAB 检查键距离过期的时间（秒）
 	过期后使用exists artAB 将返回0

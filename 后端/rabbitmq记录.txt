@@ -65,8 +65,8 @@
             rabbitmqctl set_user_tags admin monitoring policymaker
     rabbitmq中，用户权限指的是用户对exchange，queue的操作权限，包括配置权限，读权限、写权限。
         配置权限控制exchange，queue的声明和删除。
-        读权限控制向exchange发送消息以及queue和exchange的绑定(bind)操作。
-        写权限控制到从queue里取消息。
+        写权限控制向exchange发送消息以及queue和exchange的绑定(bind)操作。
+        读权限控制到从queue里取消息。
     设置用户权限：
         标准格式：
             rabbitmqctl set_permissions -p VHostPath User ConfP WriteP ReadP
