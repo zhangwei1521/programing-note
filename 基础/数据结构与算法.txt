@@ -439,244 +439,451 @@ a>=1,b>1,k>=0,p为实数;
 					}
 				}
 			}
-		双向链表实现：
-			public class MyDDLinkedList<T> implements SimpleList<T>{
+		使用额外的开始和结束标记节点的双向链表实现(实现了Iterable接口)：
+            import java.util.ConcurrentModificationException;
+            import java.util.Iterator;
+            import java.util.NoSuchElementException;
 
-				private static class DDListNode<T>{
-					private T data;
-					private DDListNode<T> pre;
-					private DDListNode<T> next;
+            public class MyLinkedList<T> implements Iterable<T> {
+                
+                private static class Node<T>{
+                    public T data;
+                    public Node<T> prev;
+                    public Node<T> next;
+                    
+                    public Node(T t,Node<T> pre,Node<T> nxt) {
+                        data = t;
+                        prev = pre;
+                        next = nxt;
+                    }
+                }
+                
+                private int theSize;
+                private int modcount = 0;
+                private Node<T> beginMarker;
+                private Node<T> endMarker;
+                
+                public MyLinkedList() {
+                    clear();
+                }
+                
+                public void clear() {
+                    beginMarker = new Node<T>(null, null, null);
+                    endMarker = new Node<T>(null, beginMarker, null);
+                    beginMarker.next = endMarker;
+                    
+                    theSize = 0;
+                    modcount++;
+                }
+                
+                public int size() {
+                    return theSize;
+                }
+                
+                public boolean isEmpty() {
+                    return size()==0;
+                }
+                
+                public boolean add(T t) {
+                    add(size(),t);
+                    return true;
+                }
+                
+                public void add(int idx,T t) {
+                    addBefore(getNode(idx), t);
+                }
+                
+                public T get(int idx) {
+                    return getNode(idx).data;
+                }
+                
+                public T set(int idx, T t) {
+                    Node<T> p = getNode(idx);
+                    T oldVal = p.data;
+                    p.data = t;
+                    return oldVal;
+                }
+                
+                public T remove(int idx) {
+                    return remove(getNode(idx));
+                }
+                
+                private void addBefore(Node<T> p, T t) {
+                    Node<T> node = new Node<T>(t, p.prev,p);
+                    p.prev.next = node;
+                    p.prev = node;
+                    
+                    theSize++;
+                    modcount++;
+                }
+                
+                private T remove(Node<T> p) {
+                    p.prev.next = p.next;
+                    p.next.prev = p.prev;
+                    
+                    theSize--;
+                    modcount++;
+                    
+                    return p.data;
+                }
+                
+                private Node<T> getNode(int idx){
+                    if(idx<0 || idx>theSize) {
+                        throw new IndexOutOfBoundsException();
+                    }
+                    Node<T> p;
+                    if(idx < theSize/2) {
+                        p = beginMarker.next;
+                        for(int i=0;i<idx;i++){
+                            p = p.next;
+                        }
+                    }
+                    else {
+                        p = endMarker;
+                        for(int i=theSize;i>idx;i--) {
+                            p = p.prev;
+                        }
+                    }
+                    return p;
+                }
+                
+                public Iterator<T> iterator() {
+                    return new MyLinkedListIterator();
+                }
+                
+                private class MyLinkedListIterator implements Iterator<T> {
+                    
+                    private Node<T> current;
+                    
+                    private int expectedModCount = modcount;
+                    
+                    private boolean okToRemove = false;
+                    
+                    public boolean hasNext() {
+                        return current != endMarker;
+                    }
+                    
+                    public T next() {
+                        if(modcount != expectedModCount) {
+                            throw new ConcurrentModificationException();
+                        }
+                        if(!hasNext()) {
+                            throw new NoSuchElementException();
+                        }
+                        T data = current.data;
+                        current = current.next;
+                        okToRemove = true;
+                        return data;
+                    }
+                    
+                    public void remove() {
+                        if(modcount != expectedModCount) {
+                            throw new ConcurrentModificationException();
+                        }
+                        if(!okToRemove) {
+                            throw new IllegalStateException();
+                        }
+                        MyLinkedList.this.remove(current.prev);
+                        okToRemove = false;
+                        expectedModCount++;
+                    }
+                }
+            }
+	基于数组的顺序表实现（也称为动态数组）：
+        public class MyArrayList<T> {
+            private static final int DEFAULT_CAPACITY = 10;
+            
+            private int theSize;
+            
+            private T[] theItems;
+            
+            public MyArrayList() {
+                clear();
+            }
+            
+            public void clear() {
+                theSize = 0;
+                ensureCapacity(DEFAULT_CAPACITY);
+            }
+                
+            public int size() {
+                return theSize;
+            }
+            
+            public boolean isEmpty() {
+                return theSize==0;
+            }
+            
+            public void trimToSize() {
+                ensureCapacity(size());
+            }
+            
+            public T get(int idx){
+                if(idx<0 || idx>=size()) {
+                    throw new IndexOutOfBoundsException();
+                }
+                return theItems[idx];
+            }
+            
+            public T set(int idx, T t) {
+                if(idx<0 || idx>=size()) {
+                    throw new IndexOutOfBoundsException();
+                }
+                T data = theItems[idx];
+                theItems[idx] = t;
+                return data;
+            }
+            
+            public boolean add(T t) {
+                
+                return true;
+            }
+            
+            public void add(int idx, T t) {
+                if(size()==theItems.length) {
+                    ensureCapacity(size()*2+1);
+                }
+                for(int i=theSize;i>idx;i--) {
+                    theItems[i] = theItems[i-1];
+                }
+                theItems[idx] = t;
+            }
+            
+            public T remove(int idx) {
+                T data = theItems[idx];
+                for(int i=idx;i<theSize-1;i++) {
+                    theItems[i] = theItems[i+1];
+                }
+                return data;
+            }
+            
+            private void ensureCapacity(int size) {
+                if(size<theSize) {
+                    return;
+                }
+                T[] old = theItems;
+                theItems = (T[])new Object[size];
+                for(int i=0;i<theSize;i++) {
+                    theItems[i] = old[i];
+                }
+            }
+        }
+	使用链表实现栈：
+        public class MyStack<T> {
+            private MyLinkedList<T> list;
+            
+            public MyStack() {
+                list = new MyLinkedList<T>();
+            }
+            
+            public boolean push(T data) {
+                list.add(data);
+                return true;
+            }
+            
+            public T pop() {
+                if(list.isEmpty()) {
+                    return null;
+                }
+                return list.remove(list.size()-1);
+            }
+            
+            public T peek() {
+                if(list.isEmpty()) {
+                    return null;
+                }
+                return list.get(list.size()-1);
+            }
+            
+            public boolean isEmpty() {
+                return list.isEmpty();
+            }
+        }
+	使用栈计算表达式：
+        public class ExpressionStack {
+            private String postfixExpression;
+            
+            public String getPostfixExpression() {
+                return postfixExpression;
+            }
+            
+            public ExpressionStack(String infixExpression) {
+                MyStack<Character> stack = new MyStack<Character>();
+                StringBuilder builder = new StringBuilder();
+                char[] chars = infixExpression.toCharArray();
+                // origin a + b * c +(d / e + f)* g
+                // expect a b c * + d e / f + g * +
+                for (int i = 0; i < chars.length; i++) {
+                    char c1 = chars[i];
+                    if(c1>='0' && c1<='9') {
+                        builder.append(c1);
+                    }
+                    else {
+                        while (!comparePriority(c1, stack.peek())) {
+                            Character c2 = stack.pop();
+                            if(c2=='(') {
+                                break;
+                            }
+                            builder.append(c2);
+                        }
+                        if(c1!=')') {
+                            stack.push(c1);
+                        }
+                    }
+                }
+                while(stack.peek()!=null) {
+                    builder.append(stack.pop());
+                }
+                postfixExpression = builder.toString();
+                System.out.println(postfixExpression);
+            }
+            
+            //如果 a 优先级 <= b 优先级，则返回 false
+            private boolean comparePriority(Character a,Character b) {
+                if(b==null) {
+                    return true;
+                }
+                if(a=='(') {
+                    return true;
+                }
+                if((a=='*' || a=='/') && (b=='+' || b=='-')) {
+                    return true;
+                }
+                if(a!=')' && b=='(') {
+                    return true;
+                }
+                
+                return false;
+            }
+            
+            public double calculate() {
+                MyStack<Double> stack = new MyStack<Double>();
+                char[] chars = postfixExpression.toCharArray();
+                for (int i = 0; i < chars.length; i++) {
+                    char c = chars[i];
+                    if(c>='0' && c<='9') {
+                        double val = Double.valueOf(c)-48;
+                        stack.push(val);
+                    }
+                    else {
+                        if(c=='+') {
+                            double val = stack.pop() + stack.pop();
+                            stack.push(val);
+                        }
+                        if(c=='-') {
+                            stack.push(stack.pop() - stack.pop());
+                        }
+                        if(c=='*') {
+                            stack.push(stack.pop() * stack.pop());
+                        }
+                        if(c=='/') {
+                            stack.push(1 / (stack.pop() / stack.pop()));
+                        }
+                    }
+                }
+                return stack.peek();
+            }
+        }
+	使用链表实现队列：
+        public class MyQueue<T> {
+            private MyLinkedList<T> list;
+            
+            public MyQueue() {
+                list = new MyLinkedList<T>();
+            }
+            
+            public boolean enqueue(T t) {
+                list.add(t);
+                return true;
+            }
+            
+            public T dequeue() {
+                return list.remove(0);
+            }
+        }
+    二叉表达式树：
+        public class ExpressionTree {
+        
+            private static class Node{
+                char data;
+                Node left;
+                Node right;
+                
+                public Node(char data,Node left, Node right) {
+                    this.data = data;
+                    this.left = left;
+                    this.right = right;
+                }
+            }
+            
+            private Node root;
 
-					DDListNode(T t){
-						data = t;
-					}
-				}
-
-				private DDListNode<T> head;
-
-				private int size;
-
-				@Override
-				public String toString(){
-					StringBuilder sb = new StringBuilder();
-					sb.append('[');
-					MyDDLinkedList.DDListNode<T> node = head;
-					while (node!=null){
-						sb.append(node.data).append(',');
-						node = node.next;
-					}
-					sb.deleteCharAt(sb.length()-1);
-					sb.append(']');
-					return sb.toString();
-				}
-
-				@Override
-				public int size() {
-					return size;
-				}
-
-				@Override
-				public T add(T t) {
-					if(head==null){
-						head = new DDListNode<>(t);
-					}
-					else {
-						DDListNode<T> tail = new DDListNode<>(t);
-						DDListNode<T> before = head;
-						while (before.next!=null){
-							before = before.next;
-						}
-						before.next = tail;
-						tail.pre = before;
-					}
-					size++;
-					return t;
-				}
-
-				@Override
-				public T add(T t, int index) {
-					if(index<0 || index>size){
-						throw new RuntimeException("parameter error");
-					}
-					if(head==null){
-						if(index!=0){
-							throw new RuntimeException("parameter error");
-						}
-						head = new DDListNode<>(t);
-					}
-					else {
-						DDListNode<T> node = new DDListNode<>(t);
-						DDListNode<T> before = head;
-						int i = 0;
-						while (i<index-1){
-							before = before.next;
-							i++;
-						}
-						if(index==0){
-							node.next = head;
-							head.pre=node;
-							head = node;
-						}
-						else {
-							DDListNode<T> point = before.next;
-							before.next = node;
-							node.pre = before;
-							if(point!=null){
-								node.next = point;
-								point.pre = node;
-							}
-						}
-					}
-					size++;
-					return t;
-				}
-
-				@Override
-				public int remove(T t) {
-					int count;
-					if(head==null){
-						count = 0;
-					}
-					else {
-						DDListNode<T> point = head;
-						while (point != null){
-							if(equals(point.data,t)){
-								break;
-							}
-							else {
-								point = point.next;
-							}
-						}
-						if(point!=null){
-							if(point.pre!=null){
-								point.pre.next = point.next;
-							}
-							if(point.next!=null){
-								point.next.pre = point.pre;
-							}
-							if(point==head){
-								head = head.next;
-							}
-							count = 1;
-							size--;
-						}
-						else {
-							count = 0;
-						}
-					}
-					return count;
-				}
-
-				@Override
-				public int removeAll(T t) {
-					int count = 0;
-					if (head == null) {
-						count = 0;
-					}
-					else {
-						DDListNode<T> point = head;
-						while (point != null){
-							if(equals(point.data,t)){
-								if(point.pre!=null){
-									point.pre.next = point.next;
-								}
-								if(point.next!=null){
-									point.next.pre = point.pre;
-								}
-								if(point==head){
-									head = head.next;
-								}
-								count++;
-							}
-							point = point.next;
-						}
-					}
-					size -= count;
-					return count;
-				}
-
-				@Override
-				public T get(int index) {
-					if(index<0 || index>=size){
-						throw new RuntimeException("parameter error");
-					}
-					int count = 0;
-					DDListNode<T> point = head;
-					while (count < index){
-						point = point.next;
-						count++;
-					}
-					return point.data;
-				}
-
-				@Override
-				public int indexOf(T t) {
-					int count = 0;
-					DDListNode<T> point = head;
-					while (point!=null){
-						if(equals(point.data,t)){
-							break;
-						}
-						point = point.next;
-						count++;
-					}
-					if(point==null){
-						return -1;
-					}
-					return count;
-				}
-
-				@Override
-				public SimpleList clear() {
-					head = null;
-					size = 0;
-					return this;
-				}
-
-				@Override
-				public int replace(T oldVal, T newVal) {
-					int count=0;
-					if(head!=null){
-						DDListNode<T> point = head;
-						while (point!=null){
-							if(equals(point.data,oldVal)){
-								point.data = newVal;
-								count = 1;
-								break;
-							}
-							point = point.next;
-						}
-					}
-					return count;
-				}
-
-				@Override
-				public int replaceAll(T oldVal, T newVal) {
-					int count=0;
-					if(head!=null){
-						DDListNode<T> point = head;
-						while (point!=null){
-							if(equals(point.data,oldVal)){
-								point.data = newVal;
-								count++;
-							}
-							point = point.next;
-						}
-					}
-					return count;
-				}
-
-				@Override
-				public SimpleList sort(Comparator<T> comparator) {
-					//....
-					return this;
-				}
-
-				private boolean equals(T t1,T t2){
-					//和前面的单向链表相同
-				}
-			}
-	
-	第四章 栈
-	
-	
+            public ExpressionTree(String infixExpression) {
+                //先使用栈获得对应的后缀表达式
+                ExpressionStack expressionStack = new ExpressionStack(infixExpression);
+                String postfixExpression = expressionStack.getPostfixExpression();
+                
+                //根据后缀表达式构造表达式树
+                MyStack<Node> stack = new MyStack<Node>();
+                char[] chars = postfixExpression.toCharArray();
+                for (int i = 0; i < chars.length; i++) {
+                    char c = chars[i];
+                    if(c>='0' && c<='9') {
+                        stack.push(new Node(c, null, null));
+                    }
+                    else {
+                        Node r = stack.pop();
+                        Node l = stack.pop();
+                        Node p = new Node(c, l, r);
+                        stack.push(p);
+                    }
+                }
+                root = stack.pop();
+            }
+            
+            public String getInfixExpression() {
+                return getInfixExp(root);
+            }
+            
+            private String getInfixExp(Node node) {
+                if(node==null) {
+                    return "";
+                }
+                StringBuilder builder = new StringBuilder();
+                builder.append("("+getInfixExp(node.left));
+                builder.append(node.data);
+                builder.append(getInfixExp(node.right)+")");
+                return builder.toString();
+            }
+            
+            public String getPostfixExpression() {
+                return getPostfixExp(root);
+            }
+            
+            private String getPostfixExp(Node node) {
+                if(node==null) {
+                    return "";
+                }
+                StringBuilder builder = new StringBuilder();
+                builder.append(getPostfixExp(node.left));
+                builder.append(getPostfixExp(node.right));
+                builder.append(node.data);
+                return builder.toString();
+            }
+            
+            public String getPrefixExpression() {
+                return getPrefixExp(root);
+            }
+            
+            private String getPrefixExp(Node node) {
+                if(node==null) {
+                    return "";
+                }
+                StringBuilder builder = new StringBuilder();
+                builder.append(node.data);
+                builder.append(getPrefixExp(node.left));
+                builder.append(getPrefixExp(node.right));
+                return builder.toString();
+            }
+        }
+    
