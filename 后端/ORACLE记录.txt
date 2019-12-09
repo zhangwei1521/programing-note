@@ -211,3 +211,12 @@ where t.id in ('1017295088217186304','1017292933557084160','1017293041459748864'
 	select a.id from T_JW_XJGL_XSJTCYXX a where a.field1 in (
 		select t.field1 from table1 t group by t.field1,t.field2 having count(1)>1
 	) order by a.field1,a.field2;
+
+	rank()函数：
+	rank函数既可以作为聚合函数使用，也可以作为分析函数使用。
+	作为聚合函数时，和 within group配合使用获得数据排名：
+		rank(val1,val2) within group (order by expr3,expr4 [desc/asc] [nulls first/last])
+		//表示根据col1,col2排序，然后获取col1=val1 and col2=val2的行的排名
+	作为分析时，和over()函数配合使用获取每行记录的排名：
+		rank() over([partition by col1] order by col2 desc [desc/asc] [nulls first/last])
+		//表示根据[col1分组、]col2排序后的每一行[在组内]的排名
