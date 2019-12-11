@@ -418,14 +418,17 @@ defaults 包含rw、exec、auto、nouser、async
 	
 	ps 命令
 	ps 命令能够显示出当前进程列表的快照：
-		ps [选项]
+		ps [选项](这里的选项可以使用三种风格：UNIX风格：选项前加 - ；BSD风格：选项前不加 - ；GNU风格：选项前加 -- ，通常只选择一种风格使用)
 	选项包括：
 		a 显示所有用户的进程
 		u 显示进程的用户和拥有者
 		x 显示不依附于终端的进程
+		f 输出完整格式化格式
+		e 显示所有进程信息
+		u 指定用户
 		...
 	可以使用管道将 ps 命令的输出传递给 grep 命令，然后输出匹配的样式：
-		ps aux | grep chrome
+		ps -aux | grep chrome
 
 	/etc/profile、/etc/bashrc、~/.bash_profile、~/.bashrc文件
 	/etc/profile是一个全局配置文件，系统中每个用户在他们第一次登陆系统时，这个文件都会被读取执行，这个文件会读取 /etc/profile.d/

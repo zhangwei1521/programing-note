@@ -26,7 +26,9 @@
 	启动rabbitmq：
 		rabbitmq-server -detached
 	关闭rabbitmq：
-		kill -9 5479
+		rabbitmqctl stop
+		# 若单机有多个实例，则在rabbitmqctlh后加–n 指定名称
+		# 使用kill命令关闭 kill -9 5479
 	查看rabbitmq状态：
 		rabbitmqctl status
 	查看插件：
