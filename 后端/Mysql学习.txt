@@ -40,8 +40,6 @@ msvcr120.dll文件缺失，无法安装mysql，需要下载：Visual C++ Redistr
 手动去修改注册表：
 	HKEY_LOCAL_MACHINE - SYSTEM - CurrentControlSet - services - mysql - ImagePath
 需要将ImagePath这项的值改为解压的mysqld路径："D:\zhangwei\devtools\mysql-5.7.23-winx64\bin\mysqld" (保留引号)
-	
-
 
 修改密码：
 	1) 运行net stop mysql，停止服务 
@@ -60,6 +58,61 @@ msvcr120.dll文件缺失，无法安装mysql，需要下载：Visual C++ Redistr
 非安装版本可能会出现时区问题,设置时区：
 set global time_zone='+8:00';	
 查看时区设置：show variables like '%time_zone%';
+
+
+centos7 安装 mariadb 10.4.10:
+	下载二进制tar压缩包：
+		wget https://downloads.mariadb.org/interstitial/mariadb-10.4.10/bintar-linux-systemd-x86_64/mariadb-10.4.11-linux-systemd-x86_64.tar.gz/from/http%3A//mirror.rackspace.com/mariadb/
+	新增mysql用户和mysql用户组：
+		groupadd mysql
+		useradd -g mysql mysql
+	解压：
+		cd /usr/local
+		tar -zxvpf /usr/local/src/mariadb-10.4.10-linux-systemd-x86_64.tar.gz
+	建软链接：
+		ln -s mariadb-10.4.10-linux-systemd-x86_64 mysql
+	初始化：
+		cd mysql
+		./scripts/mysql_install_db --user=mysql
+	修改目录用户：
+		chown -R root .
+		chown -R mysql data
+	添加配置文件：
+		vim /etc/my.cnf
+		#mysql配置文件
+		[mysqld]
+		port            = 3306
+		socket          = /tmp/mysql.sock
+		basedir = /usr/local/mysql
+		datadir= /usr/local/mysql/data
+		innodb_file_per_table = on
+		skip_name_resolve = on
+		skip-external-locking
+		key_buffer_size = 16M
+		max_allowed_packet = 1M
+		table_open_cache = 64
+		sort_buffer_size = 512K
+		net_buffer_length = 8K
+		read_buffer_size = 256K
+		read_rnd_buffer_size = 512K
+		myisam_sort_buffer_size = 8M
+	注：配置文件可以放在/etc和/home/username或/root目录下。
+	配置为systemd服务：
+		cp support-files/systemd/mariadb.service /usr/lib/systemd/system/mariadb.service
+	启动：
+		systemctl start mariadb
+	安全设置(设置修改root密码等):
+		./bin/mysql_secure_installation
+	授权root远程主机登录(需登录进mysql)：
+		grant all privileges on *.* to 'root'@'10.3.12.50' identified by 'root' with grant option;
+	配置path环境变量：
+		vim /etc/bashrc
+		
+		MARIADB_HOME=/usr/local/mysql
+		PATH=$PATH:$MARIADB_HOME/bin
+
+		source /etc/bashrc
+	
 
 mysql数据类型：
 	整数型：

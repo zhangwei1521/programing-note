@@ -97,6 +97,7 @@
 		实例：
 			docker pull ubuntu:18.04
 			#不写出仓库地址，默认地址就是Docker Hub，仓库名称应该是 用户名/仓库名，这里没有给出用户名，就使用默认的library用户。
+			#不写标签，则默认使用latest标签
 	运行容器：
 		docker run -it --rm ubuntu:18.04 bash
 		# 参数 -i 表示交互式操作，参数 -t 表示终端。
@@ -140,5 +141,47 @@
 	如果某个镜像启动的容器还存在（即使容器没有运行），那么不能删除这个镜像。
 	删除命令中使用docker image ls 命令来获取镜像ID：
 		docker image rm $(docker image ls -q redis)
-
 	
+	搜索可下载的镜像：
+		docker search nginx
+	使用指定名称启动一个容器和映射端口：
+		# -p 80:80前一个80是宿主机端口，后一个是docker容器进程的虚拟端口
+		docker run --name webserver -d -p 80:80 nginx
+	进入运行中的容器：
+		docker exec -it webserver bash
+	修改运行中的nginx主页：
+		cd /usr/share/nginx/html/
+		tee ./index.html << -EOF
+			Hello Docker!
+			-EOF
+	退出容器进程：exit
+	查看改动的内容：
+		docker diff webserver
+		C /root
+		A /root/.bash_history
+		...
+		C /usr/share/nginx/html
+		C /usr/share/nginx/html/index.html
+		...
+	可以看到，这里所做的修改其实要比手动修改的多。
+	在一个运行中的不使用卷的容器中所做的修改都会被记录于容器存储层里。
+	将容器存储层和原镜像保存为一个新镜像：
+		docker commit \
+    		--author "zhangwei"
+			--message "修改默认网页" \
+			webserver \
+    		nginx:v2
+	保存的新镜像为 nginx:v2，--author和--message是可选部分。
+	查看镜像内的历史记录：
+		docker history nginx:v2
+	运行新镜像：
+		docker run --name web2 -d -p 81:80 nginx:v2
+	使用 docker commit 生成的镜像也被称为 黑箱镜像，即是说构造镜像的过程难以被记录，导致镜像不能被理解。
+	查看容器状态：
+		docker ps -a
+	关闭运行中的容器：
+		docker stop 759454521566
+	重新启动已关闭的容器：
+		docker restart 759454521566
+	删除已关闭的容器：
+		docker rm 759454521566
