@@ -538,6 +538,12 @@ work.xml，即9个规则集。public.xml内容入下：
 			reboot
 		6、查看
 			uname -r
+    查看内核列表：
+        rpm -q kernel
+    删除旧的内核（如果不删除，旧内核会继续占用/boot空间）：
+        yum remove kernel-3.10.0-327.el7.x86_64
+    查看/boot空间占用情况
+        df -h
 	查看centos发布版本：
 		 cat /etc/redhat-release
 	
