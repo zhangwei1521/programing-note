@@ -327,6 +327,8 @@ defaults 包含rw、exec、auto、nouser、async
 		-p表示为tar包添加原文件的属性
 		-p表示可以使用绝对路径、
 		--exclude filename表示打包时不包括指定文件
+		-C dirname 解包时指定解包到指定目录
+		--strip-components=1 解包时指定不保留包名作为目录
 	打包文件：tar -cvf filename.tar filename
 	查看tar包中的文件列表：tar -tf filename.tar
 	安装tree工具：yum install tree
@@ -547,6 +549,21 @@ work.xml，即9个规则集。public.xml内容入下：
 		tee -a ./file1 << -EOF
 		hello
 		-EOF
+	
+	debian系使用APT工具集管理软件包，常用的工具包括apt-get、apt-cache等。
+	Ubuntu1604开始可以使用apt命令部分代替原来的apt-get使用。
+	配置国内源：
+		检查更新（更新仓库缓存信息）：
+			apt-get update
+		安装ca-certificates（需要在http下安装，默认官方仓库就是http）
+			apt-get install ca-certificates
+		切换清华的源：
+			cd /etc/apt
+			mv sources.list sources.list.bak
+			tee sources.list << -EOF
+			deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic main restricted universe multiverse
+			...
+			-EOF
 	
 
 
