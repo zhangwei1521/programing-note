@@ -1,4 +1,5 @@
 											docker参考文档
+								（参考文档：https://docker_practice.gitee.io/）
 	虚拟化技术是一种为应用构建独立（隔离）运行环境的技术，传统的虚拟技术是通过虚拟机软件虚拟出一套硬件后，在其上运行一个完整操作系统，
 在该系统上再运行所需应用进程。容器技术则是一种操作系统层面的虚拟化技术，容器内的应用进程直接运行于宿主的内核，但是容器进程之间以及容器
 进程和宿主机中的进程之间都实现了很好的隔离。
@@ -179,9 +180,60 @@
 	使用 docker commit 生成的镜像也被称为 黑箱镜像，即是说构造镜像的过程难以被记录，导致镜像不能被理解。
 	查看容器状态：
 		docker ps -a
+	过滤指定镜像的容器：
+		docker ps -a -f ancestor=alpine
 	关闭运行中的容器：
 		docker stop 759454521566
 	重新启动已关闭的容器：
 		docker restart 759454521566
 	删除已关闭的容器：
 		docker rm 759454521566
+	删除指定镜像的容器：
+		docker rm $(docker ps -a -q -f ancestor=alpine:v2)
+
+	定制镜像：通过修改一个已有的镜像的文件和配置得到一个新的镜像的过程。通常使用Dockerfile文件来描述定制镜像的操作。
+	Dockerfile 是一个文本文件，其内包含了一条条的 指令，每一条指令描述了如何构建镜像的某一层。
+	简单的Dockerfile示例：
+		FROM nginx
+		RUN echo '<h1>Hello, Docker!</h1>' > /usr/share/nginx/html/index.html
+	FROM 指令指定用于构建新镜像的基础镜像，这条指令应该是Dockerfile文件的第一行。
+	官方Registry服务（Docker Hub）提供了一批可以直接作为应用服务使用的镜像，也提供了一些基础的操作系统镜像，可以使用
+应用服务镜像定制自己的镜像，也可以从操作系统镜像开始构建自己的应用镜像。
+	Docker 中存在一个名为 scratch 的特殊镜像，表示一个空白的镜像，使用这个镜像作为基础镜像，意味着需要自己从头开始构建镜像。
+	RUN 指令是用来执行命令行命令，具有两种格式：
+		shell 格式：RUN <命令>
+		exec 格式：RUN ["可执行文件", "参数1", "参数2"]
+	Dockerfile文件中的每一条RUN指令都会创建一层镜像：
+		FROM debian:stretch
+		#新建一层镜像，该镜像在操作系统镜像基础上更新了软件仓库缓存
+		RUN apt-get update
+		#新建一层镜像，该镜像在上面创建的镜像基础上安装了编译环境
+		RUN apt-get install -y gcc libc6-dev make wget
+		...
+	在Dockerfile文件中使用多条RUN指令可能会导致创建的镜像过于臃肿，因为很多运行时不需要的中间层镜像被保留了，而且由于Union FS 存在
+最大层数限制（AUFS不得超过 127 层），还可能导致构建失败。
+	为了构建一个没有中间层镜像的应用服务镜像，可以使用&&连接各条RUN指令：
+		FROM debian:stretch
+		RUN buildDeps='gcc libc6-dev make wget' \
+			&& apt-get update \
+			&& apt-get install -y $buildDeps \
+			...
+			&& apt-get purge -y --auto-remove $buildDeps
+	构建镜像命令：
+		docker build [选项] <上下文路径/URL/->
+		示例：
+		docker build -t nginx:v3 .
+	Docker 引擎使用REST API提供对外接口，docker 命令实际上是一个客户端工具，它通过Docker 引擎的REST API 与 Docker 引擎交互。那么当
+执行docker build 时，docker引擎不能直接知道从哪里开始构建，这就需要传入参数告诉docker引擎构建的开始位置，这个参数就是后面的上下文路径。
+通常Dockerfile就保存在这个上下文路径下，所以不需要给出Dockerfile的位置，如果Dockerfile不在这个路径下，就需要使用-f path传入Dockerfile
+的路径。
+	docker中COPY 指令、ADD 指令等指令涉及到文件操作，指定文件路径时应该基于传入的上下文路径，例如：
+		COPY ./package.json /app/
+		#这里指的是复制 上下文路径下的 package.json而非执行docker build命令时所在的路径；后面的/app/是镜像中的路径，所以这里是把宿主机的
+一个文件复制到了镜像的文件系统中。
+	通常的做法是，将 Dockerfile 置于一个空目录下，或者项目根目录下，把涉及到的文件复制一份到这个目录下或其子目录下，对于存在于构建上下文
+路径下而不需要参与构建的文件，可以在一个.dockerignore文件中列出，这个文件的语法和.gitignore相同。
+	docker build 还支持从 URL 构建，比如可以直接从 Git repo 中构建、用给定的 tar 压缩包构建
+	从标准输入中读取 Dockerfile 进行构建：
+		docker build - < Dockerfile
+	这种形式由于直接从标准输入中读取 Dockerfile 的内容，它没有上下文，因此不可以像其他方法那样可以将本地文件 COPY 进镜像之类的事情。
