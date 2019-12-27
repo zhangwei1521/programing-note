@@ -577,6 +577,45 @@ Ncpu + 1。对于IO密集型任务，通常只需要设置一个线程，这是�
 核心分配2个线程，那么当其中一个线程在等待IO时，CPU可以执行另一个线程的计算任务。（前面Wt和St描述的程序是指单线程程序）
 
 	第五章 线程间协作
-	等待和通知（wait/notify）：
-
-
+	等待和通知（wait/notify）：一个线程在检查其目标动作的保护条件不通过时主动暂停的过程被称为等待，一个线程在更新系统状态后使得其他线程的保护条件得到满足
+时唤醒那些暂停线程的过程被称为通知。
+	线程暂停的典型模式：
+		atomic {
+			while(保护条件不满足){
+				暂停执行
+			}
+			//执行目标动作
+			doAction();
+		}
+	这里目标动作和保护条件的检查必须是一个原子操作，如果不是原子操作，就可以出现：某一个线程检查保护条件满足后，执行目标动作前保护条件再次被其他线程修改，就
+会出现和预期不一致的问题。
+	java使用 Object.wait/Object.wait(long)实现线程暂停，使用 Object.notify()/Object.notifyAll()实现通知。
+	任意对象都可以执行wait方法，因执行anyObject.wait()而暂停的线程称为对象anyObject上的等待线程。一个对象的wait方法可以被多个线程执行，所以一个对象可以有
+多个等待线程。对象anyObject上的等待线程需要其他线程执行anyObject.notify()方法来唤醒。线程在执行anyObject.wait()时会字段释放其持有的anyObject对应的内部锁，
+所以通常会使用anyObject作为内部锁和执行暂停的对象：
+		synchronized(anyObject){
+			while(保护条件不满足){
+				anyObject.wait();	//执行时会释放anyObject对应的内部锁
+			}
+			doAction();
+		}
+	anyObject.wait()不会立即返回，而是在线程被唤醒后重新申请到anyObject对应的锁后再返回。
+	唤醒对象anyObject上的等待线程：
+		synchronized(anyObject){
+			updateSharedState();
+			anyObject.notify();
+			//anyObject.notifyAll();
+		}
+	只有执行线程持有anyObject对象的内部锁时，才能执行anyObject.notify()。anyObject.notify()不会释放anyObject对应的内部锁，只有在这个同步代码块/同步方法
+执行完后才会释放这个锁，所以应该把anyObject.notify()放在靠近同步代码块结束的位置。
+	anyObject.notify()只会唤醒anyObject上的一个等待线程，选择哪个线程是随机的，如果要唤醒该对象上的所有等待线程，应该使用notifyAll方法。
+	anyObject.wait(long)执行后，如果超过long指定的时间后没有其他线程执行anyObject.notify()/notifyAll()，即该线程没有被其他线程唤醒，虚拟机就会唤醒该线程。
+所以这个方法外还是应该使用while来检查保护条件，如果超时可以编写代码break，可以在执行目标动作前再检查保护条件判断是否是等待超时造成的。
+	过早唤醒问题：如果多个使用不同保护条件的目标方法使用了同一个对象anyObject来实现线程暂停和唤醒，就可能出现，在某个线程更新了某一保护条件后为了唤醒等待该条件
+的所有线程而执行了anyObject.notifyAll，导致anyObject对象上等待其他条件的线程也被唤醒，这些线程的等待条件仍不满足，所以不得不再次暂停。
+	信号丢失问题：指的是代码中没有检查保护条件就直接调用wait方法，而在调用wait方法前其他线程已经更新了保护条件和执行了notify，这样就导致等待线程错过了通知信号。
+信号丢失问题其实是代码错误，而非wait/notify方法实现等待/通知的问题。
+	操作系统允许一个暂停线程被系统偶发性唤醒，这称为欺骗性唤醒，不过其发生概率非常低，通过将wait方法调用放在检查保护条件的while循环中可以避免欺骗性唤醒的影响。
+	执行wait方法后暂停线程和执行notify方法唤醒暂停线程都涉及线程上下文切换、锁的申请和释放。
+	选用notify和notifyAll的经验：优先选用notifyAll保证程序正确性，只在notify不影响正确性的时候使用notify以避免notifyAll可能导致的过早唤醒问题。
+	threadA.join方法用于暂停当前线程，直到threadA执行结束后才继续执行当前线程，join方法内使用wait方法实现线程暂停。
