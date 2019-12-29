@@ -591,7 +591,7 @@ Ncpu + 1。对于IO密集型任务，通常只需要设置一个线程，这是�
 会出现和预期不一致的问题。
 	java使用 Object.wait/Object.wait(long)实现线程暂停，使用 Object.notify()/Object.notifyAll()实现通知。
 	任意对象都可以执行wait方法，因执行anyObject.wait()而暂停的线程称为对象anyObject上的等待线程。一个对象的wait方法可以被多个线程执行，所以一个对象可以有
-多个等待线程。对象anyObject上的等待线程需要其他线程执行anyObject.notify()方法来唤醒。线程在执行anyObject.wait()时会字段释放其持有的anyObject对应的内部锁，
+多个等待线程。对象anyObject上的等待线程需要其他线程执行anyObject.notify()方法来唤醒。线程在执行anyObject.wait()时会自动释放其持有的anyObject对应的内部锁，
 所以通常会使用anyObject作为内部锁和执行暂停的对象：
 		synchronized(anyObject){
 			while(保护条件不满足){
@@ -619,3 +619,492 @@ Ncpu + 1。对于IO密集型任务，通常只需要设置一个线程，这是�
 	执行wait方法后暂停线程和执行notify方法唤醒暂停线程都涉及线程上下文切换、锁的申请和释放。
 	选用notify和notifyAll的经验：优先选用notifyAll保证程序正确性，只在notify不影响正确性的时候使用notify以避免notifyAll可能导致的过早唤醒问题。
 	threadA.join方法用于暂停当前线程，直到threadA执行结束后才继续执行当前线程，join方法内使用wait方法实现线程暂停。
+    条件变量：java.util.concurrent.locks.Condition接口的实例可以用来代替实现等待/通知功能，这个接口提供方法：await、awaitUntil、signal、signalAll方法。
+Lock接口中有一个newCondition方法返回一个Condition接口实例。
+    Condition.await和Object.wait实现的是执行线程等待一个通知信号（Condition.signal或signalAll和Object.notify或notifyAll产生信号）。
+    可以使用同一个显示锁对象的不同Condition实例来暂停使用不同保护条件的线程，这样就可以避免在同一个对象上调用notifyAll导致的过早唤醒问题。
+    Condition的awaitUntil方法接收一个Date对象作为参数，表示超时时间点，这个方法返回一个boolean值，返回true表示是被其他线程唤醒（即其他线程更新保护条件后
+调用Condition对象的signal或signalAll方法唤醒暂停线程），返回false表示超时。
+        import java.util.Date;
+        import java.util.concurrent.locks.Condition;
+        import java.util.concurrent.locks.Lock;
+        import java.util.concurrent.locks.ReentrantLock;
+
+        public class ConditionDemo {
+
+            private Lock lock = new ReentrantLock();
+
+            private Condition cond1 = lock.newCondition();
+
+            private Condition cond2 = lock.newCondition();
+
+            private boolean status1 = false;
+
+            private boolean status2 = false;
+
+            public static void main(String[] args) throws InterruptedException {
+                // test01();
+                test02();
+            }
+
+            // 测试Condition的过早唤醒问题解决方式
+            private static void test01() throws InterruptedException {
+                ConditionDemo demo = new ConditionDemo();
+                for (int i = 1; i < 5; i++) {
+                    final int j = i;
+                    Thread thread = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                demo.doSomething1(j % 2);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+                    thread.setName("thread-" + i);
+                    thread.start();
+                }
+                // Thread.sleep(500);
+                demo.doUpdateStatus(1);
+                Thread.sleep(500);
+                demo.doUpdateStatus(0);
+            }
+
+            private void doSomething1(int sign) throws InterruptedException {
+                lock.lock();
+                try {
+                    if (sign == 0) {
+                        while (!status1) {
+                            System.out.println(Thread.currentThread().getName() + " wait status1");
+                            cond1.await();
+                        }
+                    }
+                    if (sign == 1) {
+                        while (!status2) {
+                            System.out.println(Thread.currentThread().getName() + " wait status2");
+                            cond2.await();
+                        }
+                    }
+                    doNow();
+                } finally {
+                    lock.unlock();
+                }
+            }
+
+            private void doNow() {
+                System.out.println("------doNow start!!!------");
+                System.out.println("thread: " + Thread.currentThread().getName());
+                System.out.println("status1 = " + status1);
+                System.out.println("status2 = " + status2);
+                System.out.println("------doNow end!!!!!------");
+            }
+
+            private void doUpdateStatus(int sign) {
+                lock.lock();
+                try {
+                    if (sign == 0) {
+                        status1 = true;
+                        cond1.signalAll();
+                    }
+                    if (sign == 1) {
+                        status2 = true;
+                        cond2.signalAll();
+                    }
+                } finally {
+                    lock.unlock();
+                }
+            }
+
+            // 测试Condition的判断超时等待解决方式
+            private static void test02() throws InterruptedException {
+                ConditionDemo demo = new ConditionDemo();
+                for (int i = 1; i < 3; i++) {
+                    final int j = i;
+                    Thread thread = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                demo.doSomething2(j * 1000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+                    thread.setName("thread-" + i);
+                    thread.start();
+                }
+                Thread.sleep(1200);
+                demo.doUpdateStatus(0);
+            }
+
+            private void doSomething2(int timeToWait) throws InterruptedException {
+                Date deadline = new Date(System.currentTimeMillis() + timeToWait);
+                lock.lock();
+                try {
+                    while (!status1) {
+                        boolean getSignal = cond1.awaitUntil(deadline);
+                        if (!getSignal) {
+                            System.out.println(Thread.currentThread().getName() + " timeout....");
+                            return;
+                        }
+                    }
+                    doNow();
+                } finally {
+                    System.out.println("finally do....");
+                    lock.unlock();
+                }
+            }
+        }
+    计数协调器：java.util.concurrent.CountDownLatch维护一个计数器，调用其方法await时，如果计数器值不为0就暂停执行线程，其他线程调用其方法countDown，
+其内部计数器值减一，直到计数器值减为0就唤醒执行await的线程，如果继续调用countDown方法，不会再改变计数器值。计数器初始值根据构造函数参数设置。
+    CountDownLatch.await实现的是执行线程等待多个信号，CountDownLatch.countDown产生一个这样的信号。
+        public class CountDownLatchDemo {
+
+            private boolean status1 = false;
+            private boolean status2 = false;
+            private boolean status3 = false;
+
+            public static void main(String[] args) throws InterruptedException {
+                // test01();
+                test02();
+            }
+
+            private static void test01() throws InterruptedException {
+                CountDownLatchDemo demo = new CountDownLatchDemo();
+                CountDownLatch latch = new CountDownLatch(5);
+                demo.doSomething1(latch);
+                latch.await();
+                System.out.println("start..." + latch.getCount());
+            }
+
+            private void doSomething1(CountDownLatch latch) {
+                for (int i = 1; i < 8; i++) {
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            try {
+                                System.out.println(Thread.currentThread().getName() + " : " + latch.getCount());
+                            } finally {
+                                latch.countDown();
+                            }
+                        }
+                    }.start();
+                }
+            }
+
+            private static void test02() throws InterruptedException {
+                CountDownLatchDemo demo = new CountDownLatchDemo();
+                CountDownLatch latch = new CountDownLatch(2);
+                demo.doSomething2(latch);
+                latch.await();
+                System.out.println("start..." + latch.getCount());
+                System.out.println("status1 is true ? " + demo.status1);
+                System.out.println("status2 is true ? " + demo.status2);
+                System.out.println("status3 : " + demo.status3);
+            }
+
+            private void doSomething2(CountDownLatch latch) {
+                new Thread() {
+                    @Override
+                    public void run() {
+                        step1();
+                        latch.countDown();
+                        step2();
+                        latch.countDown();
+                        step3();
+                        step4();
+                    }
+                }.start();
+                new Thread() {
+                    @Override
+                    public void run() {
+                        step2();
+                        latch.countDown();
+                        step4();
+                    }
+                }.start();
+            }
+
+            private void step1() {
+                System.out.println("step1...");
+                status1 = true;
+            }
+
+            private void step2() {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("step2...");
+                status2 = true;
+            }
+
+            private void step3() {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("step3...");
+                status3 = true;
+            }
+
+            private void step4() {
+                System.out.println("step4...");
+            }
+        }
+    栅栏：java.util.concurrent.CyclicBarrier用于设置线程间互相等待时的暂停/通知，构造函数参数设置一个计数器初始值，当其await方法被调用一次，计数器值
+减一，当计数器值不为0时，执行await方法的线程就暂停，计数器值为0时，执行线程就唤醒其他等待线程。CyclicBarrier构造方法可以接收一个Runnable实例作为第二个
+参数，该Runnable实例的run方法将在更新计数器为0的线程唤醒其他等待线程前执行(由当前线程执行)。
+    CyclicBarrier.await实现的是多个线程互相等待，每个线程执行CyclicBarrier.await即各自产生一个信号，当约定的所有线程都产生了信号，所有暂停线程就被唤醒。
+        import java.util.concurrent.BrokenBarrierException;
+        import java.util.concurrent.CyclicBarrier;
+
+        public class CycliyBarrierDemo {
+
+            public static void main(String[] args) {
+                test01();
+            }
+
+            private static void test01() {
+                // CyclicBarrier barrier = new CyclicBarrier(5);
+                CyclicBarrier barrier = new CyclicBarrier(5, new Runnable() {
+                    @Override
+                    public void run() {
+                        System.out.println("everyone is here! are you ready?");
+                    }
+                });
+                for (int i = 0; i < 5; i++) {
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            System.out.println(Thread.currentThread().getName() + " : Hello!");
+                            try {
+                                barrier.await();
+                                System.out.println("done !");
+                            } catch (InterruptedException | BrokenBarrierException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }.start();
+                }
+            }
+        }
+    CyclicBarrier可以用于测试中模拟高并发。
+    阻塞队列：java.util.concurrent.BlockingQueue是线程安全的队列，可以充电生产者-消费者模型中的传输通道，实现类包括ArrayBlockingQueue、
+LinkedBlockingQueue、SynchronousQueue。
+    BlockingQueue.put(T)方法用于添加一个对象到队列中，如果队列已经满了，这个方法就阻塞，阻塞时生产者线程将被暂停；如果put执行前队列为空，put执行时会
+产生一个通知，如果有等待的消费者线程，这些线程中的一个将被唤醒。
+    BlockingQueue.take()方法从队列中取出一个元素，如果队列上存在等待的生产者线程，就唤醒其中一个生产者线程，如果队列为空，这个方法就会阻塞，消费者线程
+被暂停，直至有生产者线程添加一个对象到队列中时，消费者线程才被唤醒。
+    BlockingQueue还提供put和take方法的非阻塞版本：offer和poll，offer返回一个布尔值，返回true表示入队成功，返回false表示队列已满；poll方法返回对象，如果
+队列为空，则返回null。
+    阻塞队列可以分为有界队列和无界队列。有界队列可以自动调整生产者、消费者线程的处理速率，ArrayBlockingQueue、LinkedBlockingQueue都可以用于实现有界队列，
+ArrayBlockingQueue的put方法和take方法使用同一个显示锁对象，所以会出现锁的争用，即在put时，不能进行take。LinkedBlockingQueue的put方法和take方法使用不同
+的显式锁对象，所以可以并行执行（使用原子变量AtomicInteger表示队列元素数量，所以还是存在对这个原子变量的争用），但是这类队列基于链表，所以take后脱离链表的
+节点对象会增加GC的负担。
+    LinkedBlockingQueue也可以用来构造无界队列，无界队列不会导致生产者线程阻塞（无界队列的容量是Integer.MAX_VALUE，程序中基本上不会产生这样大的数据量），
+但是这样也可能导致资源（内存）消耗过大。
+    SynchronousQueue实际上不是队列，它不维护保存数据的缓冲区，其put方法执行时，如果没有其他线程调用take方法，put方法就阻塞，直到其他线程调用了take方法，
+阻塞的生产者线程才被唤醒继续执行；如果put方法执行时，存在等待的消费者线程（消费者线程执行take方法时阻塞暂停），就唤醒某个等待的消费者线程。
+    ArrayBlockingQueue和SynchronousQueue支持非公平调度和公平调度(默认都是非公平调度)，而LinkedBlockingQueue只支持非公平调度，所以使用LinkedBlockingQueue
+不能保障先执行put的线程提交的数据会被先消费。
+    ArrayBlockingQueue适用于并发程度不高的场景，LinkedBlockingQueue适用于并发更高的场景，SynchronousQueue适用于生产速率和消费速率差不多的场景。
+        private static void test01() {
+            //BlockingQueue<String> channel = new ArrayBlockingQueue<String>(2);
+            BlockingQueue<String> channel = new ArrayBlockingQueue<String>(2,true);
+            //BlockingQueue<String> channel = new LinkedBlockingQueue<String>(2);
+            for (int i = 0; i < 5; i++) {
+                new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            channel.put(Thread.currentThread().getName());
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }.start();
+            }
+
+            try {
+                System.out.println(channel.take());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            for (int i = 0; i < 4; i++) {
+                new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            System.out.println(channel.take());
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }.start();
+            }
+        }
+
+        private static void test02() {
+            //BlockingQueue<String> channel = new SynchronousQueue<String>();
+            BlockingQueue<String> channel = new SynchronousQueue<String>(true);
+            try {
+                for (int i = 0; i < 2; i++) {
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            try {
+                                System.out.println(channel.take());
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }.start();
+                }
+                new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            channel.put(Thread.currentThread().getName());
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }.start();
+                channel.put(Thread.currentThread().getName());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+ 
+        private static void test03() {
+            BlockingQueue<String> channel = new ArrayBlockingQueue<>(5);
+            // BlockingQueue<String> channel = new SynchronousQueue<String>();
+            System.out.println(channel.offer("hello"));
+            System.out.println(channel.poll());
+        }
+    流量控制：java.util.concurrent.Semaphore可以用来为资源设置配额，从而控制获得资源的请求线程的数量，实现流量控制。Semaphore构造函数接收一个整数作为
+参数，表示资源配额，每次执行Semaphore.acquire方法时，如果可用配额不为0，则返回并将资源配额减一，如果可用配额为0，则执行线程被暂停；每次调用Semaphore的
+release方法，可用配额的值就加一（不受原始配额控制，即可以超过原始配额）。
+        private static void test04() {
+            Semaphore semaphore = new Semaphore(1);
+            semaphore.release();
+            try {
+                semaphore.acquire();
+                System.out.println("acquire success");
+                semaphore.acquire();
+                System.out.println("acquire again success");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    通常，release方法和acquire方法应该配对使用，申请一个配额，就应该返还一个配额。
+        private static void test04() {
+            BlockingQueue<String> channel = new LinkedBlockingQueue<String>();
+            Semaphore semaphore = new Semaphore(2);
+            for (int i = 0; i < 9; i++) {
+                new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            semaphore.acquire();
+                            channel.put(Thread.currentThread().getName());
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        } finally {
+                            semaphore.release();
+                        }
+                    }
+                }.start();
+            }
+        }
+    使用管道流来实现线程间通信：PipedInputStream和PipedOutputStream可以提供基于字节流的通信模型，通常用在两个线程中，而且这种通信是单向的，其中
+PipedOutputStream在发送数据的线程中执行write方法，向其他线程发送数据，PipedInputStream使用read方法读取数据：
+        private static void test01() {
+            try {
+                PipedInputStream pin = new PipedInputStream();
+                PipedOutputStream pout = new PipedOutputStream(pin);
+                new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(500);
+                            String str = "hello! this is " + Thread.currentThread().getName();
+                            //这里write方法不会等待其他线程调用pin.read后才返回，而是写出成功就返回。
+                            pout.write(str.getBytes());
+                            Thread.sleep(500);
+						    pout.write("\tgood morning!".getBytes());
+                            System.out.println("send message success!");
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            try {
+                                //这里关闭pout，pin.read就会返回-1
+                                pout.close();
+                            } catch (IOException e1) {
+                                e1.printStackTrace();
+                            }
+                        }
+                    }
+                }.start();
+
+                System.out.println("before");
+                while (true) {
+                    byte[] buf = new byte[1024];
+                    int len = pin.read(buf);
+                    String msg = new String(buf, 0, len, StandardCharsets.UTF_8);
+                    System.out.println("收到消息：: " + msg);
+                }
+            } catch (IOException e) {
+                //写线程终止后，主线程调用pin.read会抛出异常
+                //e.printStackTrace();
+                System.out.println("finish");
+            }
+        }
+    数据交换器：java.util.concurrent.Exchanger.Exchanger用于在两个线程间交换数据，这是一种双向通信模式，不是基于消息的通信，而是需要互相等待。当一个
+线程调用Exchanger.exchange(T)时，如果另一个线程没有调用exchange方法，则调用线程将暂停，直到第二个线程调用exchange方法唤醒该线程，这个方法将返回对方线程
+提供的数据，即线程间实现了数据交换。
+private static void test01() {
+		Exchanger<List<String>> exchanger = new Exchanger<>();
+		new Thread() {
+			@Override
+			public void run() {
+				List<String> buf1 = new ArrayList<String>();
+				for (int i = 0; i < 5; i++) {
+					for (int j = 0; j < 3; j++) {
+						buf1.add(i + "-" + j);
+					}
+					try {
+						List<String> ll = exchanger.exchange(buf1);
+						System.out.println(Thread.currentThread().getName() + " get : " + ll);
+						buf1 = new ArrayList<String>();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					System.out.println("===============");
+				}
+			}
+		}.start();
+
+		new Thread() {
+			@Override
+			public void run() {
+				List<String> buf1 = new ArrayList<String>();
+				for (int i = 0; i < 5; i++) {
+					for (int j = 0; j < 3; j++) {
+						buf1.add(i + "=" + j);
+					}
+					try {
+						List<String> ll = exchanger.exchange(buf1);
+						System.out.println(Thread.currentThread().getName() + " get : " + ll);
+						buf1 = new ArrayList<String>();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					System.out.println("************");
+				}
+			}
+		}.start();
+	}

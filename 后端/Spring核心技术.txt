@@ -282,7 +282,7 @@ Environment、bean工厂、资源加载器等，AnnotatedTypeMetadata接口实�
 	scoped-proxy默认基于CGLib的类代理，可以使用属性proxy-target-class=false设置使用接口代理
 	注入外部值：为了避免某些硬编码，spring支持从外部文件中读取配置的值并注入到bean中
 		@Configuration
-		@PropertyResource("classpath:app.properties")
+		@PropertySource("classpath:app.properties")
 		public class ExpressiveConfig{
 			@Autowired
 			Environment env;
