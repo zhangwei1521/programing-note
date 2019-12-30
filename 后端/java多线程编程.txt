@@ -1066,7 +1066,7 @@ PipedOutputStream在发送数据的线程中执行write方法，向其他线程�
     数据交换器：java.util.concurrent.Exchanger.Exchanger用于在两个线程间交换数据，这是一种双向通信模式，不是基于消息的通信，而是需要互相等待。当一个
 线程调用Exchanger.exchange(T)时，如果另一个线程没有调用exchange方法，则调用线程将暂停，直到第二个线程调用exchange方法唤醒该线程，这个方法将返回对方线程
 提供的数据，即线程间实现了数据交换。
-private static void test01() {
+	private static void test01() {
 		Exchanger<List<String>> exchanger = new Exchanger<>();
 		new Thread() {
 			@Override
@@ -1108,3 +1108,192 @@ private static void test01() {
 			}
 		}.start();
 	}
+	在生产者-消费者模型中，有时候生产者生成的产品是待执行的任务，生产者线程通过通道把这些任务提供给消费者线程，由消费者线程执行。在这种多线程模型中，一个
+消费者线程可以执行多个任务，可以在线程数量有限制的情景下充分利用线程资源。
+	线程中断机制：一个线程请求另外一个线程停止其正在执行的操作。java中的线程中断机制是通过一个线程发送一个指示给另外一个线程实现的，具体来说，是通过修改
+线程维护的中断标记以通知目标线程，但是目标线程可以不处理其接收到的中断指示，从而继续执行。
+	获取当前线程的中断标记：
+		Thread.currentThread().isInterrupted();	//返回true表示接收到中断指示，false表示没有收到中断指示
+	获取线程的中断标记然后将其重置为false：
+		Thread.interrupted();	//可以在目标线程中获取重置自身的中断标记，这是一个静态方法。
+	设置线程中断标记为true：
+		threadA.interrupt();	//通常用于通知目标线程中断执行
+	核心库中一些阻塞API不会对线程中断（标记）做成响应，如InputStream.read、ReentrantLock.lock等：
+		private static void  test01(){
+			Thread t1 = new Thread(()->{
+				try(InputStream in = new FileInputStream("/tem_file/files/app.js");){
+					int c;
+					int i = 0;
+					while ((c = in.read()) != -1){
+						if(Thread.currentThread().isInterrupted()){
+							i++;
+							System.out.println("get interrupted indicator");
+							if(i==2){
+								Thread.interrupted();
+							}
+						}
+					}
+					System.out.println("success!");
+				} catch (Exception e){
+					e.printStackTrace();
+				}
+			});
+			t1.start();
+			System.out.println("before");
+			t1.interrupt();
+			System.out.println("after");
+		}
+
+	还有一些核心API会在检查到线程中断标记后抛出InterruptedException异常，如Thread.sleep(long)、ReentrantLock.lockInterruptibly()等：
+		private static void  test02(){
+			Thread t1 = new Thread(()->{
+				while (true){
+					System.out.println("now : "+System.currentTimeMillis());
+					try {
+						Thread.sleep(5);
+					} catch (InterruptedException e){
+						e.printStackTrace();
+						break;
+					}
+				}
+			});
+			t1.start();
+			System.out.println("before");
+			try {
+				Thread.sleep(5);
+			} catch (InterruptedException e){
+				e.printStackTrace();
+			}
+			t1.interrupt();
+			System.out.println("after");
+		}
+	ReentrantLock.lockInterruptibly()等在阻塞前（暂停线程前）,会先检查线程中断标记，如果收到中断指示，就直接抛出异常，如果在阻塞期间，收到中断指示，虚拟机
+会先唤醒暂停的线程，然后这些线程就可以继续执行，执行过程中通常也会继续检查中断标记。
+	在自己的程序中，也可以使用这两种模式，即不处理和抛出异常，另外一种模式是在多阶段任务模型中，只在某些任务执行时检查中断标记并决定是终止当前任务，还是继续
+或者终止线程。
+	终止当前任务：
+		private static void  test03(){
+			Thread t1 = new Thread(()->{
+				step1();
+				step2();
+			});
+			t1.start();
+			System.out.println("before");
+			try {
+				Thread.sleep(5);
+			} catch (InterruptedException e){
+				e.printStackTrace();
+			}
+			t1.interrupt();
+			System.out.println("after");
+		}
+
+		private static void  step1(){
+			System.out.println("step1....start....");
+			while (true){
+				if(Thread.currentThread().isInterrupted()){
+					System.out.println("step1....canceled....");
+					//终止当前任务
+					break;
+				}
+				System.out.println("step1....doing....");
+			}
+		}
+
+		private static void  step2(){
+			System.out.println("step2。。。。start。。。。");
+			if(Thread.currentThread().isInterrupted()){
+				System.out.println("step2。。。。continue。。。。");
+			}
+			System.out.println("step2。。。。finish。。。。");
+		}
+	终止当前线程：
+		private static void  test04(){
+			Thread t1 = new Thread(()->{
+				int i=0;
+				while (i++ < 500){
+					if(Thread.currentThread().isInterrupted()){
+						System.out.println("thread....stop....");
+						//终止当前线程
+						return;
+					}
+					System.out.println("....step1 doing....");
+				}
+				System.out.println(".....other work......");
+				i=0;
+				while (i++ < 10000){
+					if(Thread.currentThread().isInterrupted()){
+						System.out.println("thread....stop....");
+						return;
+					}
+					System.out.println("....step2 doing....");
+				}
+			});
+			t1.start();
+			System.out.println("before");
+			try {
+				Thread.sleep(5);
+			} catch (InterruptedException e){
+				e.printStackTrace();
+			}
+			t1.interrupt();
+			System.out.println("after");
+		}
+	应用层代码中如果调用了会抛出InterruptedException的API，应用层方法可以选择以下处理方案：
+		1、当无法决定如果处理时，直接抛出，由调用者决定如何处理；
+		2、捕获后做一些本地处理，然后抛出给调用者；
+		3、捕获后，重新设置中断标记（调用interrupt方法），表示当前任务不响应中断，其他任务自行决定如何处理中断。
+	最好不要在应用层捕获了InterruptedException后不做任何处理，这样做就导致了中断指示的消失。
+	停止线程：早期API：Thread.stop()早已不建议使用，现在也很是有程序使用这个这个API来停止线程，但是官方一直没有给出新的停止线程执行的API，所以需要停止线程时，
+需要在应用程序中自己实现。基本思路是设计一个停止标记，在线程（任务）的run方法中检测这个标记，检测到就直接返回，线程就停止了。
+		class PureTask implements Runnable{
+			private boolean proceed = true;
+
+			public void stop(){
+				proceed = false;
+				Thread.currentThread().interrupt();
+			}
+
+			@Override
+			public void run() {
+				int i=0;
+				while (i<10000){
+					if(!proceed){
+						System.out.println("found interrupted, return");
+						return;
+					}
+					//这个方法可能会清除中断标记，但是不抛出异常
+					doSomething();
+					try {
+						Thread.sleep(50);
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+						e.printStackTrace();
+						return;
+					}
+				}
+			}
+
+			private void doSomething(){
+				if(Thread.interrupted()){
+					System.out.println("found interrupted, do nothing");
+				}
+			}
+		}
+
+		private static void test01(){
+			PureTask task = new PureTask();
+			Thread t1 = new Thread(task);
+			t1.start();
+			try {
+				Thread.sleep(5);
+			} catch (InterruptedException e){
+				e.printStackTrace();
+			}
+			task.stop();
+		}
+	线程停止，有时候需要“优雅”地停止，即正在处理中的任务，需要处理完才停止线程，可以通过捕获中断异常，然后再重新设置中断标记实现。
+	在基于web容器的web应用中，在停止应用时，应用容器进程没有退出，这是如果要终止应用线程，需要使用单独的监听器，在应用卸载时的回调方法中终止应用线程，可以使用
+一个线程登记器，在启动每个线程时就登记上该应用线程，在监听器的对应方法中就可以得到需要卸载的应用线程了。
+	
+	
