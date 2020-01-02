@@ -78,7 +78,7 @@ new Thread(Runnable task)传入的task将被设置为创建线程对象的target
         void run();
         void start();
         void join();                        在A线程中调用B线程的join方法后，A线程将会暂停执行，直到B线程执行完成后A线程继续执行。
-        static void yield();                在A线程中调用Thread.yield()后，如果进程存在线程，A线程将被让出处理器使用，等待线程
+        static void yield();                在A线程中调用Thread.yield()后，如果进程存在其他线程，A线程将被让出处理器使用，等待线程
                                             调度器再次分配处理器时间，否则线程A将继续执行。
         static void sleep(long millis);     在A线程中调用Thread.sleep(1000)后，A线程将休眠1s。
     使用Thread.sleep(n)实现一个定时器：
