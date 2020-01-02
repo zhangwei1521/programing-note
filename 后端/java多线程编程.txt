@@ -1296,4 +1296,215 @@ PipedOutputStream在发送数据的线程中执行write方法，向其他线程�
 	在基于web容器的web应用中，在停止应用时，应用容器进程没有退出，这是如果要终止应用线程，需要使用单独的监听器，在应用卸载时的回调方法中终止应用线程，可以使用
 一个线程登记器，在启动每个线程时就登记上该应用线程，在监听器的对应方法中就可以得到需要卸载的应用线程了。
 	
+	第六章
+	无状态对象：一个类的一个实例对象被多个线程使用时，不会让这些线程存在共享状态，这样的类的实例对象就是无状态对象。
+	无状态对象具有固有的线程安全性，客户端使用无状态对象不需要加锁，无状态对象的方法也不需要加锁，即允许多个线程并发（并行）执行无状态对象的任意公开方法。
+	无状态对象类及其上层类没有实例变量域和可变的静态变量域，但是一个类不包含任何实例变量域和静态变量域，并不能保证它就是一个无状态变量类。
+		public class NoStateObjDemo {
+			public static void main(String[] args) {
+				test01();
+			}
+
+			private static void test01() {
+				//NoStateObj1 obj1 = new NoStateObj1();
+				UnRealNoStateObj obj1 = new UnRealNoStateObj();
+				String[] dateStrs = { "2018-12-31", "2018-12-30", "2018-12-29", "2018-12-28", "2018-12-27" };
+				for (int i = 0; i < 5; i++) {
+					int j = i;
+					new Thread(() -> {
+						Date date = obj1.parse(dateStrs[j]);
+						System.out.println(Thread.currentThread().getName() + " get : " + date.toString());
+					}).start();
+				}
+			}
+		}
+
+		class NoStateObj1 {
+			public Date parse(String dateStr) {
+				SimpleDateFormat formater = new SimpleDateFormat("yyyy-MM-dd");
+				try {
+					return formater.parse(dateStr);
+				} catch (ParseException e) {
+					e.printStackTrace();
+					return null;
+				}
+			}
+		}
+
+		class UnRealNoStateObj {
+			public Date parse(String dateStr) {
+				return UnSafeFormater.INSTANCE.parse(dateStr);
+			}
+		}
+
+		enum  UnSafeFormater {
+			INSTANCE;
+			private UnSafeFormater(){}
+			private SimpleDateFormat formater = new SimpleDateFormat("yyyy-MM-dd");
+
+			public Date parse(String dateStr) {
+				try {
+					return formater.parse(dateStr);
+				} catch (ParseException e) {
+					e.printStackTrace();
+					return null;
+				}
+			}
+		}
+	不可变对象：指的是一经创建，其状态就保持不变的对象。不可变对象也具有固有的线程安全性。
+	当不可变对象所建模的现实实体的状态发生变化时，系统通过创建新的不可变对象来建模，而不是调整原建模对象。
+	不可变对象多用在状态变化不频繁的模型中，如果一个对象的状态变化频率较高，使用不可变对象建模将导致大量的垃圾对象，造成GC的负担。对于大的不可变对象，状态变化
+创建新的对象时，可以使用浅克隆的方式来重用原对象的部分变量。
+	不可变对象作为map的key使用时，可以避免对象状态变化导致获取value失败的问题。
+	当不可变对象需要暴露自身的状态给外部客户端，可以使用防御性复制和不可修改的迭代器来实现。
+		public class ImmutableObjDemo {
+			public static void main(String[] args) {
+				//test01();
+				test02();
+			}
+
+			private static HashMap<String,Object> prepareData(){
+				HashMap<String,Object> map = new HashMap<>();
+				map.put("name","zhangwei");
+				map.put("age",25);
+				map.put("tools",new String[]{"java","js","linux"});
+				return map;
+			}
+
+			private static void test01(){
+				HashMap<String,Object> map = prepareData();
+				ImmutableObj1 obj1 = new ImmutableObj1(map);
+				ImmutableObj1 obj2 = obj1.update("age",26);
+
+				System.out.println(obj1.get("tools"));
+				System.out.println(obj2.get("tools"));
+			}
+
+			private static void test02() {
+				HashMap<String, Object> map = prepareData();
+				ImmutableObj1 obj1 = new ImmutableObj1(map);
+				Iterator<Map.Entry<String,Object>> iterator = obj1.iterator();
+				while (iterator.hasNext()){
+					Map.Entry<String,Object> entry = iterator.next();
+					System.out.println(entry.getKey()+" : "+entry.getValue());
+					if(entry.getKey().equals("age") && (Integer)entry.getValue()==25){
+						// 不能删除：UnsupportedOperationException
+						// iterator.remove();
+					}
+				}
+			}
+		}
+
+		class ImmutableObj1{
+			private final HashMap<String,Object> map;
+
+			public ImmutableObj1(HashMap<String,Object> map){
+				this.map = map;
+			}
+
+			public Object get(String key){
+				return map.get(key);
+			}
+
+			public ImmutableObj1 update(String key,Object value){
+				return new ImmutableObj1(copyMap(this,key,value));
+			}
+			
+			public Set<Map.Entry<String,Object>> entrySet(){
+				final Set<Map.Entry<String,Object>> entries = Collections.unmodifiableSet(map.entrySet());
+				// 不能修改: UnsupportedOperationException
+				// entries.clear();
+				return entries;
+			}
+
+			public Iterator<Map.Entry<String,Object>> iterator(){
+				final Set<Map.Entry<String,Object>> entries = entrySet();
+				return new ReadOnlyIterator(entries.iterator());
+			}
+
+			private HashMap<String,Object> copyMap(ImmutableObj1 prototype,String key,Object value){
+				HashMap<String,Object> newMap = (HashMap<String,Object>)prototype.map.clone();
+				newMap.put(key,value);
+				return newMap;
+			}
+		}
+	线程特有对象：只能被一个线程访问的对象称为线程特有对象。某些特定类型的线程特有对象，一个线程只需要该类对象的一个实例，并且这个实例会被该线程所执行的多个方法
+共享。
+	ThreadLocal<T>的实例对象被设计为线程访问其线程特有对象的代理，一个线程可以有多个ThreadLocal<T>实例，多个线程也可以共用一个ThreadLocal<T>实例。
+	ThreadLocal通常作为静态字段使用，而不需要为每个对象都添加一个ThreadLocal实例。
+		public class ThreadLocalDemo {
+			private static Map<String,String> map = new HashMap<>();
+			private static ThreadLocal<String> tl1 = new ThreadLocal<>();
+			//这样就不需要在每个方法中去创建SimpleDateFormat对象，且是线程安全的
+			private static ThreadLocal<SimpleDateFormat> tl2 = ThreadLocal.withInitial(()->new SimpleDateFormat("yyyy-MM-dd"));
+
+			public static void main(String[] args) {
+				//test01();
+				test02();
+			}
+
+			private static void test01(){
+				CyclicBarrier barrier = new CyclicBarrier(100);
+				for (int i=0;i<100;i++){
+					new Thread(()->{
+						//doSomething1(barrier);
+						doSomething2(barrier);
+					}).start();
+				}
+			}
+
+			private static void test02(){
+				String[] dateStrs = { "2018-12-31", "2018-12-30", "2018-12-29", "2018-12-28", "2018-12-27" };
+				CyclicBarrier barrier = new CyclicBarrier(5);
+				for (int i=0;i<5;i++){
+					final int j = i;
+					new Thread(()->{
+						Date date = parseDate(dateStrs[j],barrier);
+						System.out.println(Thread.currentThread().getName() + " get : " + date);
+					}).start();
+				}
+			}
+
+			private static void doSomething1(CyclicBarrier barrier){
+				try {
+					barrier.await();
+				} catch (InterruptedException | BrokenBarrierException e){
+					e.printStackTrace();
+				}
+				//使用map，线程不安全
+				String str1 = map.get(Thread.currentThread().getName());
+				if(str1==null){
+					map.put(Thread.currentThread().getName(),Thread.currentThread().getName());
+				}
+				System.out.println("a: "+Thread.currentThread().getName()+"\tb:"+map.get(Thread.currentThread().getName()));
+			}
+			private static void doSomething2(CyclicBarrier barrier){
+				try {
+					barrier.await();
+				} catch (InterruptedException | BrokenBarrierException e){
+					e.printStackTrace();
+				}
+				//使用ThreadLocal
+				String str2 = tl1.get();
+				if(str2==null){
+					tl1.set(Thread.currentThread().getName());
+				}
+				System.out.println("1: "+Thread.currentThread().getName()+"\t2: "+tl1.get());
+			}
+			private static Date parseDate(String dateStr,CyclicBarrier barrier){
+				try {
+					barrier.await();
+				} catch (InterruptedException | BrokenBarrierException e){
+					e.printStackTrace();
+				}
+				try {
+					return tl2.get().parse(dateStr);
+				} catch (ParseException e) {
+					e.printStackTrace();
+					return null;
+				}
+			}
+		}
+	
+
 	
