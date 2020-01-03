@@ -464,7 +464,7 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 		repl-disable-tcp-nodelay no
 		#是否启用无磁盘复制，设为yes就在完全重新同步时不将RDB文件写到磁盘上，直接将内存中的RDB文件发送给从实例。
 		repl-diskless-sync no
-		#主实例ping从实例的时间间隔（秒），从实例美秒都会像主实例发送RELPCONF ACK{offset}
+		#主实例ping从实例的时间间隔（秒），从实例每秒都会向主实例发送RELPCONF ACK{offset}
 		# repl-ping-slave-period 10
 		# 主实例ping从实例和从实例发送ack请求到主实例、同步复制的超时时间，如果超时就会断开连接。
 		# repl-timeout 60
@@ -480,7 +480,7 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 		config set save "900 1 300 10 60 10000"
 	运行时禁用RDB持久化：
 		config set save ""
-	如果在配置文件中注释了save参数，再启动redis实例就不会再出发RDB持久化
+	如果在配置文件中注释了save参数，再启动redis实例就不会再触发RDB持久化
 	运行时查看save参数：
 		config get save
 	运行时手动执行RDB快照：
