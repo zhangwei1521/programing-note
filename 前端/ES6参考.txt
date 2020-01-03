@@ -2158,7 +2158,8 @@ Module提供模块化支持。
 		// 等同于
 		let _fs = require('fs');
 		let stat = _fs.stat;
-	ES6的模块使用静态加载的方案，不会执行模块，而是引用模块内的函数变量等，效率要比 CommonJS 模块的加载方式高。
+	//ES6的模块使用静态加载的方案，不会执行模块，而是引用模块内的函数变量等，效率要比 CommonJS 模块的加载方式高。
+	//这一段有误，使用Chrome最新版测试，ES6模块加载会执行模块文件
 		import { stat, exists, readFile } from 'fs';
 	ES6 的模块自动采用严格模式，不管你有没有在模块头部加上"use strict";。
 	模块功能主要由两个命令构成：export和import。export命令用于规定模块的对外接口，import命令用于输入其他模块提供的功能。
