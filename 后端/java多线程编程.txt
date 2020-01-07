@@ -1566,6 +1566,382 @@ ConcurrentLinkedQueue等则不使用快照模式，每个线程操作的都是�
 			}
 		}
 
+	第七章 线程活性故障
+	死锁：两个或多个线程都在等待对方持有的锁（资源），同时都不释放自己持有的锁（资源），导致各个线程都处于BLOCKED或WAITING状态。
+	死锁实例：哲学家就餐问题：
+		public class PhilosopherEatingDemo {
+			public static void main(String[] args) {
+				Chopstick[] chopsticks = new Chopstick[5];
+				Philosopher[] philosophers = new Philosopher[5];
+				for(int i=0;i<5;i++){
+					chopsticks[i] = new Chopstick();
+				}
+				for(int i=0;i<5;i++){
+					philosophers[i] = new Philosopher(chopsticks[i],chopsticks[(i+1)%5]);
+				}
+				for(int i=0;i<5;i++){
+					final int j = i;
+					new Thread(()->{
+						while (true){
+							philosophers[j].eat();
+							philosophers[j].think();
+						}
+					}).start();
+				}
+			}
+		}
+
+		class Philosopher{
+			private Chopstick left;
+			private Chopstick right;
+
+			public Philosopher(Chopstick l,Chopstick r){
+				this.left = l;
+				this.right = r;
+			}
+
+			public void think(){
+				String threadName = Thread.currentThread().getName();
+				long threadId = Thread.currentThread().getId();
+				//System.out.println(Thread.currentThread().getName()+" : thinking....");
+			}
+
+			public void eat(){
+				synchronized (left){
+					left.pickUp();
+					synchronized (right){
+						right.pickUp();
+						//System.out.println(Thread.currentThread().getName()+" : eating....");
+						right.putDown();
+					}
+					left.putDown();
+				}
+			}
+		}
+
+		class Chopstick{
+			private String status = "DOWN";
+
+			public void pickUp(){
+				status = "UP";
+			}
+
+			public void putDown(){
+				status = "DOWN";
+			}
+		}
+	通过JvisualVM可以查看到出现死锁，生成线程转储后可以在其中看到以下信息：
+		...
+		Found one Java-level deadlock:
+		=============================
+		"Thread-4":
+		waiting to lock monitor 0x000000001e0c2328 (object 0x000000076b25d748, a com.zhangwei.javabase.thread.Chopstick),
+		which is held by "Thread-0"
+		"Thread-0":
+		waiting to lock monitor 0x00000000030bb548 (object 0x000000076b25d788, a com.zhangwei.javabase.thread.Chopstick),
+		which is held by "Thread-1"
+		"Thread-1":
+		waiting to lock monitor 0x000000001e0c3928 (object 0x000000076b25d798, a com.zhangwei.javabase.thread.Chopstick),
+		which is held by "Thread-2"
+		"Thread-2":
+		waiting to lock monitor 0x00000000030bc9e8 (object 0x000000076b25d7a8, a com.zhangwei.javabase.thread.Chopstick),
+		which is held by "Thread-3"
+		"Thread-3":
+		waiting to lock monitor 0x00000000030bc938 (object 0x000000076b25d7b8, a com.zhangwei.javabase.thread.Chopstick),
+		which is held by "Thread-4"
+	这里使用内部锁，这几个线程都处于BLOCKED状态，如果使用显示锁的lock和lockInterruptibly方法，则死锁发生时，这些线程处于WAITING状态，使用
+tryLock(long timeout, TimeUnit unit)方法则死锁线程状态为TIMED_WAITING。
+	死锁发生的条件：
+		一、多个线程访问互斥资源；
+		二、资源不能被抢夺，只能由持有者主动释放；
+		三、线程持有某个资源时继续申请其他资源；
+		四、多个线程持有资源和申请其他资源形成循环等待。
+	这些条件是形成死锁的必要条件，但不是充分条件，即满足这些条件时不一定发生死锁，但是发生死锁时，一定存在这四种情形。
+	死锁的代码特征：
+	内部锁形式：
+		synchronized (objA){
+			//...
+			synchronized (objB){
+				...
+			}
+			//...
+		}
+	显示锁形式：
+		lockA.lock();
+		try{
+			//...
+			lockB.lock();
+			try{
+				//...
+			}finally{
+				lockB.unlock();
+			}
+		}finally{
+			lockA.unlock();
+		}
+	规避死锁的思路：消除产生死锁的四个条件中的任意一个条件就可以规避死锁。
+	规避死锁的常用方法：
+	a) 粗锁法：使用一个粗粒度的锁代替多个细粒度的锁。粗锁法消除了产生死锁的第三个条件：线程持有某个资源时继续申请其他资源
+		使用粗锁的哲学家类，每次只能有一个哲学家吃饭：
+		class MonopolizedPhilosopher{
+			private Chopstick left;
+			private Chopstick right;
+			private static final Object lockObj = new Object();
+
+			public Philosopher(Chopstick l,Chopstick r){
+				this.left = l;
+				this.right = r;
+			}
+
+			public void think(){
+				//System.out.println(Thread.currentThread().getName()+" : thinking....");
+			}
+			
+			public void eat(){
+				synchronized (lockObj){
+					left.pickUp();
+					right.pickUp();
+					//System.out.println(Thread.currentThread().getName()+" : eating....");
+					right.putDown();
+					left.putDown();
+				}
+			}
+		}
+		从这个例子就可以看出，5个哲学家有5只筷子，理论上可以支持2个人同时吃饭，但是使用粗锁就导致每次只能一个人吃饭，可见粗锁会带来资源的浪费。
+	b) 锁排序法：每个线程都使用全局统一的顺序去申请锁。
+		在哲学家就餐问题中，如果对每根筷子编号排序，并且让每个哲学家在申请筷子时按照编号从小到大的顺序申请，就可以避免死锁条件的第四条：循环等待。
+		下面使用System.identityHashCode(obj);方法获取对象的身份标识，然后设置筷子时，让left总是小于right：
+		class FixedPhilosopher{
+			private Chopstick one;
+			private Chopstick theOther;
+			private static final Object lockObj = new Object();
+
+			public FixedPhilosopher(Chopstick l,Chopstick r){
+				int lh = System.identityHashCode(l);
+				int rh = System.identityHashCode(r);
+				if(lh<rh){
+					this.one = l;
+					this.theOther = r;
+				}
+				else if(lh>rh){
+					this.one = r;
+					this.theOther = l;
+				}
+				else {
+					this.one = null;
+					this.theOther = null;
+				}
+			}
+			public void eat(){
+				if(one!=null){
+					synchronized (one){
+						one.pickUp();
+						synchronized (theOther){
+							theOther.pickUp();
+							//System.out.println(Thread.currentThread().getName()+" : eating....");
+							theOther.putDown();
+						}
+						one.putDown();
+					}
+				}
+				else {
+					synchronized (lockObj){
+						one.pickUp();
+						theOther.pickUp();
+						//System.out.println(Thread.currentThread().getName()+" : eating....");
+						theOther.putDown();
+						one.putDown();
+					}
+				}
+			}
+			public void think(){
+				//System.out.println(Thread.currentThread().getName()+" : thinking....");
+			}
+		}
+	c) 使用ReentrantLock.tryLock(long timeout, TimeUnit unit)方法设置等待超时时间，这样可以避免一个线程无限制地等待其他线程占用的资源。
+		class NewPhilosopher{
+			private Chopstick left;
+			private Chopstick right;
+			private static final ConcurrentHashMap<Chopstick, ReentrantLock> LOCK_MAP;
+			static {
+				LOCK_MAP = new ConcurrentHashMap<>();
+			}
+			public NewPhilosopher(Chopstick left,Chopstick right){
+				this.left = left;
+				this.right = right;
+				LOCK_MAP.putIfAbsent(left,new ReentrantLock());
+				LOCK_MAP.putIfAbsent(right,new ReentrantLock());
+			}
+
+			public void eat(){
+				final ReentrantLock leftLock = LOCK_MAP.get(left);
+				final ReentrantLock rightLock = LOCK_MAP.get(right);
+				try {
+					boolean accessFlag = leftLock.tryLock(20, TimeUnit.SECONDS);
+					if(!accessFlag){
+						System.err.println("timeout for wait eating!");
+						return;
+					}
+					left.pickUp();
+					accessFlag = rightLock.tryLock(20, TimeUnit.SECONDS);
+					if(!accessFlag){
+						System.err.println("timeout for wait eating!");
+						return;
+					}
+					right.pickUp();
+					//....
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				} finally {
+					if(rightLock.isHeldByCurrentThread()){
+						right.putDown();
+						rightLock.unlock();
+					}
+					if(leftLock.isHeldByCurrentThread()){
+						left.putDown();
+						leftLock.unlock();
+					}
+				}
+			}
+		}
+	导致死锁的另外一种形式：在持有一个锁的情况下调用一个外部方法(其他对象的方法)，而该外部方法也会申请锁，这时可能出现以下情景：
+		class ClassA{
+			private ClassB obj;
+			public synchronized void method1(){
+				//...
+				obj.method3();
+			}
+			public synchronized void method2(){
+				//...
+			}
+		}
+		class ClassB{
+			private ClassA obj;
+			public synchronized void method3(){
+				//...
+			}
+			public synchronized void method4(){
+				//...
+				obj.method2();
+			}
+		}
+	当一个线程在执行ClassA实例的method1时，另一个线程正在执行ClassB实例的method4，如此就会导致死锁。由于很难控制外部调用是否使用同步，这种死锁需要特别关注。
+对这类死锁问题的一种解决方案是开放调用：一个方法在调用外部方法时（包括其他类的方法和当前类的可覆写方法），不持有任何锁。
+	当然如果不使用锁，自然就不会有死锁问题，在合适的场景中可以考虑使用一些设计上的方法替换锁，如无状态对象、线程特有对象、不可变对象等。
+	死锁检测和恢复：死锁检测可以使用ThreadMXBean.findDeadlockedThreads，恢复死锁中的线程的思路是发送中断指示，这就要求死锁中的线程必须要能响应中断，对于
+显示锁，需要使用lockInterruptibly方法。恢复死锁的线程实际用途不大，如果程序设计不当，导致死锁发生，那么意味着死锁不是只发生一次，即使从死锁恢复了，执行一段
+时间后，程序还是会继续陷入死锁。
+		public class DeadLockDetector extends Thread{
+			static final ThreadMXBean threadMxBean = ManagementFactory.getThreadMXBean();
+			private final long timeInterval;
+
+			public DeadLockDetector(long timeInterval){
+				setName("DeadLockDetector");
+				setDaemon(true);
+				this.timeInterval = timeInterval;
+			}
+			public DeadLockDetector(){
+				this(2000);
+			}
+
+			public static ThreadInfo[] findDeadLockThread(){
+				long [] ids = threadMxBean.findDeadlockedThreads();
+				return null==ids ? new ThreadInfo[0] : threadMxBean.getThreadInfo(ids);
+			}
+
+			public static Thread findThreadById(long threadId){
+				for (Thread t : Thread.getAllStackTraces().keySet()){
+					if(t.getId()==threadId){
+						return t;
+					}
+				}
+				return null;
+			}
+
+			public static boolean interruptThread(long threadId){
+				Thread thread = findThreadById(threadId);
+				if(thread!=null){
+					thread.interrupt();
+					return true;
+				}
+				return false;
+			}
+
+			public void run(){
+				ThreadInfo [] threadInfos;
+				int i=0;
+				while (true){
+					threadInfos = findDeadLockThread();
+					if(threadInfos.length>0){
+						interruptThread(threadInfos[i++ % threadInfos.length].getThreadId());
+						continue;
+					}
+					i=0;
+					try {
+						Thread.sleep(timeInterval);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+	可以从死锁中恢复的哲学家就餐方法：
+		public void eat(){
+			try {
+				if(pickUpChopstick(left) && pickUpChopstick(right)){
+					//....
+					left.putDown();
+					right.putDown();
+				}
+			} finally {
+				if(LOCK_MAP.get(right).isHeldByCurrentThread()){
+					LOCK_MAP.get(right).unlock();
+				}
+				if(LOCK_MAP.get(left).isHeldByCurrentThread()){
+					LOCK_MAP.get(left).unlock();
+				}
+			}
+		}
+		private boolean pickUpChopstick(Chopstick chopstick){
+			final ReentrantLock lock = LOCK_MAP.get(chopstick);
+			try {
+				lock.lockInterruptibly();
+			} catch (InterruptedException e){
+				if(LOCK_MAP.get(right).isHeldByCurrentThread()){
+					LOCK_MAP.get(right).unlock();
+				}
+				if(LOCK_MAP.get(left).isHeldByCurrentThread()){
+					LOCK_MAP.get(left).unlock();
+				}
+				return false;
+			}
+			chopstick.pickUp();
+			return true;
+		}
+	锁死：一个线程一直等待被唤醒，但是由于某些原因，此线程一直没有被唤醒。锁死通常只是一个或少量相对独立线程的活性问题，而死锁则是一组关联对象的活性故障。
+	导致锁死的原因主要包括通知信号丢失和嵌套监视器，如果不使用状态量来控制wait等方法，则可能出现notify()[同时修改相关状态量]在wait()调用前执行，导致notify
+失效。嵌套监视器的典型形式：
+		synchronized(monitorX){
+			synchronized(monitorY){
+				which(!status){
+					monitorY.wait();
+				}
+			}
+		}
+		//唤醒
+		synchronized(monitorX){
+			synchronized(monitorY){
+				status = true;
+				monitorY.notify();
+			}
+		}
+	线程饥饿与活锁：线程饥饿是指一个线程无法获得其需要的资源，导致线程计算任务无法进行下去，线程饥饿不一定是BLOCKED或WAITING状态，比如在使用非公平调度的资源
+争用环境中，某些线程可能一直处于RUNNABLE状态（线程一直在申请资源）。饥饿线程一直处于RUNNABLE状态，这通常就称其为活锁。
+	BLOCKED状态通常由线程申请内部锁（synchronized实现）阻塞时进入，属于线程被动进入暂停状态，而WAITING通常线程调用Object.wait方法、申请显示锁失败等主动
+进入暂停状态。
+	WAITING和BLOCKED状态本质上是一样的，都是线程被暂停，但是jvm出于管理的需要在虚拟机层面做了这种区分，这样做一个典型的好处是，两种原因的线程放在两个队列，
+如果别的线程运行出了synchronized这段代码，虚拟机只需要去blocked队列唤醒某个线程，如果某个线程调用了notify()，虚拟机则去waitting队列唤醒一个线程。
+
 	
 
 	
