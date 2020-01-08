@@ -106,7 +106,7 @@ public class TemplateDemo1 {
             }
             return instance;
         }
-    使用 synchronized同步整个方法可能引起性能上的损耗，这种场景下可以使用下面这中double-checked locking模式，使用这种模式需要使用
+    使用 synchronized同步整个方法可能引起性能上的损耗，这种场景下可以使用下面这种double-checked locking模式，使用这种模式需要使用
 volatile修饰实例对象名，这个关键字可以保证线程发现所修饰变量的最新状态。
     注：java内存模型中，对象共享变量保存在对象的主内存空间，线程使用这个对象时，会复制对象共享变量到线程的本地内存空间中，线程对这个
 共享变量的修改也只是先在本地内存空间进行，不会马上同步到主内存空间，这样某个线程对共享变量的修改对其他线程就不是立即可见的。volatile
@@ -145,7 +145,7 @@ volatile修饰实例对象名，这个关键字可以保证线程发现所修饰
     在工厂方法中使用ThreadLocal为线程绑定实例对象：
         public class ConnectionFactory{
 			private final ThreadLocal<Connection> connections = new ThreadLocal<>();
-			public getConnection(){
+			public Connection getConnection(){
 				Connection conn = connections.get();
 				if(conn==null){
 					conn = DBUtils.getConnection;
@@ -357,7 +357,7 @@ volatile修饰实例对象名，这个关键字可以保证线程发现所修饰
                                 continue;
                             }
                             String className = fileName.substring(0,fileName.length()-6);
-                            String fullName = packageName+"."+className;
+                            String fullName = packageName!=null ? (packageName +"."+className) : className;
                             try {
                                 Class<?> clazz = Thread.currentThread().getContextClassLoader().loadClass(fullName);
                                 if(clazz != null && clazz.getAnnotation(annotation) != null){
