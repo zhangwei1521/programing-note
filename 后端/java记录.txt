@@ -371,7 +371,7 @@ run()、sleep()、start()等。
 	不应该滥用自动装拆箱，否则会影响程序性能。
 	JDK5新增了注解语法，用于在源文件中嵌入补充信息，主要是便于其它工具获取这些信息。
 	注解定义语法：
-		@Interface MyAnno {
+		@interface MyAnno {
 			String str();
 			int val();
 		}
@@ -383,7 +383,7 @@ hashCode方法。
 	保留策略：RetentionPolicy枚举类定义了三种枚举常量保留策略：SOURCE、CLASS、RUNTIME。
 	使用内置注解@Retention声明注解的保留策略：(默认是RetentionPolicy.CLASS)
 		@Retention(RetentionPolicy.RUNTIME)
-		@Interface MyAnno {
+		@interface MyAnno {
 			String str();
 			int val();
 		}
@@ -402,11 +402,11 @@ hashCode方法。
 		}
 	标记注解：没有属性，使用时不使用括号：@Mark
 	单成员注解：
-		@Interface MyAnno {
+		@interface MyAnno {
 			String value();
 		}
 	或者
-		@Interface MyAnno {
+		@interface MyAnno {
 			String value();
 			int val() default 100;
 		}
