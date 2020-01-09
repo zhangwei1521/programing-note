@@ -1918,7 +1918,7 @@ tryLock(long timeout, TimeUnit unit)方法则死锁线程状态为TIMED_WAITING�
 			chopstick.pickUp();
 			return true;
 		}
-	锁死：一个线程一直等待被唤醒，但是由于某些原因，此线程一直没有被唤醒。锁死通常只是一个或少量相对独立线程的活性问题，而死锁则是一组关联对象的活性故障。
+	锁死：一个线程一直等待被唤醒，但是由于某些原因，此线程一直没有被唤醒。锁死通常只是一个或少量相对独立线程的活性问题，而死锁则是一组关联线程的活性故障。
 	导致锁死的原因主要包括通知信号丢失和嵌套监视器，如果不使用状态量来控制wait等方法，则可能出现notify()[同时修改相关状态量]在wait()调用前执行，导致notify
 失效。嵌套监视器的典型形式：
 		synchronized(monitorX){
@@ -1936,12 +1936,348 @@ tryLock(long timeout, TimeUnit unit)方法则死锁线程状态为TIMED_WAITING�
 			}
 		}
 	线程饥饿与活锁：线程饥饿是指一个线程无法获得其需要的资源，导致线程计算任务无法进行下去，线程饥饿不一定是BLOCKED或WAITING状态，比如在使用非公平调度的资源
-争用环境中，某些线程可能一直处于RUNNABLE状态（线程一直在申请资源）。饥饿线程一直处于RUNNABLE状态，这通常就称其为活锁。
-	BLOCKED状态通常由线程申请内部锁（synchronized实现）阻塞时进入，属于线程被动进入暂停状态，而WAITING通常线程调用Object.wait方法、申请显示锁失败等主动
+争用环境中，某些线程可能一直处于RUNNABLE状态（线程一直在申请资源）。饥饿线程一直处于RUNNABLE状态，通常就称其为活锁。
+	BLOCKED状态通常由线程申请内部锁（synchronized实现）阻塞时进入，属于线程被动进入暂停状态，而WAITING通常是线程调用Object.wait方法、申请显示锁失败等主动
 进入暂停状态。
 	WAITING和BLOCKED状态本质上是一样的，都是线程被暂停，但是jvm出于管理的需要在虚拟机层面做了这种区分，这样做一个典型的好处是，两种原因的线程放在两个队列，
 如果别的线程运行出了synchronized这段代码，虚拟机只需要去blocked队列唤醒某个线程，如果某个线程调用了notify()，虚拟机则去waitting队列唤醒一个线程。
 
+	第八章 线程管理
+	线程组：ThreadGroup，表示一组相似或相关的线程，可以使用Thread的构造函数参数指定创建线程的线程组，不指定时默认线程组就是父线程所在的线程组，通过
+threadA.getThreadGroup方法可以得到线程所在线程组。线程组是一个过时的概念，现在一般都不再使用。
+	非检查异常的处理：线程运行时（run方法或run调用链中的方法）抛出运行时异常，线程会提前终止（退出run方法），jdk1.5开始在Thread中添加了一个接口：UncaughtExceptionHandler，
+这个接口提供一个方法：void uncaughtException(Thread t, Throwable e)，把这个接口的实例注册到线程对象上，这个方法就会在线程终止前被产生异常的线程调用。在这个方法里
+可以做一些工作来对异常做一些处理，例如记录日志，甚至创建一个新的线程替代原线程继续完成工作。
+	下面是一个实例：
+		public class ThreadExceptionHandleDemo {
+			volatile boolean inited = false;
+			static AtomicInteger threadIndex = new AtomicInteger(0);
+			final BlockingQueue<String> channel = new ArrayBlockingQueue<>(100);
+
+			public static void main(String[] args) {
+				ThreadExceptionHandleDemo demo = new ThreadExceptionHandleDemo();
+				demo.init();
+				for(int i=0;i<100;i++){
+					demo.sendMsg("msg"+i);
+				}
+				try {
+					Thread.sleep(3000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				System.exit(0);
+			}
+
+			private void sendMsg(String msg){
+				channel.add(msg);
+			}
+
+			private synchronized void init(){
+				if(inited){
+					return;
+				}
+				CustomerThread customerThread = new CustomerThread();
+				customerThread.setName("customer-"+threadIndex.getAndAdd(1));
+				customerThread.setUncaughtExceptionHandler(new CustomerThreadExceptionHandler());
+				customerThread.start();
+				inited = true;
+			}
+
+			private class CustomerThread extends Thread{
+				@Override
+				public void run(){
+					String msg=null;
+					for (;;){
+						try {
+							msg = channel.take();
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+						process(msg);
+					}
+				}
+
+				private void process(String msg) {
+					if((int)(Math.random()*100)<10){
+						throw new RuntimeException("random exception");
+					}
+					System.out.println(msg);
+					try {
+						Thread.sleep(20);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+
+			private class CustomerThreadExceptionHandler implements Thread.UncaughtExceptionHandler{
+				@Override
+				public void uncaughtException(Thread t, Throwable e) {
+					String tname = t.getName();
+					System.err.println(tname+" terminated : "+e);
+					inited = false;
+					init();
+				}
+			}
+		}
+	线程组(ThreadGroup)实现了UncaughtExceptionHandler接口，它的实现逻辑是优先使用父线程组的uncaughtException处理异常，如果没有父线程组，就使用全局的默认线程异常处理器
+处理，全局线程异常处理器可以通过Thread.setDefaultUncaughtExceptionHandler()设置。
+	线程抛出的运行时异常优先使用线程设置的线程异常处理器处理，如果线程没有设置异常处理器，就使用线程所在线程组的线程异常处理器处理，通常都不会去创建自己的线程组对象，所以
+实际上会使用全局线程异常处理器处理。
+	线程工厂：ThreadFactory，这是jdk1.5开始提供的一个接口，提供一个方法 Thread newThread(Runnable r),通过线程工厂创建线程对象，可以封装创建线程、配置线程的逻辑。
+		class MyThreadFactory implements ThreadFactory{
+			AtomicInteger threadIndex = new AtomicInteger(0);
+			@Override
+			public Thread newThread(Runnable r) {
+				Thread thread = new Thread(r);
+				thread.setDaemon(false);
+				thread.setPriority(4);
+				thread.setUncaughtExceptionHandler(new MyThreadExceptionHandler());
+				thread.setName("mythread-"+threadIndex.getAndAdd(1));
+
+				return thread;
+			}
+		}
+		class MyThreadExceptionHandler implements Thread.UncaughtExceptionHandler{
+			@Override
+			public void uncaughtException(Thread t, Throwable e) {
+				String tname = t.getName();
+				System.err.println(tname+" terminated : "+e);
+			}
+		}
+	线程的暂挂和恢复：Thread的实例方法suspend和resume方法早已废弃，现在实现线程的暂挂和恢复实际上是通过应用程序设计实现的，典型的做法是使用一个状态量，在执行那些耗时操作
+（或其他任何有需要的操作）前先检查这个状态量，如果状态不满足条件就使用wait或Condition的await实现暂停，当需要时通过修改状态量和调用notify等唤醒线程实现恢复。
+	下面的例子中把线程要执行的任务分为两个子任务，每个子任务使用可控制的工具类执行，这个工具类执行任务时会先检查一个状态量，这个工具类还提供一个暂停和一个恢复线程的方法。
+		public class ThreadPauseDemo{
+			public static void main(String[] args) throws InterruptedException {
+				test01();
+			}
+
+			private static void test01() throws InterruptedException {
+				Runnable task1 = createTask("task1");
+				Runnable task2 = createTask("task2");
+
+				ThreadPauseTool threadPauseTool = new ThreadPauseTool();
+				new Thread(()->{
+					try {
+						threadPauseTool.doAction(task1);
+						threadPauseTool.doAction(task2);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}).start();
+				Thread.sleep(100);
+				threadPauseTool.suspend();
+				System.out.println("waiting........");
+				threadPauseTool.resume();
+			}
+
+			private static Runnable createTask(String taskName){
+				Runnable task = new Runnable() {
+					@Override
+					public void run() {
+						System.out.println(taskName+" start");
+						try {
+							Thread.sleep(200);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+						System.out.println(taskName+" end");
+					}
+					@Override
+					public String toString(){
+						return taskName;
+					}
+				};
+				return task;
+			}
+		}
+
+		class ThreadPauseTool extends ReentrantLock {
+			private boolean status = true;
+			private Condition condition = newCondition();
+			public void suspend(){
+				status = false;
+			}
+
+			public void resume(){
+				lock();
+				try {
+					status = true;
+					condition.signalAll();
+				} finally {
+					unlock();
+				}
+			}
+
+			public void doAction(Runnable task) throws InterruptedException {
+				lock();
+				try {
+					while (!status){
+						System.out.println("task paused...");
+						condition.await();
+					}
+					task.run();
+				} finally {
+					unlock();
+				}
+			}
+		}
 	
+	多线程带来的额外开销：线程对象相比普通对象，增加了栈空间的开销，线程的启动、调度和销毁都需要占用额外的CPU时间（上下文切换）。
+	线程池是一个对象，其内部会预先创建一批工作者线程，使用时，客户端代码将需要执行的任务提交给线程池，线程池可能将这些提交的任务缓存起来，然后由工作者线程从缓存中取出任务
+执行。所以线程池可以看成是基于生产者-消费者模式的一种服务，客户端代码生产任务传递给线程池消费。
+	java.util.concurrent.ThreadPoolExecutor是一个线程池实现，它提供三个submit方法给客户端代码调用以提交任务：
+		public Future<?> submit(Runnable task);
+		public <T> Future<T> submit(Runnable task, T result)
+		public <T> Future<T> submit(Callable<T> task)
+	其构造方法也有四个版本，参数最多的一个如下：
+		public ThreadPoolExecutor(int corePoolSize,
+                              int maximumPoolSize,
+                              long keepAliveTime,
+                              TimeUnit unit,
+                              BlockingQueue<Runnable> workQueue,
+                              ThreadFactory threadFactory,
+                              RejectedExecutionHandler handler)
+	在其他几个构造方法中，threadFactory和handler是可选的。
+	构造方法参数介绍：
+		corePoolSize	核心线程数量（表示"合适"的线程数量）
+		maximumPoolSize 最多线程数量
+		keepAliveTime	超出corePoolSize的线程的空闲时间
+		unit			keepAliveTime的单位
+		workQueue		缓存任务的队列
+		threadFactory	生产线程对象的工厂
+		handler			缓存队列已装满，并且线程数量也达到了maximumPoolSize后新提交的任务被拒绝后的处理器
+	客户端代码提交任务给线程池，线程池内部的工作过程：初始状态下，每提交一个任务，线程池就创建一个线程来处理该任务，当任务数量超过corePoolSize后，如果所有工作者线程仍在
+执行，新提交的任务就被存入缓存队列(使用offer存入，不会阻塞)，当队列被填满后，继续提交就导致创建新的工作者线程来处理这些新提交任务，当工作者线程数量达到maximumPoolSize，
+继续提交的任务如果不能存入缓存队列，就会被拒绝，这时handler将会处理新提交的任务(由客户端线程执行)。
+	ThreadPoolExecutor的prestartAllCoreThreadsf方法可以在提交任务前就创建出所有的核心工作者线程，即corePoolSize个工作者线程。
+	ThreadPoolExecutor提供一个shutdown方法和一个shutdownNow方法，shutdown方法执行后，线程池内的线程不会马上终止，而是会继续执行已提交的任务，如果再提交任务给线程池，
+这些新提交的任务就会像线程池已满时那样被拒绝。shutdownNow方法执行时，正在执行的任务会被停止，已提交的任务也不会被执行（将被返回给调用者），这里正在执行的任务必须要能响应
+中断才能被停止，如果不响应中断则不会被停止。
+		private static void test01(){
+			ThreadPoolExecutor executor = new ThreadPoolExecutor(4,8,10, TimeUnit.SECONDS,
+					new ArrayBlockingQueue<>(10),
+					new RejectedExecutionHandler(){
+						@Override
+						public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+							System.out.println(Thread.currentThread().getName()+" : "+r);
+						}
+					});
+			//executor.prestartAllCoreThreads();
+			System.out.println("initial thread count : "+executor.getPoolSize());
+			for (int i=0;i<19;i++){
+				final int j = i;
+				executor.submit(()->{
+					System.out.println("hello "+j);
+					try {
+						Thread.sleep(j*4);
+					} catch (InterruptedException e){
+						e.printStackTrace();
+					}
+				});
+				System.out.println("=================");
+				System.out.println("thread count : "+executor.getPoolSize());
+				System.out.println("active count : "+executor.getActiveCount());
+				System.out.println("task count : "+executor.getTaskCount());
+				System.out.println("completed task count : "+executor.getCompletedTaskCount());
+				System.out.println("queue size : "+executor.getQueue().size());
+				System.out.println("=================");
+			}
+			//executor.shutdown();
+			try {
+				Thread.sleep(6000);
+			} catch (InterruptedException e){
+				e.printStackTrace();
+			}
+			System.out.println("final thread count : "+executor.getPoolSize());
+			System.out.println("largest pool size : "+executor.getLargestPoolSize());
+			executor.shutdownNow();
+		}
+	Callable是一个和Runnable功能类似的接口，也是任务的抽象，它提供一个call方法，和Runnable的run方法不同的是Callable的实例有返回值，且可以抛出异常：
+		public String call() throws Exception;
+	Executors.callable可以把一个Runnable实例转换为一个Callable实例：
+		public static <T> Callable<T> callable(Runnable task, T result)
+	ThreadPoolExecutor的几个submit方法返回值都是一个Future对象，这个对象可以看成是提交任务执行过程的一个句柄，通过这个对象可以获取任务执行结果（返回值）、取消任务等。
+		private static void test02(){
+			ThreadPoolExecutor executor = new ThreadPoolExecutor(4,8,5, TimeUnit.SECONDS,
+					new ArrayBlockingQueue<>(10));
+			Future<String> future = executor.submit(new Callable<String>() {
+				@Override
+				public String call() throws Exception {
+					Thread.sleep(100);
+					return "sucess";
+				}
+			});
+			//future = executor.submit(Executors.callable(()->{},"success"));
+			//future.cancel(true);
+			try {
+				if(!future.isCancelled()){
+					//future.get()这个方法会阻塞执行线程
+					//String result = future.get();
+					String result = future.get(20, TimeUnit.MILLISECONDS);
+					System.out.println(result);
+				}
+			} catch (InterruptedException | ExecutionException | TimeoutException e) {
+				if(e instanceof TimeoutException){
+					future.cancel(true);
+					System.out.println("task canceled");
+				}
+				else {
+					e.printStackTrace();
+				}
+			}
+			executor.shutdown();
+		}
+	future.get()这个方法会阻塞执行线程，所以调用这个方法应该尽可能晚一点，只在必须获得任务执行结果的时候才调用这个方法。这个方法还会抛出任务执行过程中抛出的异常
+（ExecutionException）（任务执行时抛出的异常会先被捕获并保存在任务实例中）。
+	future.cancel(true/false)表示取消任务执行，true表示如果任务在执行中，就发送中断指示给执行线程，如果任务不响应中断，运行时则不能被取消。
+	任务被取消后，再调用future.get()将抛出CancellationException异常。
+	future.isDone()方法返回任务是否执行完毕，任务正常结束、任务被取消、任务执行过程中抛出异常，这个方法都返回true。
+	future.get(20, TimeUnit.MILLISECONDS)这个方法在等待指定时间后任务仍没有执行结束就抛出一个运行时异常：TimeoutException。
+	ThreadPoolExecutor提供一组监控线程池的方法：
+		getPoolSize()			获取当前线程池大小（存活的线程数量）
+		getQueue()				获取缓存队列，返回一个BlockingQueue实例，这个这个实例可以查看其使用情况
+		getLargestPoolSize()	获取曾经达到过的最大线程数量
+		getTaskCount()			获取已提交到线程池的任务数量(近似值)
+		getCompletedTaskCount()	获取已完成的任务数量(近似值)
+		getActiveCount()		获取工作中的线程数(近似值)
+	后面三个方法获取的都只是近似值，所以不是很靠谱。
+	ThreadPoolExecutor还提供两个hook方法：beforeExecute和afterExecute，beforeExecute在任务执行前执行，而afterExecute在任务执行后执行，这里需要注意，任务执行过程中
+抛出的异常不会被传递给afterExecute，而是封装在了Runnable实例当中。
+		private static void test03(){
+			ThreadPoolExecutor executor = new ThreadPoolExecutor(4,8,5, TimeUnit.SECONDS,
+					new ArrayBlockingQueue<>(10)){
+				@Override
+				protected void beforeExecute(Thread t, Runnable r) {
+					System.out.println(t.getName()+" will execute "+r);
+				}
+				@Override
+				protected void afterExecute(Runnable r, Throwable t) {
+					System.out.println(r+" execute finished"+(t==null ? "" : ", exception happended : "+t.getMessage()));
+				}
+			};
+			 Future future = executor.submit(new Runnable() {
+				@Override
+				public void run()  {
+					int i = 20/0;
+					System.out.println(Thread.currentThread().getName()+" doing");
+				}
+			});
+			try {
+				future.get();
+			} catch (InterruptedException | ExecutionException e) {
+				e.printStackTrace();
+			}
+			executor.shutdown();
+		}
+	线程池也需要注意避免线程死锁，一般来说，适合提交给同一线程池的任务应该是相对独立的任务，如果是一组彼此依赖的任务，可以提交给多个线程池执行。
+	任务执行过程中的异常处理方案：
+		一、直接在任务的run方法中捕获处理；
+		二、捕获submit方法返回的future的get方法抛出的异常；
+		三、使用自定义线程工厂，为其创建的线程添加线程异常处理器；
+		四、设置默认线程异常处理器。
+	覆写ThreadPoolExecutor的afterExecute方法不能拿到任务执行过程中抛出的异常。
+
 
 	
