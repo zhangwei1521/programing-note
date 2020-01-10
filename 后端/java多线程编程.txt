@@ -2194,7 +2194,7 @@ threadA.getThreadGroup方法可以得到线程所在线程组。线程组是一�
 			System.out.println("largest pool size : "+executor.getLargestPoolSize());
 			executor.shutdownNow();
 		}
-	Callable是一个和Runnable功能类似的接口，也是任务的抽象，它提供一个call方法，和Runnable的run方法不同的是Callable的实例有返回值，且可以抛出异常：
+	Callable是一个和Runnable功能类似的接口，也是任务的抽象，它提供一个call方法，和Runnable的run方法不同的是Callable的call方法有返回值，且可以抛出异常：
 		public String call() throws Exception;
 	Executors.callable可以把一个Runnable实例转换为一个Callable实例：
 		public static <T> Callable<T> callable(Runnable task, T result)
