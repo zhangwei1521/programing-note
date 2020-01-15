@@ -1478,8 +1478,9 @@ getInputStream()、getReader()、getRemoteHost()等
 			name = (String) in.readObject();
 			age = in.readInt();
 		}
-	虚拟机在反序列化时会检查类路径和序列化ID( private static final long serialVersionUID)，只有两者都能匹配才完成反序列化。
-
+	虚拟机在反序列化时会检查类路径和序列化ID( private static final long serialVersionUID)，只有两者都能匹配才完成反序列化(在进行
+反序列化时，JVM会把传来的字节流中的serialVersionUID与本地相应实体类的serialVersionUID进行比较，如果相同就认为是一致的，可以进行反序列化，
+否则就会出现序列化版本不一致的异常，即是InvalidCastException)。
 
 												第十六章 jdbc
 

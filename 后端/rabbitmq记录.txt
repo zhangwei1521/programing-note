@@ -208,6 +208,266 @@
     当客户端执行 factory.newConnection() 时，客户端将发送一个AMQP request给Broker，该请求包括一个Protocal Header 0-9-1请求头，标识建立的连接使用
 AMQP 0-9-1协议，Broker将返回一个包含Connection.Start响应头的response。
 
+	第三部分 java客户端API
+	RabbitMQ官方提供的java客户端以com.rabbitmq.client为包名，核心类和接口包括Channel、Connection、ConnectionFactory、Consumer等。
+	创建连接工厂（可以使用builder模式）：
+		public class ConnectionFactoryBuilder {
+			private static final String IP_ADDRESS = "192.168.56.2";
+			private static final int PORT = 5672;
+			private static final String USERNAME = "admin";
+			private static final String PASSWORD = "admin";
+
+			public static ConnectionFactory build(){
+				ConnectionFactory factory = new ConnectionFactory();
+				factory.setHost(IP_ADDRESS);
+				factory.setPort(PORT);
+				factory.setUsername(USERNAME);
+				factory.setPassword(PASSWORD);
+				//使用url初始化连接工厂：
+				//factory.setUri("amqp://admin:admin@192.168.56.2:5672/");
+				return factory;
+			}
+		}
+	使用连接工厂创建连接：
+		ConnectionFactory factory = ConnectionFactoryBuilder.build();
+		Connection connection = factory.newConnection();
+	一个Connection可以创建多个Channel，多个线程间不应该共用一个Channel，它不是线程安全的。
+		Channel channel = connection.createChannel();
+
+	Channel核心API：
+	交换机相关API：
+		Exchange.DeclareOk exchangeDeclare(String exchange, 
+											String type, 
+											boolean durable, 
+											boolean autoDelete,
+											boolean internal,
+											Map<String, Object> arguments) throws IOException;
+		这个方法是常用的声明交换机的方法[如果不存在就创建，如果存在则交换机类型和其他属性要和实际交换机相同，否则关闭channel时将抛出异常]，
+	其基本参数说明如下：
+			exchange：交换机名称
+			type：交换机类型，可以使用字符换和BuiltinExchangeType枚举量
+			durable：是否持久化
+			autoDelete：为true时，当最后一个绑定到此交换机上的队列(或交换机)删除后，自动删除此交换机
+			internal：是否为内部交换机，内部交换机不能给客户端直接使用，默认为false
+			arguments：扩展参数
+		这个方法还有几个重载版本。
+		
+		void exchangeDeclareNoWait(...) throws IOException;
+		这个方法和 exchangeDeclare 功能相同[参数也类似]，不同在于 exchangeDeclareNoWait 返回类型为void，所以调用这个方法不会等待服务器返回
+	（不阻塞客户端），但是调用这个方法后就马上使用声明的交换机，这时可能服务端初始化还没结束，就会抛出异常。
+		
+		Exchange.DeclareOk exchangeDeclarePassive(String name) throws IOException;
+		这个方法主要用来检测相应的交换机是否已存在，如果已存在就正常返回，否则将抛出异常并关闭channel。
+		
+		Exchange.DeleteOk exchangeDelete(String exchange) throws IOException;
+		这个方法用于删除交换机，无论是否绑定到队列或其他交换机都执行删除。
+
+		Exchange.DeleteOk exchangeDelete(String exchange, boolean ifUnused) throws IOException;
+		用于删除交换机，ifUnused表示是否绑定到队列或其他交换机。
+
+		void exchangeDeleteNoWait(String exchange, boolean ifUnused) throws IOException;
+		也用于删除交换机，不等待服务器返回。
+
+	队列相关API：
+		Queue.DeclareOk queueDeclare(String queue, 
+									boolean durable, 
+									boolean exclusive, 
+									boolean autoDelete,
+									Map<String, Object> arguments) throws IOException;
+		这个方法用于声明队列[如果不存在就创建，如果存在则队列的属性要和实际队列相同，否则关闭channel时将抛出异常]，参数说明如下：
+			queue：队列名称
+			durable：是否持久化
+			exclusive：是否为仅用于此次连接的专用队列（如果为true，即使durable为true，连接断开时这个队列也会被销毁）
+			autoDelete：为true时，当所有消费者都解除订阅此队列后就自动删除此队列（必须是已有消费者取消订阅）
+			arguments：扩展参数
+		这个方法的另一个重载版本是： 
+			Queue.DeclareOk queueDeclare() throws IOException;
+			这个方法用于创建一个服务器自动命名（称为匿名队列）、此次连接专用、非持久化、自动删除的队列。
+		
+		void queueDeclareNoWait(...) throws IOException;
+		这个方法和 queueDeclare 功能相同[参数也类似]，不同在于它不等待服务器返回，所以不阻塞客户端调用，当然使用这个方法声明队列也存在风险。
+
+		Queue.DeclareOk queueDeclarePassive(String queue) throws IOException;
+		这个方法主要用来检测相应的队列是否已存在，如果已存在就正常返回，否则将抛出异常并关闭channel。
+
+		Queue.DeleteOk queueDelete(String queue) throws IOException;
+		用于删除队列，无论队列是否还有订阅者、是否保存有消息。
+
+		Queue.DeleteOk queueDelete(String queue, boolean ifUnused, boolean ifEmpty) throws IOException;
+		用于删除队列，参数：queue为队列名，ifUnused是否还有订阅者，ifEmpty是否为空
+
+		void queueDeleteNoWait(String queue, boolean ifUnused, boolean ifEmpty) throws IOException;
+		上面方法的重载版本，不需要等待服务器返回。
+
+		Queue.PurgeOk queuePurge(String queue) throws IOException;
+		用于清空队列中的消息。
+
+	绑定相关API：
+		Queue.BindOk queueBind(String queue, String exchange, String routingKey) throws IOException;
+		用于绑定交换机和队列，参数：queue为队列名，exchange为交换机名，routingKey为绑定键。
+
+		Queue.BindOk queueBind(String queue, String exchange, String routingKey, Map<String, Object> arguments) throws IOException;
+		上面方法的重载版本，参数arguments表示其他属性。
+
+		void queueBindNoWait(String queue, String exchange, String routingKey, Map<String, Object> arguments) throws IOException;
+		也是用于绑定队列和交换机，不需要等待服务器返回。
+
+		Queue.UnbindOk queueUnbind(String queue, String exchange, String routingKey) throws IOException;
+		用于解绑队列和交换机，只是根据解绑routingKey对应的绑定关系（一个交换机和队列之间可以有多个绑定键）。它的另一个重载版本比其多一个参数：
+	Map<String, Object> arguments
+
+		Exchange.BindOk exchangeBind(String destination, String source, String routingKey) throws IOException;
+		用于绑定交换机到交换机，它的另一个重载版本比其多一个参数：	Map<String, Object> arguments
+
+		void exchangeBindNoWait(String destination, String source, String routingKey, Map<String, Object> arguments) throws IOException;
+		也是用于绑定队列到交换机，不需要等待服务器返回。示例：
+			channel.exchangeDeclare("myInnerExchange","fanout",true,false,true,null);
+            channel.exchangeDeclare("pendingExchange1","direct",true,false,false,null);
+            channel.queueDeclare("pendingQueue1",true,false,false,null);
+            channel.queueBind("pendingQueue1","myInnerExchange","");
+            channel.exchangeBind("myInnerExchange","pendingExchange1","pendingExchange1-myInnerExchange");
+
+		Exchange.UnbindOk exchangeUnbind(String destination, String source, String routingKey) throws IOException;
+		用于解绑交换机间的绑定。它的另一个重载版本比其多一个参数：	Map<String, Object> arguments
+
+		void exchangeUnbindNoWait(String destination, String source, String routingKey, Map<String, Object> arguments) throws IOException;
+		方法exchangeUnbind的非阻塞版本。
+
+	发送消息API：
+		void basicPublish(String exchange, String routingKey, BasicProperties props, byte[] body) throws IOException;
+		用于发送消息，参数介绍如下：
+			exchange：要发送给的交换器
+			routingKey：消息的路由键，用于匹配交换器到队列(或交换器)的绑定键
+			props：消息的基本属性集
+			body：消息内容
+		参数中props可以包括14个属性：contentType、contentEncoding、headers、deliveryMode等，例如：
+			 channel.basicPublish("pendingExchange1","pendingExchange1-myInnerExchange",
+                    new AMQP.BasicProperties().builder()
+                            .contentType("text/plain")
+                            .deliveryMode(2)
+                            .priority(1)
+                            .build(),
+                    "hello from NewMessageProducer".getBytes());
+			指定消息类型（contentType）为普通文本，投递模式（deliveryMode）为2（即把消息持久化到服务器上），优先级（priority）为1
+
+		void basicPublish(String exchange, String routingKey, boolean mandatory, BasicProperties props, byte[] body) throws IOException;
+		上面方法的重载版本，新参数：mandatory表示
+
+		void basicPublish(String exchange, String routingKey, boolean mandatory, boolean immediate, BasicProperties props, byte[] body) throws IOException;
+		上面方法的重载版本，新参数：immediate表示
+
+	消费消息API：
+		void basicQos(int prefetchCount) throws IOException;
+		用于通知服务器不要同时给一个消费者推送多于prefetchCount个消息，即一旦有prefetchCount个消息还没有ack，则该consumer将阻塞，直到有消息ack
+
+		String basicConsume(String queue, boolean autoAck, Consumer callback) throws IOException;
+		用于消费者订阅队列，这个方法还有一些重载版本：
+			String basicConsume(String queue, boolean autoAck, Map<String, Object> arguments, Consumer callback) throws IOException;
+			String basicConsume(String queue, boolean autoAck, String consumerTag, Consumer callback) throws IOException;
+			String basicConsume(String queue, boolean autoAck, String consumerTag, boolean noLocal, boolean exclusive, 
+								Map<String, Object> arguments, Consumer callback) throws IOException;
+		参数介绍如下：
+			queue：队列名称
+			autoAck：是否自动确认
+			consumerTag：消费者标签，用于区分消费者（同一个channel可以同时供多个消费者使用）
+			callback：消息消费者对象
+			noLocal：设为true表示不把同一个Connection中生产者发生的消费传递给这个Connection中的消费者
+			exclusive：是否排他
+			arguments：扩展参数
+	
+	消费者接收消息的API主要涉及接口：Consumer和类：DefaultConsumer。DefaultConsumer实现了Consumer接口，通常可以通过继承DefaultConsumer并覆写其部分方法来
+接收消息和进行其他操作。示例：
+		channel.basicQos(20);
+        Consumer consumer = new DefaultConsumer(channel) {
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope,
+                                       AMQP.BasicProperties properties, byte[] body) throws IOException {
+                System.out.println("receive message : "+new String(body));
+                channel.basicAck(envelope.getDeliveryTag(), false);
+            }
+        };
+        channel.basicConsume("pendingQueue1",false, consumer);
+	Consumer接口方法：
+		public void handleShutdownSignal(String consumerTag, ShutdownSignalException sig)
+		在Connection或Channel关闭时调用
+
+		public void handleConsumeOk(String consumerTag)
+		在接收消息后其他方法被调用前被调用
+
+		public void handleCancel(String consumerTag) throws IOException 
+		用于取消订阅，Channel接口也提供一个方法用于取消订阅：
+		void Channel.basicCancel(String consumerTag) throws IOException;
+
+		public void handleCancelOk(String consumerTag)
+		在取消订阅后被调用
+	
+	Channel接口中的其他与消费消息相关API：
+		GetResponse basicGet(String queue, boolean autoAck) throws IOException;
+		用于从服务器'拉取'一条消息
+		示例：
+			GetResponse resp = channel.basicGet("pendingQueue1",false);
+			System.out.println("receive message : "+new String(resp.getBody()));
+			channel.basicAck(resp.getEnvelope().getDeliveryTag(),false);
+		不应该使用循环调用channel.basicGet来获取消息以代替channel.basicConsume，因为basicConsume调用是将channel置为推送模式，其性能要比使用多次
+	拉操作好得多。
+
+		void basicAck(long deliveryTag, boolean multiple) throws IOException;
+		用于确认消息已被消费，参数deliveryTag表示消息的标识(ID).
+		消息确认机制：消费者订阅队列时指定的参数autoAck用于设置是否自动确认，为false表示，只有当服务器收到消费者发送的确认信号后才会从队列中删除发送的消息，
+	如果为true就表示服务器发送消息给消费者后就删除消息。
+		消息队列中的消息只有两种状态：准备发送和未确认。当一个消息被发送给消费者，而消费者还没有确认，消息就处于未确认状态，如果连接中断，服务器就认为消息消费
+	失败，就把消息重置为准备发送状态。如果消费者发回确认信息，服务器就标记该消息并随后删除。需要注意，如果消费者消费消息时出现了异常，没有发回确认信息，并且也
+	一直没有关闭channel和connection，那么这条消息就一直处于未确认状态，既不能删除，也不能发送给其他消费者（以及当前消费者）。
+
+		void basicReject(long deliveryTag, boolean requeue) throws IOException;
+		用于拒绝消息，参数requeue为true，（未确认）消息将被从新加入消息队列（重新标记为准备发送），然后消息可以被发送给订阅队列的任何消费者，为false时，消息将
+	从队列中移除。
+
+		void basicNack(long deliveryTag, boolean multiple, boolean requeue) throws IOException;
+		用于批量拒绝消息，参数multiple为false时，这个方法和basicReject功能相同，multiple为true时，表示这条消息编号之前的未确认消息都需要被移除出队列。
+
+		Basic.RecoverOk basicRecover(boolean requeue) throws IOException;
+		用于请求从新发送未确认的消息，参数requeue为true时，未确认消息从新进入队列并可以发送给订阅队列的任何消费者，为false时，未确认消息会被发送给原消费者（即未
+	发回确认信号的消费者）。
+
+		Basic.RecoverOk basicRecover() throws IOException;
+		上面方法的重载版本，相当于basicRecover(true);
+
+	Connection和Channel使用结束后需要关闭，可以直接关闭Connection，那么Connection创建的Channel也会被关闭，也可以手动先关闭Channel，再关闭Connection。
+		channel.close();
+        connection.close();
+	Connection和Channel的生命周期状态：Open、Closing、Closed
+	Connection和Channel中的生命周期相关接口：
+		void addShutdownListener(ShutdownListener listener)
+		这个方法是Connection和Channel继承自ShutdownNotifier接口，用于注册一个监听器，在Connection状态变为closed时，监听器的shutdownCompleted方法被调用，
+		该方法签名如下：
+			void shutdownCompleted(ShutdownSignalException cause)
+			参数cause为导致连接断开（channel关闭）的异常
+		
+		void removeShutdownListener(ShutdownListener listener);
+		用于移除方法addShutdownListener注册的监听器，也来自ShutdownNotifier接口
+
+		ShutdownSignalException getCloseReason();
+		用于获取异常信息，也来自ShutdownNotifier接口
+
+		ShutdownSignalException提供以下方法：
+		 	public Object getReference()
+			返回关闭的channel或connection
+			public Method getReason() 
+			返回关闭channel或connection的方法
+	示例：
+		connection.addShutdownListener(new ShutdownListener() {
+            @Override
+            public void shutdownCompleted(ShutdownSignalException cause) {
+                System.out.println(cause.getReason());
+                System.out.println(cause.getReference());
+            }
+        });
+
+		
+
+		
+
 
 	
 

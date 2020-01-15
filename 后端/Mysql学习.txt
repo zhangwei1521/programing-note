@@ -104,7 +104,10 @@ centos7 安装 mariadb 10.4.10:
 	安全设置(设置修改root密码等):
 		./bin/mysql_secure_installation
 	授权root远程主机登录(需登录进mysql)：
-		grant all privileges on *.* to 'root'@'10.3.12.50' identified by 'root' with grant option;
+		grant all privileges on *.* to 'root'@'%' identified by 'root' with grant option;
+		或者
+		update mysql.user set host = '%' where user = 'root'  and host='localhost';
+		flush privileges;
 	配置path环境变量：
 		vim /etc/bashrc
 		
