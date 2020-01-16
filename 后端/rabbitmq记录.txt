@@ -328,7 +328,7 @@ AMQP 0-9-1协议，Broker将返回一个包含Connection.Start响应头的respon
             channel.exchangeBind("myInnerExchange","pendingExchange1","pendingExchange1-myInnerExchange");
 
 		Exchange.UnbindOk exchangeUnbind(String destination, String source, String routingKey) throws IOException;
-		用于解绑交换机间的绑定。它的另一个重载版本比其多一个参数：	Map<String, Object> arguments
+		用于解绑交换机间的绑定(绑定键需要手动取消)。它的另一个重载版本比其多一个参数：	Map<String, Object> arguments
 
 		void exchangeUnbindNoWait(String destination, String source, String routingKey, Map<String, Object> arguments) throws IOException;
 		方法exchangeUnbind的非阻塞版本。
@@ -351,10 +351,23 @@ AMQP 0-9-1协议，Broker将返回一个包含Connection.Start响应头的respon
 			指定消息类型（contentType）为普通文本，投递模式（deliveryMode）为2（即把消息持久化到服务器上），优先级（priority）为1
 
 		void basicPublish(String exchange, String routingKey, boolean mandatory, BasicProperties props, byte[] body) throws IOException;
-		上面方法的重载版本，新参数：mandatory表示
+		上面方法的重载版本，新参数：mandatory用于设置消息路由失败处理策略，为true表示将消息返回给生产者，为false表示丢弃消息
+		生产者接收服务器返回消息示例：
+			channel.addReturnListener(new ReturnListener() {
+                @Override
+                public void handleReturn(int replyCode, String replyText, String exchange, String routingKey, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                    System.out.println("message come back from "+exchange+" with "+routingKey+
+                            ", \nreplyCode: "+replyCode+
+                            "\nreplyText: "+replyText+
+                            "\nproperties: "+properties+
+                            "\nmessage content: "+new String(body));
+                }
+            });
+			//这里需要注意，不要在发送消息后就关闭channel和connection，关闭后就不能接收到服务器返回的消息了。
 
 		void basicPublish(String exchange, String routingKey, boolean mandatory, boolean immediate, BasicProperties props, byte[] body) throws IOException;
-		上面方法的重载版本，新参数：immediate表示
+		上面方法的重载版本，新参数：immediate表示在队列没有消费者时是否保存消息到队列中，为true则不保存消息到没有消费者订阅的队列，false则保存该消息。但是这个参数从
+	Rabbitmq 3.0开始就不再被官方支持了，所以现在不再使用(继续使用会抛出异常)。
 
 	消费消息API：
 		void basicQos(int prefetchCount) throws IOException;
@@ -464,9 +477,58 @@ AMQP 0-9-1协议，Broker将返回一个包含Connection.Start响应头的respon
             }
         });
 
-		
+	备份交换器（AE）：是一个关联到一个或多个普通交换器的交换器，当普通交换器路由消息失败就把该消息转给AE处理，AE可以是direct类型，但是通常采用fanout类型，因为
+转给AE的消息路由键如果不能匹配AE到备份队列的绑定键，消息还是会丢失。示例如下：
+		channel.exchangeDeclare("MyAE","fanout",true,false,null);
+        channel.queueDeclare("alternateQueue",true,false,false,null);
+        channel.queueBind("alternateQueue","MyAE","");
+        Map<String,Object> exchangeProps = new HashMap<>();
+        exchangeProps.put("alternate-exchange","MyAE");
+        channel.exchangeDeclare("pendingExchange2","direct",true,false,exchangeProps);
+        channel.queueDeclare("pendingQueue1",true,false,false,null);
+        channel.queueBind("pendingQueue1","pendingExchange2","pendingExchange2-pendingQueue1");
+        channel.basicPublish("pendingExchange2","null",
+                new AMQP.BasicProperties().builder()
+                        .contentType("text/plain")
+                        .deliveryMode(2)
+                        .priority(1)
+                        .build(),
+                "hello from NewMessageQueueDemo.test04".getBytes());
+	采用Policy的方式设置备份交换器：
+		rabbitmqctl set_policy AE "^pendingExchange2$" '{"alternate-exchange":"MyAE"}'
 
-		
+	过期时间简称TTL(time to live)，可以为消息设置过期时间，也可以为队列设置过期时间。
+	设置消息过期时间，可以分为两种，一是为某个队列中的所有消息都设置一个过期时间，这是在声明(创建)队列时实现的，二是为某条消息设置单独的过期时间，这是在发布消息时设置的，
+如果队列已经设置了所有消息的TTL，而某条消息也设置了自己的TTL，则取二者之间最小的TTL。另外，通过队列设置的所有消息的TTL，当消息过期时间一到，就会立即从队列中删除，而在发
+布消息时设置的TTL，则不会在消息过期时间到了就马上删除，而是在准备消费该消息时才检查其TTL，如果已过期就不传递给消费者消费，直接从队列中删除。
+	如果不设置消息的TTL，则消息永远不会过期，如果消息TTL设为0，则类似于交换机的immediate属性，只有投递消息时队列上存在消费者才投递，否则直接删除（immediate是返回给生产者）
+	声明队列时设置所有消息的TTL：
+		Map<String,Object> queueProps = new HashMap<>();
+        queueProps.put("x-message-ttl",6000);	//单位为毫秒
+        channel.queueDeclare("pendingQueue1",true,false,false,queueProps);
+	发布消息时设置单条消息的TTL：(expiration属性)
+		channel.basicPublish("pendingExchange2","null",
+                new AMQP.BasicProperties().builder()
+                        .expiration("4000")
+						.contentType("text/plain")
+                        .deliveryMode(2)
+                        .priority(1)
+                        .build(),
+                "hello from NewMessageQueueDemo.test04".getBytes());
+	设置队列的TTL，表示队列如果在过期时间范围内没有被使用（队列没有消费者，没有重新声明，没有被Basic.Get访问）就删除该队列，在声明队列时设置：
+		queueProps.put("x-expires",15000);	//单位为毫秒，如果这个值小于消息的TTL，还是会直接删除队列
+	死信交换机：简称DLX(Dead Letter Exchange)，是一个关联一个或多个普通队列的交换机，当普通队列中的消息变成死信后（消息被拒绝、消息过期、队列已满），该消息被转给DLX处理，
+DLX通常绑定一个死信队列，把收到的死信消息投递到该队列中。
+		//死信交换机
+        channel.exchangeDeclare("dlxExchange","direct",true,false,null);
+        //死信队列
+        channel.queueDeclare("dlxQueue",true,false,false,null);
+        channel.queueBind("dlxQueue","dlxExchange","dlxRoutingKey");
+		//关联队列到死信交换机
+		queueProps.put("x-dead-letter-exchange","dlxExchange");
+        queueProps.put("x-dead-letter-routing-key","dlxRoutingKey");
+	
+
 
 
 	
