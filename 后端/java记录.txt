@@ -2517,6 +2517,13 @@ test方法返回true时，filter方法也返回原Optional对象，test方法返
         System.setProperty("x.dt.conn.timeout", String.valueOf(2000));
         System.out.println(System.getProperty("x.dt.conn.timeout"));
 		
+	补充：浮点数保留小数位数：
+		double d1 = 55.8;
+        double d2 = 196.8;
+        System.out.println("55.8 + 196.8 = "+(d1+d2));
+
+        DecimalFormat dft = new DecimalFormat("0.0");
+        System.out.println("55.8 + 196.8 = "+dft.format(d1+d2));
 
 
 

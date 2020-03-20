@@ -3132,7 +3132,17 @@ oldURL属性和newURL属性，分别表示变化前后的完整 URL。
 	resize事件：在改变浏览器窗口大小时触发，主要发生在window对象上面。
 	fullscreenchange事件：在进入或退出全屏状态时触发，该事件发生在document对象上面。
 	copy事件：进行复制动作时触发。此事件是ClipboardEvent的实例，有一个实例属性clipboardData，是一个 DataTransfer 对象，存放剪贴的数据。
-
+	手动处理复杂（某些网页会阻止访问者复制内容，使用下面的代码可以解除这种限制）：
+		document.addEventListener('copy',(e)=>{
+			if(window.getSelection()){
+				let value = window.getSelection().toString();
+				if(e.clipboardData){
+					console.log(value+' copyed!');
+					e.clipboardData.setData('text',value);
+				}
+			}
+		});
+	
 	focus：元素节点获得焦点后触发，该事件不会冒泡。
 	blur：元素节点失去焦点后触发，该事件不会冒泡。
 	由于focus和blur事件不会冒泡，只能在捕获阶段触发，所以addEventListener方法的第三个参数需要设为true。

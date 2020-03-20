@@ -1,5 +1,7 @@
                                     使用mybatis
+
     第一章 ORM框架的起源，JDBC、mybatis和hibernate的区别及应用场景
+
 	本质上java程序访问操作数据库都是通过JDBC实现的，JDBC包括两个部分：官方的JDBC接口（规范）和数据库厂商对标准接口的
 实现（JDBC驱动程序）。JDBC的问题在于每次访问数据库都需要在自己的程序中重复的编写如下语句：加载驱动、建立连接、建立会话、
 执行sql、关闭会话、关闭连接，还得处理可能抛出的繁多的异常。ORM框架就是为了解决JDBC的这种问题而开发的，但是ORM框架使用
@@ -16,8 +18,11 @@
 	总体来说，原始的JDBC编程接口使用起来太过繁琐，实际开发中通常很少使用，Hibernate开发效率高，但是对于复杂性高、性能
 要求高的系统来说不太适合，通常用于数据关系不太复杂、性能要求不太高的系统。mybatis则不适合用于需要快速开发的低复杂性系
 统，适合用在数据关系复杂、需要通过优化sql提供高效操作数据库能力的系统。
-	第二章 搭建工程和实例入门
-	使用maven搭建mybatis入门工程，引入mybatis依赖：
+	
+    
+    第二章 搭建工程和实例入门
+	
+    使用maven搭建mybatis入门工程，引入mybatis依赖：
 		<dependency>
             <groupId>org.mybatis</groupId>
             <artifactId>mybatis</artifactId>
@@ -124,8 +129,10 @@ Configuration对象去读取的配置文件）。SqlSessionFactoryBuilder在创�
 SqlSessionFactory始终以单例对象存在，SqlSession对象在开启事务时需要手动提交事务，而且应该在操作数据库结束后关闭连接，这通
 常在finally代码块中完成。
 	
+
 	第三章 mybatis配置详解
-	mybatis配置文件中可以使用以下元素，但是需要按照下面的顺序排列，否则将会出错。
+	
+    mybatis配置文件中可以使用以下元素，但是需要按照下面的顺序排列，否则将会出错。
 		<?xml version="1.0" encoding="utf8" ?>
 			<!DOCTYPE configuration
 				PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
@@ -279,3 +286,22 @@ resultMap不需要。但是不需要在配置文件中注册自定义的typeHand
 		<mapper class="com.zhangwei.mybatisdemo1.mapper.EmployeeMapper"/>
 		<package name="com.zhangwei.mybatisdemo1.mapper“/>
 	
+
+
+
+
+
+    
+    mybatis使用SqlSessionFactory实例对象管理（建立、销毁）到数据库的连接，这个对象是通过它的建造者（SqlSessionFactoryBuilder）
+对象创建的，创建时必须要给出数据库的相关配置（通常写在mybatis的xml配置文件中）：
+        Reader cfgReader = Resources.getResourceAsReader(configFileName);
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(cfgReader);
+    SqlSessionFactoryBuilder需要获得含有数据库配置及其他mybatis配置的Configuration以创建一个DefaultSqlSessionFactory实例，
+它并不自己解析配置文件得到Configuration对象，而是使用XMLConfigBuilder的实例对象去解析配置文件：
+        XMLConfigBuilder parser = new XMLConfigBuilder(reader, environment, properties);
+        Configuration config = parser.parse();
+        return new DefaultSqlSessionFactory(config);
+    构造XMLConfigBuilder对象时，需要传入配置文件，而且创建这个对象时就已经将XML配置文件以DOM的方式解析到内存中。XMLConfigBuilder
+也不直接解析文件，而是使用XPathParser实例去解析文件。构造XMLConfigBuilder对象时，它会创建XPathParser实例，创建XPathParser实例时，
+xml配置文件就被解析为一个Document对象保存在XPathParser实例中。
+    
