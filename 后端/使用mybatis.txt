@@ -305,3 +305,9 @@ resultMap不需要。但是不需要在配置文件中注册自定义的typeHand
 也不直接解析文件，而是使用XPathParser实例去解析文件。构造XMLConfigBuilder对象时，它会创建XPathParser实例，创建XPathParser实例时，
 xml配置文件就被解析为一个Document对象保存在XPathParser实例中。
     
+    mybatis内置的jdbcType：
+    BIT	        FLOAT	    CHAR	    TIMESTAMP	    OTHER	    UNDEFINED
+    TINYINT	    REAL	    VARCHAR	    BINARY	        BLOB	    NVARCHAR
+    SMALLINT	DOUBLE	    LONGVARCHAR	VARBINARY	    CLOB	    NCHAR
+    INTEGER	    NUMERIC	    DATE	    LONGVARBINARY	BOOLEAN	    NCLOB
+    BIGINT	    DECIMAL	    TIME	    NULL	        CURSOR	    ARRAY

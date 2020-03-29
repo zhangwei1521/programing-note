@@ -305,3 +305,22 @@ mysql的 MyISAM 存储引擎不支持 cluster 索引，而 InnoDB 存储引擎�
 					@prevRank := score
 			FROM scores p, ( SELECT @curRank :=0, @prevRank := NULL, @incRank := 1) r 
 			ORDER BY score) s
+
+modify column name:
+    alter table table_name change old_col_name new_col_name varchar(40);
+
+functions:
+    rand()      //return a random decimal between 0 and 1
+        select rand();
+    round(x)     //return the result of round-up or round-down of x
+        select round(rand() * 10);
+    floor(x)    //return the result of round-down of x
+        select floor(rand() * 10);
+    ceiling(x)  //return the result of round-up of x
+        select ceiling(rand() * 10);
+    exmaple1:
+        select t.decimal,round(t.decimal),floor(t.decimal),ceiling(t.decimal) from (select rand()*10 as 'decimal') t;
+    exmaple2:
+        select 50+floor(rand() * (100-50+1));
+    md5(x)      //get a 32 bit random string
+        select md5(rand() * 10000);
