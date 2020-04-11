@@ -2279,5 +2279,76 @@ threadA.getThreadGroup方法可以得到线程所在线程组。线程组是一�
 		四、设置默认线程异常处理器。
 	覆写ThreadPoolExecutor的afterExecute方法不能拿到任务执行过程中抛出的异常。
 
-
-	
+    第九章 异步编程
+    同步计算：发起一个任务后，马上执行该任务，并且必须等到该任务执行结束后，其他任务才能开始。这样的任务称为同步任务。
+    异步计算：发起一个任务后，该任务可能不会马上执行，主流程不等待该任务执行，而是继续执行其他任务。这样的任务称为异步任务。
+    同步任务和异步任务主要是通过提交（执行）任务的方式来区分的，和任务本身的内容无关。当然，提交（执行）方式本质上是取决于任务本身内容的。
+    同步任务通常使用一个线程，即任务提交和任务的执行都是同一个线程，这也意味着，对于同步任务的后续任务来说，执行线程被同步任务“阻塞”了，当然一般不这么说，通常所说的阻塞指的
+是执行线程暂停，主要是IO等引发的。
+    Executor是concurrent包下的接口，表示任务执行器，这个接口只声明了一个方法：
+        void execute(Runnable command);
+    Executor没有区分执行的任务是同步任务还是异步任务，具体的执行方式由具体的实现类去实现。
+    Executor的execute方法只接受Runnable实例作为任务，而Runnable的run方法没有返回值，所以后来又设计了Callable接口，可以在Callable任务执行时抛出异常和执行完成后返回一个
+结果；Executor第一个问题就是不支持Callable任务，第二个问题是它没有提供终止任务执行的方法。
+    为了增强Executor接口，所以后来并发包下新增了ExecutorService接口，这个接口继承自Executor接口，并且新增了多个方法：
+        <T> Future<T> submit(Callable<T> task);     //提交Callable任务
+        Future<?> submit(Runnable task);            //提交Runnable任务
+        <T> Future<T> submit(Runnable task, T result);
+        List<Runnable> shutdownNow();               //立即终止所有任务
+        void shutdown();                            //终止还没有开始执行的任务
+        ....
+    AbstractExecutorService是一个实现了ExecutorService接口的抽象类，并且添加了两个protected型的newTaskFor方法：
+        protected <T> RunnableFuture<T> newTaskFor(Runnable runnable, T value) {
+            return new FutureTask<T>(runnable, value);
+        }
+        protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
+            return new FutureTask<T>(callable);
+        }
+    这两个方法将Runnable和Callable任务转换为FutureTask，FutureTask实现了Future接口和Runnable接口，所以可以被提交给Executor实例，并且在提交任务后，可以获取任务的状态、
+执行结果等（通过Future声明的方法），Future声明了如下方法：
+        boolean isDone();
+        boolean isCancelled();
+        boolean cancel(boolean mayInterruptIfRunning);
+        V get() throws InterruptedException, ExecutionException;
+        V get(long timeout, TimeUnit unit)
+    AbstractExecutorService对submit方法的实现就是调用newTaskFor将Runnable和Callable任务转换为FutureTask实例，然后传递FutureTask实例给execute方法。需要注意的是这个
+类是抽象类，它没有实现execute方法，所以这里采用策略模式实现了提交Callable任务给execute方法。
+        public <T> Future<T> submit(Runnable task, T result) {
+            if (task == null) throw new NullPointerException();
+            RunnableFuture<T> ftask = newTaskFor(task, result);
+            execute(ftask);
+            return ftask;
+        }
+    ThreadPoolExecutor继承自AbstractExecutorService，它实现了execute方法。
+    Executors是concurrent包下的一个工具类，它提供了一些很有用的方法：
+        public static Callable<Object> callable(Runnable task)      //Runnable任务转Callable任务
+        public static ThreadFactory defaultThreadFactory()          //返回默认线程工厂
+        public static ExecutorService newCachedThreadPool()         //创建一个corePoolSize为0，maximumPoolSize为Integer.MAX_VALUE，keepAliveTime为60秒，
+                                                                    //workQueue为SynchronousQueue的ThreadPoolExecutor实例
+        public static ExecutorService newFixedThreadPool(int nThreads)  //创建一个corePoolSize、maximumPoolSize都为nThreads，keepAliveTime为0的ThreadPoolExecutor实例。
+        public static ExecutorService newSingleThreadExecutor()     //相当于newFixedThreadPool(1)
+        ....
+    concurrent包下的CompletionService接口是为了更加方便地获取提交给执行器的任务的执行结果而设计的，它声明了以下方法：
+        Future<V> submit(Callable<V> task);
+        Future<V> submit(Runnable task, V result);
+        Future<V> take() throws InterruptedException;       //获取一个已完成的任务的执行结果，这个方法会阻塞，直到有一个任务执行结束
+        Future<V> poll();                                   //take()的非阻塞版本
+        Future<V> poll(long timeout, TimeUnit unit) throws InterruptedException;    //poll()的带超时时间版本
+    ExecutorCompletionService是CompletionService接口的默认实现类，它的一个构造方法声明如下：
+        public ExecutorCompletionService(Executor executor, BlockingQueue<Future<V>> completionQueue) 
+    ExecutorCompletionService内部使用Executor实例执行提交给它的任务，同时使用BlockingQueue实例保存任务执行结果。
+    ScheduledExecutorService接口继承自ExecutorService接口，用于抽象计划任务的执行，它声明了以下方法：
+        //提交Callable/Runnable任务延迟delay时间后执行该任务
+        public <V> ScheduledFuture<V> schedule(Callable<V> callable, long delay, TimeUnit unit);
+        public ScheduledFuture<?> schedule(Runnable command,long delay, TimeUnit unit);
+        //提交command后，在initialDelay+n*period开始执行，n=1、2、3....
+            (这是我们希望的情形，但是如果某次执行时间比period长，则下次执行是在本次实际执行完成后才开始)
+        public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit);
+        //提交command后，延迟initialDelay后开始执行，并在每次执行完成delay时间后再次执行
+        public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit);
+    Executors提供获取ScheduledExecutorService实例的静态方法：
+        public static ScheduledExecutorService newScheduledThreadPool(int corePoolSize) 
+        public static ScheduledExecutorService newScheduledThreadPool(int corePoolSize, ThreadFactory threadFactory)
+        public static ScheduledExecutorService newSingleThreadScheduledExecutor()
+        public static ScheduledExecutorService newSingleThreadScheduledExecutor(ThreadFactory threadFactory)
+    

@@ -26,6 +26,17 @@
 		在工作目录中修改文件。
 		暂存文件，将文件的快照放入暂存区域。
 		提交更新，找到暂存区域的文件，将快照永久性存储到 Git 仓库目录。
+
+    git安装
+    源码编译安装：
+        mkdir /usr/local/git
+        cd /usr/local/src
+        wget https://www.kernel.org/pub/software/scm/git/git-2.9.3.tar.gz
+        tar zxvf git-2.9.3.tar.gz
+        cd git-2.9.3
+        make configure
+        ./configure prefix=/usr/local/git/
+        make && make install
 	
 	Git自带一个 git config 的工具来帮助设置控制 Git 外观和行为的配置变量。 这些变量存储在
 三个不同的位置：

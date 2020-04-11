@@ -371,6 +371,8 @@ defaults 包含rw、exec、auto、nouser、async
 	查询已安装包的详细信息：rpm -qi name
 	列出rpm包安装后的所有文件：rpm -ql name
 	查询某个文件属于哪个rpm包：rpm -qf filename
+    查看系统自带的jdk：rpm -qa | grep java
+    强制卸载已安装的jdk rpm包：rpm -e --nodeps java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64
 	使用rpm安装需要自己处理依赖问题，也就是说需要自己先手动安装依赖包，才能安装当前包
 	yum工具可以联网下载需要的rpm包，同时会自动解决依赖包的安装
 	列出所有的rpm包资源：yum list | head
