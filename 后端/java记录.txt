@@ -1480,7 +1480,7 @@ getInputStream()、getReader()、getRemoteHost()等
 		}
 	虚拟机在反序列化时会检查类路径和序列化ID( private static final long serialVersionUID)，只有两者都能匹配才完成反序列化(在进行
 反序列化时，JVM会把传来的字节流中的serialVersionUID与本地相应实体类的serialVersionUID进行比较，如果相同就认为是一致的，可以进行反序列化，
-否则就会出现序列化版本不一致的异常，即是InvalidCastException)。
+否则就会出现序列化版本不一致的异常，即是InvalidClassException)。
 
 												第十六章 jdbc
 
@@ -2270,6 +2270,16 @@ getResponseMessage()、getHeaderFields()等。
 				}
 			}
 		}
+    网络IO的一些概念：
+        同步：用户线程启动某个任务后需要等待该任务完成后才能继续执行后续操作。
+        异步：用户线程启动某个任务后就继续执行后续操作，当启动的任务执行结束后会通知用户线程，或者调用用户线程注册的回调函数。
+        同步与异步是针对线程的任务而言的，一般表述为某个任务对其后续任务来说，是同步的还是异步的。
+        阻塞网络IO：网络请求发出后，如果该请求返回需要的条件不满足，请求操作就一直阻塞，直到条件满足。
+        非阻塞网络IO：网络请求发出后，直接返回，然后用户线程可以通过循环检查请求结果。
+    Unix下共有五种IO模型：阻塞IO、非阻塞IO、IO多路复用、信号驱动IO、异步IO。
+    java支持Unix中IO模型中除信号驱动IO外的其他四种。
+    
+
 
 	补充：java8新增的Optional<T>类：
 	这个类是一个包装类，用来包装一个对象，包装的对象可以是null，包装后的Optional对象提供一些操作/访问包装对象的方法，正确使用这些方法可以优雅地

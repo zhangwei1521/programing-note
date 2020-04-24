@@ -27,7 +27,7 @@
 		rabbitmq-server -detached
 	关闭rabbitmq：
 		rabbitmqctl stop
-		# 若单机有多个实例，则在rabbitmqctlh后加–n 指定名称
+		# 若单机有多个实例，则在rabbitmqctl后加–n 指定名称
 		# 使用kill命令关闭 kill -9 5479
 	查看rabbitmq状态：
 		rabbitmqctl status
@@ -384,7 +384,7 @@ AMQP 0-9-1协议，Broker将返回一个包含Connection.Start响应头的respon
 			autoAck：是否自动确认
 			consumerTag：消费者标签，用于区分消费者（同一个channel可以同时供多个消费者使用）
 			callback：消息消费者对象
-			noLocal：设为true表示不把同一个Connection中生产者发生的消费传递给这个Connection中的消费者
+			noLocal：设为true表示不把同一个Connection中生产者发送的消费传递给这个Connection中的消费者
 			exclusive：是否排他
 			arguments：扩展参数
 	

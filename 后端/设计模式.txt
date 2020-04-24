@@ -120,7 +120,7 @@ volatile修饰实例对象名，这个关键字可以保证线程发现所修饰
                 private static final Singleton instance = new Singleton();
             }
 
-            public Singleton getInstance(){
+            public static Singleton getInstance(){
                 return SingletonHolder.instance;
             }
         }

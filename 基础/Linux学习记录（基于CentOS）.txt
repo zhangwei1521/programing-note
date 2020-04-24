@@ -246,6 +246,7 @@ defaults 包含rw、exec、auto、nouser、async
 	mkswap -f /tmp/newdisk 格式化为swap格式
 	swapon /tmp/newdisk 启用虚拟磁盘
 	free -m 使用MB为单位查看内存使用情况。
+	partprobe命令用于重读分区表，当出现删除文件后，出现仍然占用空间。可以partprobe在不重启的情况下重读分区。
 	
 	使用Vim
 	Vim是Vi的升级版，日常使用几乎没有什么差别。安装Vim：yum install -y vim-enhanced
@@ -541,7 +542,13 @@ work.xml，即9个规则集。public.xml内容入下：
 		6、查看
 			uname -r
     查看内核列表：
+        cat /boot/grub2/grub.cfg |grep menuentry
+    查看其他内核：
         rpm -q kernel
+    查看当前启动时默认内核：
+        grub2-editenv list
+    修改启动时默认内核：
+        grub2-set-default "CentOS Linux (5.4.3-1.el7.elrepo.x86_64) 7 (Core)"
     删除旧的内核（如果不删除，旧内核会继续占用/boot空间）：
         yum remove kernel-3.10.0-327.el7.x86_64
     查看/boot空间占用情况
@@ -596,7 +603,10 @@ work.xml，即9个规则集。public.xml内容入下：
         语法：exec(选项)(参数)
         选项：-c：在空环境中执行指定的命令。
 
-
+	查看端口占用：
+		lsof -i:3306
+		或者
+		netstat -tunlp | grep 3306
 
 
 

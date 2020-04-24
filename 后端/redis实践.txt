@@ -171,7 +171,8 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 (默认64字节)的有序集合。
 		skiplist: 不适用于ziplist的有序集合
 	
-	HyperLogLog:是一种类似集合的数据结构，但是占用内存相比集合少很多，这个数据结构应该主要是用于计数(
+	HyperLogLog
+    HyperLogLog是一种类似集合的数据结构，但是占用内存相比集合少很多，这个数据结构应该主要是用于计数(
 它可以O(1)返回计数)。
 	pfadd Counting:Olive  000123 000456  #添加元素
 	pfcount Counting:Olive				 #返回元素总数
@@ -193,6 +194,18 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 	redis使用一个52位的geohash编码保存geo集合元素的坐标。可以实现低于1m的精度，当然不可能完全准确，
 所以保存的坐标和使用geopos返回的坐标有极小的差别。
 	
+	位图：
+	位图是一种使用一个比特位代表是或否状态，比如某个用户是否点赞：假如系统中有n个用户，现在要为某一作品
+记录点赞的用户，使用位图：setbit artA 101 1 表示ID为101的用户为作品artA点了赞。如果系统有1000万用户，
+这是使用位图只需要占用1000万个比特位即1220KB空间，如果使用列表记录每个用户的ID则会需要多得多的空间。
+	获取指定位置的比特位的值：getbit artA 101
+	计算值为1的比特位的数量：bitcount artA 
+	操作比特位：
+		按位与：bitop and artAB artA artB	(同时为artA、artB点赞)
+		按位或: bitop or artA/B artA artB	(为artA或artB点赞)
+		按位异或：bitop xor artA|B artA artB	(只为artA或artB之一点赞)
+		按位取反：bitop not art_A artA
+
 	分库：
 	redis默认提供0-15共16个库，这些库实际上是没有提供任何隔离机制的，只是作为命名空间使用。进入redis后默认在
 0号库操作数据，使用 select n选择切换n号库。
@@ -210,18 +223,6 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 	flushdb: 删除当前所选数据库的所有键。此命令永远不会失败。（使用需谨慎）
 	flushall: 删除所有数据库的所有键。此命令永远不会失败。（使用需谨慎）
 
-	位图：
-	位图是一种使用一个比特位代表是或否状态，比如某个用户是否点赞：假如系统中有n个用户，现在要为某一作品
-记录点赞的用户，使用位图：setbit artA 101 1 表示ID为101的用户为作品artA点了赞。如果系统有1000万用户，
-这是使用位图只需要占用1000万个比特位即1220KB空间，如果使用列表记录每个用户的ID则会需要多得多的空间。
-	获取指定位置的比特位的值：getbit artA 101
-	计算值为1的比特位的数量：bitcount artA 
-	操作比特位：
-		按位与：bitop and artAB artA artB	(同时为artA、artB点赞)
-		按位或: bitop or artA/B artA artB	(为artA或artB点赞)
-		按位异或：bitop xor artA|B artA artB	(只为artA或artB之一点赞)
-		按位取反：bitop not art_A artA
-	
 	设置键的过期时间：expire artAB 60	60秒后artAB将过期
 	使用 ttl artAB 检查键距离过期的时间（秒）
 	过期后使用exists artAB 将返回0
@@ -230,6 +231,7 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 	使用persist名取消过期时间设置：persist artAB
 	将替换或删除键的值时，键的过期时间将被清除，但是修改键的值不会清除过期时间。
 	expireat可以直接指定一个过期时间戳。
+    
 	排序：
 		sadd scores 88 55 89 92 100
 		数字可以直接排序：sort scores	//默认为升序
@@ -374,6 +376,8 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 		bind 192.168.56.2
 		或
 		protected-mode no
+    绑定本地ip和对外网卡ip:
+        bind 127.0.0.1 192.168.137.2
 	修改配置文件设置日志文件保存位置：
 		logfile /usr/local/redis/redis.log
 	使用连接池：
@@ -449,7 +453,7 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 定是否接受部分重新同步，如果接受就从收到的(master_replid;master_repl_offset)处开始增量地同步写入命令，
 否则就会进行完全重新同步。
 	当主实例收到新的写入命令后，它会转发一份该命令给从实例，这样就实现了数据同步。
-	主实例上的同步操作时完全异步的，所以不会阻塞客户端写入数据到主实例。
+	主实例上的同步操作是完全异步的，所以不会阻塞客户端写入数据到主实例。
 	上面配置的从实例是只读实例，不能直接写数据到从实例中。
 	从实例可以提升为主实例，这时其他的从实例需要与新主实例重新同步，redis4.0开始这种同步只需要部分同步。
 	当从实例与主实例失去连接时，redis主实例会使用一个缓冲区来保存新的写入命令，这个缓冲区称为replication backlog，
@@ -533,4 +537,13 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 	redis保证不会进行RDB转储和AOF重写。
 	redis优先使用AOF文件恢复数据。
 	
+    在配置文件中配置密码：
+        requirepass root
+    通过redis-cli设置密码(redis重启后会丢失此密码)：
+        config set requirepass root
+    通过redis-cli连接时输入密码：
+        redis-cli -h 127.0.0.1 -p 6379 -a root
+    在redis-cli中输入密码：
+        auth root
+    
 
