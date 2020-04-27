@@ -594,9 +594,11 @@ work.xml，即9个规则集。public.xml内容入下：
 		export MYENV
 		# 赋值
 		export MYENV=7
+    
     使用cat创建文件：
         #使用b作为结束
         cat > test.txt <<b
+    
 	exec命令
         用于调用并执行指令的命令。exec命令通常用在shell脚本程序中，可以调用其他的命令。如果在当前终端中使用命令，
         则当指定的命令执行完毕后会立即退出终端。	
@@ -607,20 +609,138 @@ work.xml，即9个规则集。public.xml内容入下：
 		lsof -i:3306
 		或者
 		netstat -tunlp | grep 3306
+    
+    sed
+    sed是一个流式编辑器，它逐行处理文件。sed运行时使用一个称为模式空间的缓冲区来保存读入的文件行，然后对该缓冲区的行数据进行
+处理，处理完成后便将处理后的数据输出到屏幕，然后再读取文件的下一行到缓冲区，如此循环处理文件的每一行直至结束。
+    用法：
+        sed [OPTION]... {script-only-if-no-other-script} [input-file]...
+    OPTION的值：
+        -i ：直接修改读取的文件内容，而不是输出到终端
+        -n ：使用安静(silent)模式。sed正常输出时会将来自 STDIN 的数据所有行输出到终端上。使用 -n 后，只有经过sed 处理的那些行才会被输出。
+        -e ：多点编辑
+    {script...}：
+        a ：新增行，例(显示/etc/passwd，在其第二行后添加一行文本)：nl /etc/passwd | sed '2a hello sed'
+        i ：插入行，例(显示/etc/passwd，在其第二行前添加一行文本)：nl /etc/passwd | sed '2i hello sed'
+            新增或插入多行，可以使用 \ ：
+                nl /etc/passwd | sed '2i hello sed \
+                another line'
+        s ：替换行内内容，通常搭配正则表达式使用。用法：sed 's/要被取代的字串/新的字串/g' g表示替换所有匹配字符串
+        c ：替换行，例(显示/etc/passwd，替换其第2~5行为一行文本)：nl /etc/passwd | sed '2,5c hello sed'
+        d ：删除行，例(显示/etc/passwd，排除其2~5行)：nl /etc/passwd | sed '2,5d' 
+        p ：打印行，通常和参数 sed -n 一起使用，例(显示/etc/passwd 文件的第 5-7 行)：nl /etc/passwd | sed -n '5,7p'
+        q ：退出。 
+    使用正则表达式搜索：
+        # 搜索并输出所有含有root关键词的行
+        nl /etc/passwd | sed -n '/root/p'
+        # 删除/etc/passwd所有包含root的行，输出其他行
+        nl /etc/passwd | sed '/root/d'
+    搜寻并执行命令：
+        # 首先查找包含keyword的行，然后对找到的行执行cmd1和cmd2
+        sed '/keyword/{cmd1;cmd2}'
+        # 查找包含root的行，并将行内的bash替换为blueshell并输出：
+        nl /etc/passwd | sed -n '/root/{s/bash/blueshell/;p}'
+        # 查找包含root的行，将找到的第一行中的bash替换为blueshell并输出
+        nl /etc/passwd | sed -n '/root/{s/bash/blueshell/;p;q}'
+        # 显示ens33的ip地址：
+        ifconfig ens33 | grep 'inet ' | sed 's/^.*inet //g' | sed 's/netmask.*$//g'
+    多点编辑：
+        # 删除/etc/passwd第三行到末尾的数据，并把剩下行内的bash替换为blueshell
+        nl /etc/passwd | sed -e '3,$d' -e 's/bash/blueshell/'
+    直接修改源文件（这是一个危险操作，不要用它去编辑系统配置文件）
+        # 将以 . 结尾的行末尾的 . 替换为 !
+        sed -i 's/\.$/\!/g' file1
+        # 在文件末尾追加一行文本：
+        sed -i '$a a new line' file1
+        # 在每个单词前添加一个#：
+        sed -i 's/\</#/g' file1
+        # 在每个单词后添加一个#：
+        sed -i 's/\>/#/g' file1
+        # 替换行内第二个?为!：
+        sed 's/\?/\!/2' file1
 
+    awk(参考：【酷 壳】[AWK 简明教程] https://coolshell.cn/articles/9070.html)
+    awk是一个文本处理工具，支持使用脚本文件来编写文本处理逻辑
+    用法：
+        # 使用脚本文件progfile处理目标文件file
+        awk [POSIX or GNU style options] -f progfile [--] file ...
+        # 使用命令行命令处理目标文件file
+        awk [POSIX or GNU style options] [--] 'program' file ...
+    内建变量:
+        $0	    当前处理的行
+        $1~$n	当前行的第n个字段，字段间由FS分隔
+        FS	    输入行内字段的分隔符，默认是空格和Tab
+        NF	    当前行中的字段个数，即有多少列
+        NR	    已经读出的记录数，即行号，从1开始，如果有多个文件话，后续文件的NR值是在前一文件的NR基础上增长。
+        FNR	    每个文件内的正在处理的行号
+        OFS	    输出字段分隔符，默认是空格
+        RS	    输入的记录分隔符， 默认为换行符
+        ORS	    输出的记录分隔符，默认为换行符
+        FILENAME	当前输入文件的名字
+    示例：
+        # 显示netstat.txt的第1列和第4列，输出列间使用制表符间隔
+        awk '{print $1,$4}' OFS='\t' netstat.txt
+        # 显示netstat.txt的第1列和第4列，输出列间使用制表符间隔，不显示列名：
+        awk 'NR!=1 {print $1,$4}' OFS='\t' netstat.txt
+        # 格式化输出
+        awk '{printf "%02s %-8s %-18s\n",NR,$1,$4}' netstat.txt
+        
+        # 过滤行
+        awk '$6=="ESTABLISHED" || NR==1 {print $1,$4,$5,$6}' netstat.txt
+        awk '$4 ~ /6379/ || NR==1 {printf "%-4s %-8s %-18s %-18s %-12s\n",NR,$1,$4,$5,$6}' netstat.txt
+        awk '$4 !~ /6379/ || NR==1 {printf "%-4s %-8s %-18s %-18s %-12s\n",NR,$1,$4,$5,$6}' netstat.txt
+        awk '/LISTEN/' netstat.txt
+        awk '/LISTEN|ESTABLISHED/' netstat.txt
+        awk '!/LISTEN/' netstat.txt
 
+        # 指定文件的列分隔符
+        awk 'BEGIN {FS=":"} {print $1,$3,$6}' passwd
+        # 等价于：awk -F: '{print $1,$3,$6}' passwd
+        # 指定多个分隔符：awk -F '[;:]'
+        
+        # 折分文件
+        # 根据列类容拆分(这里会将第6列内容相同的行写到同一个文件，文件名就是第6列的内容文本)
+        awk 'NR!=1 {print > $6}' netstat.txt
+        # 根据列类容拆分，只输出指定列
+        awk 'NR!=1{print $4,$5 > $6}' netstat.txt
+        # 统计目录大小
+        ls -al | awk '{sum+=$5} END {print sum}'
+        # 统计不同状态的连接数量
+        awk 'NR!=1 {a[$6]++;} END {for (i in a) print i ", " a[i];}' netstat.txt
+        统计每个用户的进程的占了多少内存
+        ps aux | awk 'NR!=1 {a[$1]+=$6;} END { for(i in a) print i ", " a[i]"KB";}'
+    awk脚本：
+        #!/bin/awk -f
+        #运行前
+        BEGIN {
+            math = 0
+            english = 0
+            computer = 0
 
+            printf "NAME    NO.   MATH  ENGLISH  COMPUTER   TOTAL\n"
+            printf "---------------------------------------------\n"
+        }
+        #运行中
+        {
+            math+=$3
+            english+=$4
+            computer+=$5
+            printf "%-6s %-6s %4d %8d %8d %8d\n", $1, $2, $3,$4,$5, $3+$4+$5
+        }
+        #运行后
+        END {
+            printf "---------------------------------------------\n"
+            printf "  TOTAL:%10d %8d %8d \n", math, english, computer
+            printf "AVERAGE:%10.2f %8.2f %8.2f\n", math/NR, english/NR, computer/NR
+        }
+    执行： ./cal.awk score.txt 或 awk -f cal.awk score.txt
 
-
-
-
-
-
-
-
-
-
-
+    在awk中使用环境变量需要使用-v参数和ENVIRON，使用ENVIRON的环境变量需要export：
+        x=5
+        y=10
+        export y
+        echo $x $y
+        awk -v val=$x '{print $1,$2,$3,$4+val,$5+ENVIRON["y"]}' OFS='\t' score.txt
 
 
 
