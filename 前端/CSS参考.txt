@@ -983,7 +983,14 @@ vertical-align 为 middle.
 		[lang^=en]{...}					//选择lang属性值以en开始的元素
 		input[type="text"] {background-color:yellow;}
 
-	
+	去掉input默认样式
+		<input type="search" style="outline:none;">
+		兼容：
+		input{  
+			background:none;  
+			outline:none;  
+			border:0px;
+		}
 
 
 

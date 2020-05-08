@@ -2535,7 +2535,32 @@ test方法返回true时，filter方法也返回原Optional对象，test方法返
         DecimalFormat dft = new DecimalFormat("0.0");
         System.out.println("55.8 + 196.8 = "+dft.format(d1+d2));
 
-
+    补充：桥接方法(bridge method)
+    jdk1.5引入了泛型，而在之前的jdk版本中没有泛型，所以为了保持兼容性，java在编译时时采用了类型擦除，即把泛型类型替换为了Object。
+子类在继承泛型父类或实现泛型接口时，如果指定了泛型的实际类型，则编译的方法的泛型类型就是实际类型，这样就和父类或接口的方法签名不一致
+了，为了保持语义的一致性，java在编译这种子类时就会生成额外的桥接方法，桥接方法的签名和父类或接口的方法签名保持一致。
+    泛型接口：
+        public interface Parent<T>{
+            T convert(T param);
+        }
+    编译后：
+        public abstract T convert(T);
+        descriptor: (Ljava/lang/Object;)Ljava/lang/Object;
+        flags: (0x0401) ACC_PUBLIC, ACC_ABSTRACT
+    实现类：
+        public class Child implements Parent<String>{
+            public String convert(String param){
+                return param.toUpperCase();
+            }
+        }
+    编译后：
+        public java.lang.String convert(java.lang.String);
+        descriptor: (Ljava/lang/String;)Ljava/lang/String;
+        flags: (0x0001) ACC_PUBLIC
+        //编译时生成的桥接方法
+        public java.lang.Object convert(java.lang.Object);
+        descriptor: (Ljava/lang/Object;)Ljava/lang/Object;
+        flags: (0x1041) ACC_PUBLIC, ACC_BRIDGE, ACC_SYNTHETIC
 
 
 
