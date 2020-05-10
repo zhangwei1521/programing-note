@@ -213,6 +213,8 @@ ApplicationPreparedEvent、ContextRefreshedEvent、EmbeddedServletContainerIniti
 如果是以手动构造SpringApplication实例调用run方法的方式还可以调用SpringApplication实例的addListener方法
 	CommandLineRunner实例的run方法基本上是在应用启动的最后一步执行，所以可以自己实现CommandLineRunner并注入到IOC容器中。
 	
+    禁用banner：
+        spring.main.banner-mode=off
 第四部分 springboot起步依赖模块
 	SpringBoot广泛应用了最佳实践“约定优先于配置”，提供了大量的默认配置，简单的springboot应用几乎可以实现零配置运行。
 springboot的自定义配置可以在以下位置：

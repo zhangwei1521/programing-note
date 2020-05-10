@@ -169,6 +169,8 @@ git diff --staged，效果是相同的）
     使用ssh的原理分析：ssh-keygen生成了两个文件：id_rsa和id_rsa.pub，然后把id_rsa.pub给到了远程仓库服务器，
 ssh -T git@github.com则是发送一条使用id_rsa加密的消息给远程仓库服务器，该服务器使用id_rsa.pub解密消息，成功
 后就返回确认，每次从远程仓库拉取数据和提交数据也是同样的方式。
+    修改同远程仓库通信的协议：
+        git remote set-url origin git@github.com:zhangwei1521/programing-note.git
 	从远程仓库中抓取数据：git fetch [remote-name] 这个命令不会自动合并或修改当前的工作，需要手动处理。
 进行合并处理：git merge origin/master
 	从远处仓库中拉取数据：git pull [remote-name] 这个命令会自动的抓取然后合并远程分支到当前分支。

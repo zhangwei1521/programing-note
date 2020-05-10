@@ -833,88 +833,404 @@ a>=1,b>1,k>=0,p为实数;
 		}
 	可以使用二叉树构造表达式树，该表达式树提供获取表达式的前缀、中缀和后缀表达形式（通过先序(根)遍历、中序(根)遍历、后序(根)遍历实现）。
     二叉表达式树实现：
-        public class ExpressionTree {
-        
+        class ExpressionsTree{
             private static class Node{
-                char data;
+                Object element;
                 Node left;
                 Node right;
-                
-                public Node(char data,Node left, Node right) {
-                    this.data = data;
+            }
+
+            private Node root;
+
+            //使用后缀表达式构造表达式数
+            ExpressionsTree(String postfixExp){
+                Stack<Node> stack = new Stack<>();
+                String[] arr = postfixExp.split(" ");
+                List<Character> operators = Arrays.asList('+','-','*','/','(',')');
+                for (String str : arr){
+                    char c0 = str.charAt(0);
+                    Node node = new Node();
+                    node.element = c0;
+                    if(operators.contains(c0)){
+                        node.right = stack.pop();
+                        node.left = stack.pop();
+                    }
+                    stack.push(node);
+                }
+                root = stack.pop();
+            }
+
+            //中序遍历，返回普通表达式
+            String getInOrderExp(){
+                return getInOrderExp(root).replaceAll(" +"," ").trim();
+            }
+
+            private String getInOrderExp(Node node){
+                StringBuilder expBuilder = new StringBuilder();
+                if(node != null){
+                    expBuilder.append(getInOrderExp(node.left)).append(' ');
+                    expBuilder.append(node.element).append(' ');
+
+                    boolean flag = false;
+                    if(((Character) node.element == '-') && node.right != null &&
+                            (((Character) node.right.element == '-') ||
+                                    ((Character) node.right.element == '+')))
+                    {
+                        flag = true;
+                        expBuilder.append("( ");
+                    }
+
+                    expBuilder.append(getInOrderExp(node.right)).append(' ');
+
+                    if(flag){
+                        expBuilder.append(')');
+                    }
+                }
+                return expBuilder.toString();
+            }
+
+            //后序遍历，返回后缀表达式
+            String getPostOrderExp(){
+                return getPostOrderExp(root).replaceAll(" +"," ").trim();
+            }
+
+            private String getPostOrderExp(Node node){
+                StringBuilder expBuilder = new StringBuilder();
+                if(node != null){
+                    expBuilder.append(getPostOrderExp(node.left)).append(' ');
+                    expBuilder.append(getPostOrderExp(node.right)).append(' ');
+                    expBuilder.append(node.element).append(' ');
+                }
+                return expBuilder.toString();
+            }
+
+            //先序遍历，返回前缀表达式
+            String getPreOrderExp(){
+                return getPreOrderExp(root).replaceAll(" +"," ").trim();
+            }
+
+            private String getPreOrderExp(Node node){
+                StringBuilder expBuilder = new StringBuilder();
+                if(node != null){
+                    expBuilder.append(node.element).append(' ');
+                    expBuilder.append(getPreOrderExp(node.left)).append(' ');
+                    expBuilder.append(getPreOrderExp(node.right)).append(' ');
+                }
+                return expBuilder.toString();
+            }
+        }
+    AVL树是一种平衡二叉树，它的特点是任何一个节点的左子树高度与右子树高度的差最大为1。因此在添加新的元素、删除元素时需要调整
+整个二叉树的结构，以使整个二叉树保持平衡。
+    在添加新元素即插入新节点时，需要调整的情况有四种：
+        1、在左孩子节点的左子树插入新节点导致左子树高度比右子树高度大2；
+        2、在左孩子节点的右子树插入新节点导致左子树高度比右子树高度大2；
+        3、在右孩子节点的左子树插入新节点导致右子树高度比左子树高度大2；
+        4、在右孩子节点的右子树插入新节点导致右子树高度比左子树高度大2；
+    其中1、4两种情况是对称的，需要进行一次单旋转来调整树结构，2、3两种情况是对称的，需要进行一次双旋转来调整树结构：
+        情况1进行顺时针单旋转；
+        情况2进行逆-顺时针双旋转；
+        情况3进行顺-逆时针双旋转；
+        情况4进行逆时针单旋转；
+    以下代码没有提供删除元素的实现：
+        class AvlTree<T extends Comparable<? super T>>{
+            private static class AvlNode<T>{
+                T element;
+                AvlNode<T> left;
+                AvlNode<T> right;
+                int height;
+
+                AvlNode(T t){
+                    this(t,null,null);
+                }
+
+                AvlNode(T t,AvlNode<T> l,AvlNode<T> r){
+                    this.element = t;
+                    this.left = l;
+                    this.right = r;
+                    this.height = 0;
+                }
+            }
+
+            private AvlNode<T> root;
+
+            AvlTree(){
+                this.root = null;
+            }
+
+            void insert(T t){
+                root = insert(t,root);
+            }
+
+            private AvlNode<T> insert(T t,AvlNode<T> n){
+                if(n==null){
+                    return new AvlNode<>(t);
+                }
+                int result = t.compareTo(n.element);
+                if(result < 0){
+                    n.left = insert(t,n.left);
+                    if(height(n.left) - height(n.right) == 2){
+                        if(t.compareTo(n.left.element) < 0){
+                            n = rotateWithLeftChild(n);
+                        }
+                        else {
+                            n = doubleRotateWithLeftChild(n);
+                        }
+                    }
+                }
+                else if(result > 0){
+                    n.right = insert(t,n.right);
+                    if(height(n.right) - height(n.left) == 2){
+                        if(t.compareTo(n.right.element) > 0){
+                            n = rotateWithRightChild(n);
+                        }
+                        else {
+                            n = doubleRotateWithRightChild(n);
+                        }
+                    }
+                }
+                n.height = Math.max(height(n.left),height(n.right))+1;
+                return n;
+            }
+
+            private int height(AvlNode<T> n){
+                return n==null ? -1 : n.height;
+            }
+
+            private AvlNode<T> rotateWithLeftChild(AvlNode<T> n){
+                AvlNode<T> l = n.left;
+                n.left = l.right;
+                l.right = n;
+                n.height = Math.max(height(n.left),height(n.right))+1;
+                l.height = Math.max(height(l.left),n.height)+1;
+                return l;
+            }
+
+            private AvlNode<T> rotateWithRightChild(AvlNode<T> n){
+                AvlNode<T> r = n.right;
+                n.right = r.left;
+                r.left = n;
+                n.height = Math.max(height(n.left),height(n.right))+1;
+                r.height = Math.max(n.height,height(r.right))+1;
+                return r;
+            }
+
+            private AvlNode<T> doubleRotateWithLeftChild(AvlNode<T> n){
+                n.left = rotateWithRightChild(n.left);
+                return rotateWithLeftChild(n);
+            }
+
+            private AvlNode<T> doubleRotateWithRightChild(AvlNode<T> n){
+                n.right = rotateWithLeftChild(n.right);
+                return rotateWithRightChild(n);
+            }
+
+            void printTree(){
+                //使用队列来实现广度优先遍历(按层打印)
+                Queue<AvlNode> queue = new LinkedList<>();
+                queue.add(root);
+                queue.add(null);
+                do {
+                    AvlNode<T> node = queue.poll();
+                    if(node != null){
+                        System.out.print(node.element+"\t");
+                        if(node.left != null){
+                            queue.add(node.left);
+                        }
+                        if(node.right != null){
+                            queue.add(node.right);
+                        }
+                    }
+                    else if(!queue.isEmpty()){
+                        queue.add(null);
+                        System.out.println();
+                    }
+                } while (!queue.isEmpty());
+                System.out.println();
+            }
+        }
+    伸展树也是一种二叉树，它是一种渐进平衡的二叉树，它不要求单次访问任意节点的时间复杂度为O(logN)，但是它可以保证，在连续
+m次访问树中的节点的总时间复杂度不超过O(m*logN)。它是通过在每次访问一个节点后就对树结构进行调整，以使当前节点及其父级、子级
+节点更靠近根节点，这样下次访问时就会更快。
+        class StretchTree<T extends Comparable<? super T>>{
+            private static class Node<T>{
+                T element;
+                Node<T> left;
+                Node<T> right;
+
+                Node(T element){
+                    this(element,null,null);
+                }
+
+                Node(T element, Node<T> left, Node<T> right){
+                    this.element = element;
                     this.left = left;
                     this.right = right;
                 }
             }
-            
-            private Node root;
 
-            public ExpressionTree(String infixExpression) {
-                //先使用栈获得对应的后缀表达式
-                ExpressionStack expressionStack = new ExpressionStack(infixExpression);
-                String postfixExpression = expressionStack.getPostfixExpression();
-                
-                //根据后缀表达式构造表达式树
-                MyStack<Node> stack = new MyStack<Node>();
-                char[] chars = postfixExpression.toCharArray();
-                for (int i = 0; i < chars.length; i++) {
-                    char c = chars[i];
-                    if(c>='0' && c<='9') {
-                        stack.push(new Node(c, null, null));
+            Node<T> root;
+
+            StretchTree(){
+                root = null;
+            }
+
+            void insert(T t){
+                root = insert(t,root);
+            }
+
+            private Node<T> insert(T t,Node<T> node){
+                if(node == null){
+                    return new Node<>(t);
+                }
+                int result = t.compareTo(node.element);
+                if(result < 0){
+                    node.left = insert(t,node.left);
+                }
+                else if(result > 0){
+                    node.right = insert(t,node.right);
+                }
+                else{
+                    ;
+                }
+                return node;
+            }
+
+            private class Box{
+                boolean find;
+            }
+
+            boolean contains(T t){
+                Box box = new Box();
+                root = contains(t,root,box);
+                return box.find;
+            }
+
+            //每次调用contains方法都对节点进行调整，以使未来的查找操作花费更少的查找次数
+            private Node<T> contains(T t, Node<T> node,Box box){
+                box.find = false;
+                if(node == null){
+                    return node;
+                }
+                int result = t.compareTo(node.element);
+                if(result < 0){
+                    node.left = contains(t,node.left,box);
+                    if(node.left != null){
+                        int r = t.compareTo(node.left.element);
+                        if(r < 0){
+                            node = rotateWithLeft(node);
+                        }
+                        else if(r > 0){
+                            node = rotateWithLeftRight(node);
+                        }
                     }
-                    else {
-                        Node r = stack.pop();
-                        Node l = stack.pop();
-                        Node p = new Node(c, l, r);
-                        stack.push(p);
+                }
+                else if(result > 0){
+                    node.right = contains(t,node.right,box);
+                    if(node.right != null){
+                        int r = t.compareTo(node.right.element);
+                        if(r < 0){
+                            node = rotateWithRightLeft(node);
+                        }
+                        else if(r > 0){
+                            node = rotateWithRight(node);
+                        }
                     }
                 }
-                root = stack.pop();
-            }
-            
-            public String getInfixExpression() {
-                return getInfixExp(root);
-            }
-            
-            private String getInfixExp(Node node) {
-                if(node==null) {
-                    return "";
+                else {
+                    box.find = true;
                 }
-                StringBuilder builder = new StringBuilder();
-                builder.append("("+getInfixExp(node.left));
-                builder.append(node.data);
-                builder.append(getInfixExp(node.right)+")");
-                return builder.toString();
+                return node;
             }
-            
-            public String getPostfixExpression() {
-                return getPostfixExp(root);
-            }
-            
-            private String getPostfixExp(Node node) {
-                if(node==null) {
-                    return "";
+
+            //左边一字伸展
+            private Node<T> rotateWithLeft(Node<T> n) {
+                Node<T> l = n.left;
+                if(l == null){
+                    return n;
                 }
-                StringBuilder builder = new StringBuilder();
-                builder.append(getPostfixExp(node.left));
-                builder.append(getPostfixExp(node.right));
-                builder.append(node.data);
-                return builder.toString();
-            }
-            
-            public String getPrefixExpression() {
-                return getPrefixExp(root);
-            }
-            
-            private String getPrefixExp(Node node) {
-                if(node==null) {
-                    return "";
+                Node<T> ll = l.left;
+                if(ll == null){
+                    return n;
                 }
-                StringBuilder builder = new StringBuilder();
-                builder.append(node.data);
-                builder.append(getPrefixExp(node.left));
-                builder.append(getPrefixExp(node.right));
-                return builder.toString();
+                n.left = l.right;
+                l.right = n;
+                l.left = ll.right;
+                ll.right = l;
+                return ll;
             }
-        }
-    
+
+            //左边之字伸展
+            private Node<T> rotateWithLeftRight(Node<T> n) {
+                Node<T> l = n.left;
+                if(l == null){
+                    return n;
+                }
+                Node<T> lr = l.right;
+                if(lr == null){
+                    return n;
+                }
+                l.right = lr.left;
+                lr.left = l;
+                n.left = lr.right;
+                lr.right = n;
+                return lr;
+            }
+
+            //右边之字伸展
+            private Node<T> rotateWithRightLeft(Node<T> n) {
+                Node<T> r = n.right;
+                if(r == null){
+                    return n;
+                }
+                Node<T> rl = r.left;
+                if(rl == null){
+                    return n;
+                }
+                r.left = rl.right;
+                rl.right = r;
+                n.right = rl.left;
+                rl.left = n;
+                return rl;
+            }
+
+            //右边一字伸展
+            private Node<T> rotateWithRight(Node<T> n) {
+                Node<T> r = n.right;
+                if(r == null){
+                    return n;
+                }
+                Node<T> rr = r.right;
+                if(rr == null){
+                    return n;
+                }
+                n.right = r.left;
+                r.left = n;
+                r.right = rr.left;
+                rr.left = r;
+                return rr;
+            }
+
+            void printTree(){
+                //使用队列来实现广度优先遍历(按层打印)
+                Queue<Node> queue = new LinkedList<>();
+                queue.add(root);
+                queue.add(null);
+                do {
+                    Node<T> node = queue.poll();
+                    if(node != null){
+                        System.out.print(node.element+"\t");
+                        if(node.left != null){
+                            queue.add(node.left);
+                        }
+                        if(node.right != null){
+                            queue.add(node.right);
+                        }
+                    }
+                    else if(!queue.isEmpty()){
+                        queue.add(null);
+                        System.out.println();
+                    }
+                } while (!queue.isEmpty());
+                System.out.println();
+            }
+        }    
