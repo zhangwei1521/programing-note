@@ -104,7 +104,7 @@ maven统一管理着项目中很多琐碎的信息，方便了查找这些信息
 	依赖的范围：用来表述依赖的jar包和程序编译、测试、运行时的classpath的关系，默认为compile，将在三个阶段的classpath
 中都可以引用依赖的jar包，test指明只在测试时可以引用依赖的jar，provided指明编译、测试期间可以引用依赖的jar，runtime表明
 可以在测试、运行期间引用依赖的jar。还可以使用system，这种需要使用systemPath元素指明依赖jar包的本地路径，不是从maven
-仓库解析依赖，只能在编译和测试期间使用该类依赖。
+仓库解析依赖，只能在编译和测试期间使用该类依赖。(${project.basedir}可以直接引用当前项目根路径)
 	传递性依赖：maven解析依赖时，会将依赖包自己所有的依赖递归解析，这样就不用自己去手动维护各个依赖包的依赖了。
 	依赖调度：当项目同时依赖多个不同版本的同一依赖时，maven只会选择一个版本的依赖包，调度第一原则是：路径最近者优先。
 如果路径长度相同就使用调度第二原则：首先声明者优先。这里的路径意思是：A->B->C(1.0),C的路径为2，A->D->E->C(2.0),这里C
@@ -215,6 +215,11 @@ groupId/...(groupId分级路径)/artifactId/version/artifactId-version-classifie
 	maven抽象了上述过程，定义了一系列实用的软件构建生命周期，最后通过插件实现生命周期中定义的目标。
 	maven提供三套独立的生命周期：clean、default、site。每套生命周期都由多个阶段组成，如default生命周期包括了从校验
 编译、测试到安装部署的各个阶段，maven命令通过组合生命周期中的阶段实现目标。
+    所谓生命周期其实就是一个命令组，生命周期阶段就是就是一个命令，在一个生命周期内，后面的生命周期阶段依赖前面的阶段，也就是
+执行后面的命令前会先执行前面的命令。maven通过默认和配置来关联生命周期阶段和插件的目标（插件的某个功能接口）。
+    命令： mvn compile 实际上是执行一组命令：validate, initialize, generate-sources, process-sources,generate-resources,
+process-resources, compile ，这其中只有 process-resources默认绑定到了resources插件的resources目标、compile默认绑定到了
+compile插件的compile目标，其他命令什么都没干。
 	maven插件在需要使用的时候才会被下载，每个插件都有自己的一些目标，对应的是一些功能（可以看成是入口方法），如dependency插件目标：
 dependency:tree 用于列出依赖树
 	maven根据命令选择对应的生命周期阶段组合，调用插件的目标完成任务。maven默认已经将一些生命周期阶段和特定的插件目标

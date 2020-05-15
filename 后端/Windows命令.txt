@@ -3,6 +3,11 @@ Windows命令：
 	临时修改环境变量path：path d:\bin;%path%
 	查看path说明：path /?
 快速打开系统属性：sysdm.cpl
+查看所有环境变量：set
+查看指定环境变量：set JAVA_HOME
+修改指定环境变量：set JAVA_HOME=C:\Program Files\Java\jdk1.8.0_172
+修改指定环境变量为空：set JAVA_HOME=
+追加变量内容：set path=%path%;%JAVA_HOME%\bin
 
 PowerShell环境的4种运行权限：
 	Restricted——默认的设置， 不允许任何script运行

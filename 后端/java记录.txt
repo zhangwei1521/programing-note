@@ -2561,7 +2561,16 @@ test方法返回true时，filter方法也返回原Optional对象，test方法返
         public java.lang.Object convert(java.lang.Object);
         descriptor: (Ljava/lang/Object;)Ljava/lang/Object;
         flags: (0x1041) ACC_PUBLIC, ACC_BRIDGE, ACC_SYNTHETIC
-
+    
+    headless模式： 
+    java.awt.headless是java的一种工作模式，用于在缺失显示屏、鼠标或者键盘时的系统配置。某些服务器不需要显示器、
+鼠标甚至键盘，但是运行在其上的某些java服务端程序又需要实现一些字体、图形渲染等依赖这些设备的功能，这时就可以设置
+java.awt.headless为true以提供这类功能。
+    命令行设置：
+        java -Djava.awt.headless=true xxx
+    代码中设置：
+        System.setProperty("java.awt.headless",Boolean.toString(true));
+    这个系统属性默认为null。
 
 
 
