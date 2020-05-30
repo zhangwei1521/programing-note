@@ -449,7 +449,7 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 	slaveof可以在redis-cli直接使用来动态改变从实例的mater。
 	当主从实例成功建立了复制关系后，如果是从实例第一次连接主实例，主实例会将所有数据转储到一个RDB文件，
 然后发送该文件给从实例，从实例收到RDB文件后就删除自己内存中的所有数据，然后将RDB文件中的数据导入；
-如果不是第一次连接，从实例首先将(master_replid;master_repl_offset)发送给主实例，主实例将根据配置决
+如果不是第一次连接，从实例首先将(master_replid;master_repl_offset)发送给主实例，主实例将根据情况决
 定是否接受部分重新同步，如果接受就从收到的(master_replid;master_repl_offset)处开始增量地同步写入命令，
 否则就会进行完全重新同步。
 	当主实例收到新的写入命令后，它会转发一份该命令给从实例，这样就实现了数据同步。
@@ -545,5 +545,9 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
         redis-cli -h 127.0.0.1 -p 6379 -a root
     在redis-cli中输入密码：
         auth root
+
+    添加测试数据：
+        #添加1000条测试数据，格式为 key:n value:n
+        debug populate 1000
     
 

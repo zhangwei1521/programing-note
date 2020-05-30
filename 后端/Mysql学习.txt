@@ -40,6 +40,15 @@ msvcr120.dll文件缺失，无法安装mysql，需要下载：Visual C++ Redistr
 手动去修改注册表：
 	HKEY_LOCAL_MACHINE - SYSTEM - CurrentControlSet - services - mysql - ImagePath
 需要将ImagePath这项的值改为解压的mysqld路径："D:\zhangwei\devtools\mysql-5.7.23-winx64\bin\mysqld" (保留引号)
+    windows下默认是关闭了binlog的，开启binlog需配置:
+        log-bin=mysql-bin-log
+        binlog-format=Row
+        server-id=123456
+    查看binlog状态：
+        show variables like 'log_bin';
+    log_bin 这个变量是不能通过命令修改的。
+
+
 
 修改密码：
 	1) 运行net stop mysql，停止服务 

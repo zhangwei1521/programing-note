@@ -215,7 +215,7 @@ groupId/...(groupId分级路径)/artifactId/version/artifactId-version-classifie
 	maven抽象了上述过程，定义了一系列实用的软件构建生命周期，最后通过插件实现生命周期中定义的目标。
 	maven提供三套独立的生命周期：clean、default、site。每套生命周期都由多个阶段组成，如default生命周期包括了从校验
 编译、测试到安装部署的各个阶段，maven命令通过组合生命周期中的阶段实现目标。
-    所谓生命周期其实就是一个命令组，生命周期阶段就是就是一个命令，在一个生命周期内，后面的生命周期阶段依赖前面的阶段，也就是
+    所谓生命周期其实就是一个命令组，生命周期阶段就是一个命令，在一个生命周期内，后面的生命周期阶段依赖前面的阶段，也就是
 执行后面的命令前会先执行前面的命令。maven通过默认和配置来关联生命周期阶段和插件的目标（插件的某个功能接口）。
     命令： mvn compile 实际上是执行一组命令：validate, initialize, generate-sources, process-sources,generate-resources,
 process-resources, compile ，这其中只有 process-resources默认绑定到了resources插件的resources目标、compile默认绑定到了
@@ -367,3 +367,18 @@ repositories的配置了。
 已经修改就会导致当前项目找不到依赖的类，这种情况下可以本地安装所依赖的项目的最新版本。
 
 nexus下载：https://help.sonatype.com/repomanager2/download/download-archives---repository-manager-oss	
+
+设置编译jdk版本：
+    <properties>
+        <java.version>1.8</java.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+    </properties>
+    
+    maven内置变量：
+        1. ${basedir} 项目根目录
+        2. ${project.build.directory} 构建目录，缺省为target
+        3. ${project.build.outputDirectory} 构建过程输出目录，缺省为target/classes
+        4. ${project.build.finalName} 产出物名称，缺省为${project.artifactId}-${project.version}
+        5. ${project.packaging} 打包类型，缺省为jar
+        6. ${project.xxx} 当前pom文件的任意节点的内容 

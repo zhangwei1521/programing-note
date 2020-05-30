@@ -2329,12 +2329,12 @@ test方法返回true时，filter方法也返回原Optional对象，test方法返
 	Stream的API可以分为三类：创建流的API、操作流的API和收集流中元素的API。
 	创建流：
 		静态方法Stream.of()创建流，该方法接收一个变长参数：
-			Stream<Stream> stream = Stream.of("A", "B", "C", "D");
+			Stream<String> stream = Stream.of("A", "B", "C", "D");
 		静态方法Stream.empty()创建一个空的流：
-			Stream<Stream> stream = Stream.empty();
+			Stream<?> stream = Stream.empty();
 		静态方法Arrays.stream()从数组创建一个流：
 			String[] strs = {"A", "B", "C", "D"};
-			Stream<Stream> stream = Arrays.stream(strs);
+			Stream<String> stream = Arrays.stream(strs);
 		Collection接口中有一个方法stream()可以从具体的集合对象创建流，parallelStream()可以创建一个并行流：
 			Stream<Integer> stream = Arrays.asList(1,2).stream();
 		java.nio.file.Files类中的一些静态方法可以获取流，如Files.lines()方法，该方法接收一个java.nio.file.Path对象，返回一个由文件行构成的字符串流：
@@ -2364,14 +2364,14 @@ test方法返回true时，filter方法也返回原Optional对象，test方法返
 			Object [] arr = Stream.of(1, 8, 5, 2).toArray();
 			Integer [] arr = Stream.of(1, 8, 5, 2).toArray((n)->new Integer[4]);
 	收集元素：
-	reduce()：对流中的元素归并计算:
-		Optional<Integer> result = Stream.of(1, 8, 5, 2).reduce((a, b)->a+b);
-		Integer result = Stream.of(1, 8, 5, 2).reduce(0,Integer::sum);
-	collect()：收集流中的元素：
-		long size = Stream.of(1, 8, 5, 2).collect(Collectors.counting());
-		List<Integer> list = Stream.of(1, 8, 5, 2).collect(Collectors.toList());
-		Optional<Integer> max = Stream.of(1, 8, 5, 2).collect(Collectors.maxBy(Comparator.comparing(Integer::valueOf)));
-		Optional<Integer> min = Stream.of(1, 8, 5, 2).collect(Collectors.minBy(Comparator.comparing(Integer::valueOf)));
+        reduce()：对流中的元素归并计算:
+            Optional<Integer> result = Stream.of(1, 8, 5, 2).reduce((a, b)->a+b);
+            Integer result = Stream.of(1, 8, 5, 2).reduce(0,Integer::sum);
+        collect()：收集流中的元素：
+            long size = Stream.of(1, 8, 5, 2).collect(Collectors.counting());
+            List<Integer> list = Stream.of(1, 8, 5, 2).collect(Collectors.toList());
+            Optional<Integer> max = Stream.of(1, 8, 5, 2).collect(Collectors.maxBy(Comparator.comparing(Integer::valueOf)));
+            Optional<Integer> min = Stream.of(1, 8, 5, 2).collect(Collectors.minBy(Comparator.comparing(Integer::valueOf)));
 	综合统计：
 		public class Employee {
 			private long empId;

@@ -469,7 +469,28 @@ com.zhangwei.springboot.dao.master包下的dao类处理master数据源的操作�
 		File docxFile = File.createTempFile("template",".zip");
 		FileUtils.copyInputStreamToFile(docxStream,docxFile);	//FileUtils来自org.apache.commons.io.FileUtils
 
-
+    jdk9开始一些模块没有默认加载，所以springboot打包后的jar可能不能直接运行，需要添加以下依赖：
+        <!-- jaxb模块引用 - start -->
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.xml.bind</groupId>
+            <artifactId>jaxb-impl</artifactId>
+            <version>2.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>2.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.activation</groupId>
+            <artifactId>activation</artifactId>
+            <version>1.1.1</version>
+        </dependency>
+        <!-- jaxb模块引用 - end -->
 
 
 
