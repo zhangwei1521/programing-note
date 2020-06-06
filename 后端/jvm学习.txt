@@ -121,7 +121,7 @@ Survivor块，每次都在Eden和一个Survivor中创建对象，回收时将存
 	GC日志
     与GC日志有关的参数：
         -XX:+PrintGC 输出简要GC日志 
-        -verbose:gc
+        -verbose:gc  输出简要GC日志 
         -XX:+PrintGCDetails 输出详细GC日志 
         -Xloggc:gc.log  输出GC日志到文件
         -XX:+PrintGCTimeStamps 输出GC的时间戳（以JVM启动到当期的总时长的时间戳形式） 

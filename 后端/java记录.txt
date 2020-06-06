@@ -2573,8 +2573,142 @@ java.awt.headless为true以提供这类功能。
     这个系统属性默认为null。
 
 
+JDK9新特性
+    
+    一、模块系统：
+    在JDK9之前，java没有模块系统，java应用一般通过jar包的形式部署，但是这种方式存在一些固有的问题：一是jar包只
+是类的容器，一个jar包内的所有public修饰的类对于任何其他jar包/类都是可访问的，没有办法做到让这个jar包里的类只对
+特定的外部jar包/类可访问，也不能只暴露特定的包中的类；第二个问题是应用启动时不能检查所依赖的类所在的jar是否存在，
+从而在应用运行期间需要加载外部类时才会报错。另外，JRE过大也是一个问题，因为大部分应用实际使用不到JRE提供的所有功能，
+但是JRE却会去加载那些用不到的类导致占用过多不必要的内存空间。
+    JDK9引入模块系统来解决上面的问题。
+    类使用模块来聚合，模块中的类需要引用其他模块中的类时，本模块就要显示声明对外部模块的依赖，这样就可以在编译、
+链接和运行（应用启动）时检测验证依赖的模块是否存在，从而避免之前的运行时类缺失的错误。
+    模块可以声明只导出特定的包，这样只有导出的包里的类才能被外部模块使用，另外也可以声明本模块内部的public类只对
+特定模块开放，这样可以避免模块中的类被恶意使用。
+    JDK9将标准库API划分到几个不同的模块中，包括java.base，java.sql，java.xml和java.logging等，其他一些高级API
+则以jdk.*等模块发布。
+    模块示例：
+        //module-info.java 这个文件和最外层包在同一级目录下，即它没有package
+        module first{
+            //导出特定包
+            exports com.zhangwei.jmod.common;
+            //导出特定包到特定模块
+            exports com.zhangwei.jmod.date to second,third;
+        }
 
-
+        //依赖特定模块
+        //module-info.java
+        module second{
+            requires first;
+        }
+    注：导出包时，导出父级包不会导出子级包，所以需要明确写出每个需要导出的包。
+    模块名称可以是一个标识符，也可以是多个.分隔的标识符：java.base，当然自己的模块不要和JRE提供的模块重名。
+    所有java程序模块都隐式依赖java.base模块，不需要进行显示声明。
+    如果本模块依赖的外部模块需要通过反射来访问本模块内的类，可以使用open来修饰本模块实现，使用open修饰的模块会开放
+模块内部所有的包，也可以只使用opens修饰特定的包，这样就会只允许特定的包可以被外部模块通过反射访问。需要注意open或
+opens都不会导出(exports)模块中的包，如果其他模块需要直接访问本模块内的类，本模块还是需要声明exports。
+        //允许其他模块通过反射来访问本模块的类
+        open module second{
+            requires first;
+        }
+        module second{
+            requires first;
+            exports com.zhangwei.jmod.common;
+            opens com.zhangwei.jmod.common;
+            exports com.zhangwei.jmod.date;
+            opens com.zhangwei.jmod.date to banana;
+        }
+    依赖外部模块可以声明依赖关系：
+        module forth{
+            requires first;
+            //表示只在编译期间依赖此模块，运行时不需要
+            requires static second;
+            //表示传递性依赖，即依赖本模块的模块也将隐式依赖third模块
+            requires transitive third;
+        }
+    SPI的新配置方式：JDK9开始可以在module-info.java配置SPI：
+        module first{
+            exports com.zhangwei.jmod.common;
+            //模块first提供Log接口和一个实现ConsoleLog
+            provides com.zhangwei.jmod.common.Log with com.zhangwei.jmod.common.ConsoleLog;
+        }
+        module second{
+            requires transitive first;
+            //模块second提供另一个Log实现ErrorLog
+            provides com.zhangwei.jmod.common.Log with com.zhangwei.jmod2.util.ErrorLog;
+        }
+        module third{
+            requires second;
+            //模块third使用Log服务
+            uses com.zhangwei.jmod.common.Log;
+        }
+        //在模块third中使用Log：
+        public class Client {
+            //....
+            private static void test02(){
+                ServiceLoader<Log> loader = ServiceLoader.load(Log.class);
+                for(Log log : loader){
+                    log.info("hello");
+                }
+            }
+        }
+    模块解析是指识别出所有可用的模块，通常是本模块所依赖的模块。
+    基于模块的程序的编译、链接和运行时的模块解析都是从根模块开始的，在编译时，根模块是正在编译的模块，链接时根模块是
+空的，运行时根模块是通过--module或-m指定的（--module或-m指定模块和模块中的主类：-m first/com.zhangwei.jmod.Hello）
+    有时候会需要将特定模块添加到根模块列表中，可以通过--add-modules实现，--add-modules 后接逗号分隔的模块名称列表。
+    解析模块时需要待解析模块在模块路径中才能被识别，通过--module-path或-p来指定模块路径, 路径名由特定于平台的路径
+分隔符分隔，在UNIX平台上为冒号（:），Windows平台上分号（;）。
+    可以指定的模块路径包括：具有module-info.class文件的目录、具有jar文件的目录和具有jmod文件的目录。
+    编译模块first：
+        javac -d bin/demo1 \
+            demo1/src/*.java demo1/src/com/zhangwei/jmod/*.java \
+            demo1/src/com/zhangwei/jmod/common/*.java \
+            demo1/src/com/zhangwei/jmod/inner/*.java\
+        或者使用列出原文件的文本文件：
+        dir demo1\*.java/s/b > demo1\srclist.txt
+        javac -encoding utf-8 -d bin\demo1 @demo1\srclist.txt
+    编译后的程序可以通过传统的方式运行，即使用：
+        java -cp bin\demo1 com.zhangwei.jmod.Hello 
+启动，也可以直接启动模块（需要指定模块的主类）：
+        java -p bin\demo1 -m first/com.zhangwei.jmod.Hello
+    将模块打包为jar包：
+        jar cvf mod/first.jar -C bin/demo1 .
+    打一个具有主类的jar包：
+        jar --create --file mod/first.jar --main-class com.zhangwei.jmod.Hello -C bin/demo1 .
+    如果打jar指定了主类，就可以直接运行模块（模块具有了ModuleMainClass 属性，这个属性是由jar命令添加的）：
+        java -p mod -m first
+        //也可以按照执行jar的方式执行
+        /java -jar mod/first.jar
+    创建jmod文件，jmod文件是一种新的类聚合体，JDK默认就使用这种文件组织核心类库，它只用在编译和链接阶段，运行时不能使用。
+        jmod create --class-path mod/first.jar jmods/first.jmod
+    编译依赖模块first的模块second：
+        dir demo2\*.java/s/b > demo2\srclist.txt
+        //这里-p可以替换为--module-path，都用于指定模块路径，bin/demo1也可以替换为mod目录
+        javac -encoding utf-8 -p bin/demo1 -d bin\demo2 @demo2\srclist.txt
+    second模块打jar包：
+        jar --create --file mod/second.jar --main-class com.zhangwei.jmod2.Client -C bin/demo2 .
+    执行second模块（这个jar包模块依赖first模块，所以只能通过模块的方式执行）：
+        java -p mod -m second
+    为second模块创建jmod文件：
+        jmod create --class-path mod/second.jar jmods/second.jmod
+    jlink工具被设计用来从jmod文件构建出自定义的JRE，这可以有效减小JRE的体积，这也就解决了JDK9之前JRE过大的问题。
+    创建一个只包括java.base,first,second三个模块的JRE：
+        jlink -p D:\devtools\openjdk\op_jdk_hs-11.0.6+10\jmods;jmods \
+            --add-modules java.base,first,second --output applejre
+    可以直接执行这个JRE中的first模块和second模块，因为创建jar包形式的模块时指定了主类。
+        .\applejre\bin\java -m first
+	    .\applejre\bin\java -m second
+    创建这个JRE时还可以直接创建一个使用指定模块启动的命令：
+        jlink -p D:\devtools\openjdk\op_jdk_hs-11.0.6+10\jmods;jmods \
+            --add-modules java.base,first,second --launcher runapple=second --output applejre
+    直接通过这条命令启动：
+        .\applejre\bin\runapple
+    创建这个JRE时还可以启用压缩功能，进一步缩小JRE的大小：
+        jlink -p D:\devtools\openjdk\op_jdk_hs-11.0.6+10\jmods;jmods \
+            --add-modules java.base,first,second --launcher runapple=second --compress 2 \
+            --strip-debug --output mini-applejre
+    这个例子中的JRE构造出来只有30M，再压缩成zip包可以做到只有12M。
 
 
 
