@@ -60,3 +60,10 @@ certutil支持的算法还有：MD2 MD4 MD5 SHA1 SHA256 SHA384
 	5、输入select volume 2选择恢复分区对应卷；
 	6、输入delete part override删除选择的卷即恢复分区
 
+创建符号链接：
+    mklink curl.exe ..\curl\bin\curl.exe    //创建文件的符号链接
+    mklink /D dir01 dir0                    //创建目录的符号链接
+    mklink /J dir02 dir0                    //创建软链接，只能为目录创建软链接
+    mklink /H file01 file0                  //创建硬链接，不能为目录创建硬链接
+目录的符号链接和软链接的区别：使用相对路径创建的符号链接使用相对路径保存链接关系，所以绝对路径变化而相对路径不变化
+不会导致符号链接失效，而软链接总是使用绝对路径保存链接关系，所以绝对路径变化就会导致软链接失效。

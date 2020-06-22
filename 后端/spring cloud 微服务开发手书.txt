@@ -255,7 +255,7 @@ application文件->7.@Configuration注解修饰类中@propertySource修饰的属
             <!--新版本使用这个依赖-->
             <dependency>
 				<groupId>org.springframework.cloud</groupId>
-				<artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
+				<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
 			</dependency>
 		</dependencies>
 		</dependencyManagement>
@@ -334,6 +334,10 @@ application文件->7.@Configuration注解修饰类中@propertySource修饰的属
         这个请求会把服务从eureka服务实例列表中移除，如果服务实例没有停止，那这个服务实例还会继续发送心跳到eureka，
 所以又会继续登记到注册中心。
         2、服务实例通过DiscoveryManager.getInstance().shutdownComponent();通知eureka下线本服务实例，这种方式已过期。
+        3、通过actuator的shutdown端点下线：
+                management.endpoint.shutdown.enabled=true
+                management.endpoints.web.exposure.include=shutdown
+           访问服务的actuator的shutdown端点（post方法提交：http://localhost:8000/actuator/shutdown）
 	失效剔除：注册中心(Eureka Server)在启动时会创建一个定时任务，每隔一段时间（默认60秒）检测服务清单，将超时（默认90秒）
 没有续约的服务剔除。通常是服务实例非正常结束（内存溢出等）导致注册中心进行失效剔除。
     失效剔除配置：
@@ -345,7 +349,7 @@ application文件->7.@Configuration注解修饰类中@propertySource修饰的属
             #通知eureka server在15秒后还没有收到此服务实例的心跳就销毁此服务实例
             eureka.instance.lease-expiration-duration-in-seconds=15
 	自我保护：eureka server在检测时，发现服务实例是否在lease-expiration-duration-in-seconds没有发送心跳后，那么应该剔除
-此服务实例，但是有可能并不是此服务实例已经停止了，而是网络故障导致其发送的心态没有到达eureka server，如果剔除此服务，则网络
+此服务实例，但是有可能并不是此服务实例已经停止了，而是网络故障导致其发送的心跳没有到达eureka server，如果剔除此服务，则网络
 恢复后，此服务实例也不会被重新登记，因为服务登记只在服务启动或eureka server启动时进行。为了处理这种问题，eureka server在
 剔除服务实例前，会检查过去1分钟内收到的心跳数是否小于等于 Renews threshold（这个值在eureka server启动后每隔15分钟更新一次，
 更新算法：expectedNumberOfClientsSendingRenews*(60/30)*0.85，服务下线不会修改这里的expectedNumberOfClientsSendingRenews
@@ -385,6 +389,20 @@ application文件->7.@Configuration注解修饰类中@propertySource修饰的属
         eureka.client.healthcheck = true
         eureka.instance.appname = hello #默认使用spring.application.name
 	配置随机端口号：server.port = 0 或 server.port = ${random.int[10000,19999]}
+
+    CAP原则
+    C : Consistency，一致性，也叫做数据原子性，指的是系统在执行某项操作后仍然处于一致的状态。在分布式系统中，更新操作执行成功后所有的用户
+        都应该读到最新的值，这样的系统被认为是具有强一致性的。等同于所有节点访问同一份最新的数据副本。
+    A : Availability，可用性，每一个操作总是能够在一定的时间内返回结果，这里的是“一定时间内”指的是，在可以容忍的范围内返回结果，“返回结果”
+        可以是成功或者是失败。
+    P : Partition tolerance，分区容错性，在网络分区的情况下，被分隔的节点仍能正常对外提供服务(分布式集群，数据被分布存储在不同的服务器上，
+        无论什么情况，服务器都能正常被访问)。
+    CAP原则指的就是在一个分布式系统中不可能同时满足Consistency、Availability、Partition tolerance三个约束，最多同时满足其中两个。
+    在分布式系统中，分区容错总是需要的，如果一个分布式系统的独立分区间的网络出现故障，分区间的连接虽然异常，但是每个分区还是能够提供大部分可用
+服务的，所以现代分布式系统基本上都设计为满足P原则。为了实现分区容错，就需要进行同类服务实例的跨区部署。
+    在实现了分区容错后，分布式系统的一致性和可用性必然就不能同时满足，因为如果要求强一致性，则跨区同步数据的时间要求往往导致可用性的降低，而
+要保证可用性就必然不能采用同步等待跨区同步数据这种方式。
+    CP系统要求数据强一致，通常适用于银行金融类系统，分布式数据库也多采用CP设计，如redis。AP系统则更适合数据一致性要求不那么高的业务场景。
 
 第四章 Ribbon
 	Spring Cloud Ribbon是一个工具类框架，由于微服务间的调用和网关转发请求几乎都会使用Ribbon，因此Ribbon几乎存在于所有微服务和基础构件中。

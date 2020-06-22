@@ -61,11 +61,12 @@
 	使用@Component标记的bean的id默认为类名的小写形式，为bean指定id可以使用：@Component("xxx")；也可以使用java依赖注入规范
 提供的注解：@Named("xxx")，大多数情况下@Named可以替换@Component使用
 	使用@ComponentScan配置的默认扫描包是配置类所在的包和该包的子包，指定扫描的基础包可以这样：
-@ComponentScan("package1")；也可以使用：@ComponentScan(basePackages="package1")；指定多个包作为扫描基础包：
-@ComponentScan(basePackages={"package1","package2"})
+        @ComponentScan("package1")；也可以使用：@ComponentScan(basePackages="package1")；
+    指定多个包作为扫描基础包：
+        @ComponentScan(basePackages={"package1","package2"})
 	通过配置指定类的class对象来将类所在的包作为扫描基础包：
-@ComponentScan(basePackageClasses={Axe.class,Woodcutter.class})  //将Axe和Woodcutter所在的包作为扫描基础包
-这里实际可以使用一个标记接口来代替具体的应用组件类
+        //将Axe和Woodcutter所在的包作为扫描基础包，这里实际可以使用一个标记接口来代替具体的应用组件类
+        @ComponentScan(basePackageClasses={Axe.class,Woodcutter.class})  
 	自动装配：使用@Autowired注解声明组件的依赖对象，通常是将@Autowired注解应用在构造器上或setter方法上，实际上可以应用到
 任何可以设置依赖对象的方法上(使用组件扫描的方式中完全可以直接将@Autowired放在依赖对象上，不定义setter方法也可以，)。
 可以使用java依赖注入规范的@Inject注解替换@Autowired。

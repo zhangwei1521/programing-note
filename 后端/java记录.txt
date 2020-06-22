@@ -2709,6 +2709,11 @@ opens都不会导出(exports)模块中的包，如果其他模块需要直接访
             --add-modules java.base,first,second --launcher runapple=second --compress 2 \
             --strip-debug --output mini-applejre
     这个例子中的JRE构造出来只有30M，再压缩成zip包可以做到只有12M。
+    在JDK9的主目录下，没有了jre目录，现在有一个lib目录，lib目录下有一个modules文件，这个文件里包括了所有的JDK
+提供的类的class文件，这个modules文件不能直接访问，可以使用 java --list-modules列出这个文件内的模块，另外还可以
+使用 jimage list lib\modules 列出这个文件内所有的class文件。
+    兼容旧的非模块化jar包：在classpath的所有jar(不管是否模块化)会共同组成一个unnamed module。unnamed modules会
+声明依赖所有的named module，且exports自己的所有包
 
 
 

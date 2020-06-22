@@ -50,7 +50,7 @@ msvcr120.dll文件缺失，无法安装mysql，需要下载：Visual C++ Redistr
 
 
 
-修改密码：
+设置密码：
 	1) 运行net stop mysql，停止服务 
 	2) 运行mysqld --skip-grant-tables，开启无密码模式的MySQL Server 
 	3) 开启新终端，运行mysql -u root -p，进入MySQL 
@@ -260,16 +260,6 @@ mysql5.5及之前的版本都必须要写这一条语句
 分页查询：
 	select * from table_name order by id limit rownum,pagesize;
 
-建立索引：
-    create index i_emp_num on emp(empNum);
-建立unique索引：
-    create unique index i_emp_id on emp(empId);
-标准sql中可以建立cluster索引：
-    create cluster index i_name on table_name(attr_name);
-    建立这种索引后加入的数据在写入物理文件时将尽可能按照 cluster 索引属性进行靠近存储。
-mysql的 MyISAM 存储引擎不支持 cluster 索引，而 InnoDB 存储引擎默认使用主键作为 cluster 索引，
-而且不能修改。所以在 mysql 中手动创建 cluster 索引会提示语法错误。
-
 排名：
 	建表：
 		CREATE TABLE `scores` (
@@ -397,3 +387,58 @@ join语句执行过程：
         WHERE：对vt3进行条件过滤，满足条件的行被输出到vt4
         SELECT：取出vt4的指定字段到vt5
 标准SQL还定义了FULL JOIN，单mysql不支持。FULL JOIN指的是在JOIN阶段会将左右表中不满足ON条件的行都加入虚拟表。
+
+索引类型：
+    B-tree索引，使用B+树保存索引数据，支持联合索引只使用左侧部分列进行查询，支持范围查询和排序。
+    hash索引，使用hash函数计算索引列的值后散列，索引hash索引只支持精确查询，不支持范围查询、排序等。（innodb会在合适的时候
+创建hash索引，不能手动设置）
+建立索引：
+    create index index_name on table_name(col_name;
+建立前缀索引(主要是针对字符串，因为索引的长度有限制，innodb要求索引长度小于767)：
+    create index index_name on table_name(col_name(n));
+建立unique索引：
+    create unique index index_name on table_name(col_name);
+标准sql中可以建立cluster索引：
+    create cluster index index_name on table_name(col_name);
+    说明：
+    建立这种索引后加入的数据在写入物理文件时将尽可能按照 cluster 索引属性进行靠近存储。
+    mysql的 MyISAM 存储引擎不支持 cluster 索引，而 InnoDB 存储引擎默认使用主键作为 cluster 索引，
+    而且不能修改。所以在 mysql 中手动创建 cluster 索引会提示语法错误。
+建表时建立索引：
+        CREATE TABLE `rental` (
+        `rental_id` int(11) NOT NULL AUTO_INCREMENT,
+        `rental_date` datetime NOT NULL,
+        `inventory_id` mediumint(8) unsigned NOT NULL,
+        `customer_id` smallint(5) unsigned NOT NULL,
+        `return_date` datetime DEFAULT NULL,
+        `staff_id` tinyint(3) unsigned NOT NULL,
+        `last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (`rental_id`),
+        UNIQUE KEY `rental_date` (`rental_date`,`inventory_id`,`customer_id`),
+        KEY `idx_fk_inventory_id` (`inventory_id`),
+        KEY `idx_fk_customer_id` (`customer_id`),
+        KEY `idx_fk_staff_id` (`staff_id`),
+        CONSTRAINT `fk_rental_customer` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`) ON UPDATE CASCADE,
+        CONSTRAINT `fk_rental_inventory` FOREIGN KEY (`inventory_id`) REFERENCES `inventory` (`inventory_id`) ON UPDATE CASCADE,
+        CONSTRAINT `fk_rental_staff` FOREIGN KEY (`staff_id`) REFERENCES `staff` (`staff_id`) ON UPDATE CASCADE
+        ) ENGINE=InnoDB AUTO_INCREMENT=16050 DEFAULT CHARSET=utf8mb4
+    说明：
+    PRIMARY KEY将建立主键索引；
+    UNIQUE KEY将建立唯一索引（这里建立的是唯一联合索引），
+    KEY 将建立列索引。
+索引使用误区：
+    1、查询条件中在建立了索引的列上使用函数或表达式，这样做将导致查询无法使用索引，例如：
+        //已在 out_date 列上建立索引
+        select ... from product where to_days(out_date)-to_days(current_date)<=30;
+        //优化
+        select ... from product where out_date<=date_add(current_date,interval 30 day);
+    2、条件 where col_n like %xxx% 将导致查询不能使用 col_n 上的索引。
+    3、联合索引中，查询时左侧列使用了范围查询，则右侧列索引将失效。
+    4、使用索引排序时，需要索引列的顺序和排序的列顺序保保持一致、且排序列的升降序需要和索引的列排序保存一致，
+       如果是关联查询，则排序的列必须是第一张表中的列。
+索引优化：
+    1、使用联合索引替换多个独立索引，因为多个独立索引占用更多内存空间；
+    2、建立联合索引时，左侧的列优先使用，所以应该选择最常使用、选择性高（列重复数据少）、宽度小的列作为左侧的列。
+    3、使用覆盖索引作为缓存，即把select子句、from子句、order by子句以及group by子句中的列建立联合索引。
+    4、使用索引可以优化锁，因为索引可以减少锁定的行数，同时也加快了处理的速度，也就使得锁的释放更快了。
+
