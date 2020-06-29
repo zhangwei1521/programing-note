@@ -40,15 +40,6 @@ msvcr120.dll文件缺失，无法安装mysql，需要下载：Visual C++ Redistr
 手动去修改注册表：
 	HKEY_LOCAL_MACHINE - SYSTEM - CurrentControlSet - services - mysql - ImagePath
 需要将ImagePath这项的值改为解压的mysqld路径："D:\zhangwei\devtools\mysql-5.7.23-winx64\bin\mysqld" (保留引号)
-    windows下默认是关闭了binlog的，开启binlog需配置:
-        log-bin=mysql-bin-log
-        binlog-format=Row
-        server-id=123456
-    查看binlog状态：
-        show variables like 'log_bin';
-    log_bin 这个变量是不能通过命令修改的。
-
-
 
 设置密码：
 	1) 运行net stop mysql，停止服务 
@@ -192,70 +183,248 @@ mysql数据类型：
 	(3,'pig',50);
 
 # tg1 -- insert插入orders表后同步修改goods表库存
-
-delimiter $
-create trigger tg1
-after
-insert 
-on 
-orders
-for each row
-begin
-update goods set num=num-new.much where gid=new.gid;
-end$
-delimiter ;
+    delimiter $
+    create trigger tg1
+    after
+    insert 
+    on 
+    orders
+    for each row
+    begin
+    update goods set num=num-new.much where gid=new.gid;
+    end$
+    delimiter ;
 
 # tg2 -- update修改orders表前修改goods表库存
-
-delimiter $
-create trigger tg2 
-before 
-update 
-on 
-orders
-for each row
-begin 
-update goods set num=num+old.much-new.much where gid=old.gid;
-end$
-delimiter ;
+    delimiter $
+    create trigger tg2 
+    before 
+    update 
+    on 
+    orders
+    for each row
+    begin 
+    update goods set num=num+old.much-new.much where gid=old.gid;
+    end$
+    delimiter ;
 
 # tg3 -- delete删除orders表后修改goods表库存
-
-delimiter $
-create trigger tg3
-after 
-delete 
-on orders 
-for each row
-begin
-update goods set num=num+old.much where gid=old.gid;
-end$
-delimiter ;
+    delimiter $
+    create trigger tg3
+    after 
+    delete 
+    on orders 
+    for each row
+    begin
+    update goods set num=num+old.much where gid=old.gid;
+    end$
+    delimiter ;
 
 # tg4 -- insert插入orders表前判断much是否大于goods表的num值，如果大于就修改much为goods表的num值
+    delimiter $
+    create trigger tg4 
+    before 
+    insert 
+    on 
+    orders 
+    for each row
+    begin
+    declare snum int;
+    select num into snum from goods where gid=new.gid;
+    if new.much>snum then
+        set new.much=snum;
+    end if;
+    update goods set num=num-new.much where gid=new.gid;
+    end$
+    delimiter ;
 
-delimiter $
-create trigger tg4 
-before 
-insert 
-on 
-orders 
-for each row
-begin
-declare snum int;
-select num into snum from goods where gid=new.gid;
-if new.much>snum then
-	set new.much=snum;
-end if;
-update goods set num=num-new.much where gid=new.gid;
-end$
-delimiter ;
+    # for each row 说明
+    表示操作影响每一行都会执行一次触发器中的sql
+    mysql、oracle都支持
+    oracle还可以不写这一条语句，表示一条影响多行的语句只会触发一次触发器中的sql语句
+    mysql5.5及之前的版本都必须要写这一条语句
 
-# for each row 说明
-表示操作影响每一行都会执行一次触发器中的sql
-mysql、oracle都支持
-oracle还可以不写这一条语句，表示一条影响多行的语句只会触发一次触发器中的sql语句
-mysql5.5及之前的版本都必须要写这一条语句
+存储过程
+    存储过程是一组预编程的SQL，经过处理后存储在数据库中，使用者通过名称和传入参数来调用。
+    存储过程的特点：可以使用控制语句，具有较好的灵活性；具有较快的执行速度。
+创建存储过程：
+    DELIMITER $
+    CREATE PROCEDURE myproc(OUT s int)
+        BEGIN
+        SELECT COUNT(*) INTO s FROM students;
+        END
+        $
+    DELIMITER ;
+MySQL存储过程共有三种参数类型,IN,OUT,INOUT:
+    IN 参数的值必须在调用存储过程时指定，在存储过程中修改该参数的值不会改变外部参数值;
+    OUT 参数不识别调用时传入的值，可在存储过程内部被改变，并可返回；
+    INOUT 参数在调用时指定，并且可被改变和返回。
+    测试：
+        delimiter $
+        create procedure myprocedure1(in in_param int)
+        begin
+        select in_param;
+        set in_param=2;
+        select in_param;
+        end;
+        $
+        delimiter ;
+
+        //用户变量以@开头
+        set @in_param=1;
+        call myprocedure1(@in_param);
+        select @in_param;
+
+        =========================================================================
+
+        delimiter $
+        create procedure myprocedure2(out out_param int)
+        begin
+        select out_param;
+        set out_param=2;
+        select out_param;
+        end;
+        $
+        delimiter ;
+
+        set @out_param=1;
+        call myprocedure2(@out_param);
+        select @out_param;
+
+        =========================================================================
+
+        delimiter $
+        create procedure myprocedure3(inout inout_param int)
+        begin
+        select inout_param;
+        set inout_param=2;
+        select inout_param;
+        end;
+        $
+        delimiter ;
+
+        set @inout_param=1;
+        call myprocedure3(@inout_param);
+        select @inout_param;
+
+存储过程内也可以直接使用用户变量：
+    create procedure myprocedure4() select concat(@greeting,' World');
+    set @greeting='Hello';
+    call myprocedure4();
+存储过程内滥用用户变量会导致难以理解及管理。
+存储过程内可以定义全局范围内的用户变量：
+    create procedure myprocedure5() set @last_proc='myprocedure5';
+    create procedure myprocedure6() select concat('Last procedure was ',@last_proc);
+    call myprocedure5();
+    call myprocedure6();
+存储过程内定义内部变量：
+    delimiter $
+    create procedure myprocedure7()
+        begin
+        declare x1 varchar(5) default 'outer';
+            begin
+            declare x1 varchar(5) default 'inner';
+            select x1;
+            end;
+        select x1;
+        end;
+        $
+    delimiter ;
+
+    call myprocedure7();
+使用条件语句：
+    create table t (s1 int primary key);
+    drop procedure if exists myprocedure8;
+    delimiter $
+    create procedure myprocedure8(in in_param int)
+    begin
+        declare var int;
+        set var=in_param+1;
+        if var=0 then
+        insert into t values (17);
+        end if ;
+        if in_param=0 then
+        update t set s1=s1+1;
+        else
+        update t set s1=s1+2;
+        end if ;
+    end ;
+    $
+    delimiter ;
+
+    set @in_param=0;
+    call myprocedure8(@in_param);
+使用case when语句：
+    delimiter $
+    create procedure myprocedure9 (in in_param int)
+        begin
+        declare var int;
+        set var=in_param+1;
+        case var
+            when 0 then
+            insert into t values (17);
+            when 1 then
+            insert into t values (18);
+            else
+            insert into t values (19);
+        end case ;
+        end ;
+    $
+    delimiter ;
+使用循环语句：
+    delimiter $
+    create procedure proc5()
+        begin
+        declare var int;
+        set var=0;
+        --while循环
+        while var<6 do
+            insert into t values (var);
+            set var=var+1;
+        end while ;
+        /*repeat循环
+        repeat
+            insert into t values(v);
+            set v=v+1;
+            until v>=5
+        end repeat;
+        */
+        /*loop循环
+        loop_lable:loop
+            if v=3 then
+                set v=v+1;
+                --iterate 将跳到loop_lable处继续执行
+                iterate loop_lable;
+            end if;
+            insert into t values(v);
+            set v=v+1;
+            if v >=5 then
+                leave loop_lable;
+            end if;
+        end loop;
+        */
+        end;
+    $
+    delimiter ;
+
+MySQL存储过程支持两种风格的注释：
+    --注释，一般用于单行注释
+    /*注释*/， 一般用于多行注释
+
+管理存储过程：
+    查询指定数据库的存储过程：
+        select name from mysql.proc where db='java';
+        show procedure status where db='java';
+        select routine_name from information_schema.routines where routine_schema='java';
+    查看存储过程详细信息：
+        show create procedure java.myprocedure1;
+    修改存储过程：
+        alter procedure myprocedure1
+        modifies sql data   /*modifies sql data 表示修改数据的sql, reads sql data表示只读sql*/
+        sql security invoker ;  /*invoker表示调用者可以执行，definer表示只有定义者自己才能够执行*/
+    删除存储过程：
+        drop procedure myprocedure1,myprocedure2;
+
 
 分页查询：
 	select * from table_name order by id limit rownum,pagesize;
@@ -309,21 +478,80 @@ modify column name:
     alter table table_name change old_col_name new_col_name varchar(40);
 
 functions:
-    rand()      //return a random decimal between 0 and 1
-        select rand();
-    round(x)     //return the result of round-up or round-down of x
-        select round(rand() * 10);
-    floor(x)    //return the result of round-down of x
-        select floor(rand() * 10);
-    ceiling(x)  //return the result of round-up of x
-        select ceiling(rand() * 10);
-    exmaple1:
-        select t.decimal,round(t.decimal),floor(t.decimal),ceiling(t.decimal) from (select rand()*10 as 'decimal') t;
-    exmaple2:
-        select 50+floor(rand() * (100-50+1));
-    md5(x)      //get a 32 bit random string
-        select md5(rand() * 10000);
-
+字符串函数：
+    charset(str)                        //返回字串字符集
+    concat(string2 [,... ])             //连接字串
+    instr(string ,substring )           //返回substring首次在string中出现的位置,不存在返回0
+    lcase(string2 )                     //转换成小写
+    left(string2 ,length )              //从string2中的左边起取length个字符
+    length(string )                     //string长度
+    load_file(file_name )               //从文件读取内容
+    locate(substring , string [,start_position ])   //同instr,但可指定开始位置
+    lpad(string2 ,length ,pad )         //重复用pad加在string开头,直到字串长度为length
+    ltrim(string2 )                     //去除前端空格
+    repeat(string2 ,count )             //重复count次
+    replace(str ,search_str ,replace_str )          //在str中用replace_str替换search_str
+    rpad(string2 ,length ,pad)          //在str后用pad补充,直到长度为length
+    rtrim(string2 )                     //去除后端空格
+    strcmp(string1 ,string2 )           //逐字符比较两字串大小,
+    substring(str , position [,length ])            //从str的position开始,取length个字符,
+    注：mysql中处理字符串时，默认第一个字符下标为1，即参数position必须大于等于1
+    trim([[both|leading|trailing] [padding] from]string2)       //去除指定位置的指定字符
+    ucase(string2 )                     //转换成大写
+    right(string2,length)               //取string2最后length个字符
+    space(count)                        //生成count个空格
+数学类函数：
+    abs(number2)                        //绝对值
+    bin(decimal_number)                 //十进制转二进制
+    ceiling (number2)                   //向上取整
+    conv(number2,from_base,to_base)     //进制转换
+    floor(number2)                      //向下取整
+    format(number,decimal_places)       //保留小数位数
+    hex(decimalnumber)                  //转十六进制
+    注：hex()中可传入字符串，则返回其ascll码，如hex('def')返回4142143,也可以传入十进制整数，返回其十六进制编码，如hex(25)返回19
+    least(number , number2 [,..])       //求最小值
+    mod(numerator ,denominator )        //求余
+    power(number ,power)                //求指数
+    rand([seed])                        //随机数
+    round(number [,decimals ])          //四舍五入,decimals为小数位数] 注：返回类型并非均为整数，
+    sqrt(number2)                       //开平方
+日期时间函数：
+    addtime(date2 ,time_interval )              //将time_interval加到date2
+    convert_tz(datetime2 ,fromtz ,totz )        //转换时区
+    current_date()                              //当前日期
+    current_time()                              //当前时间
+    current_timestamp()                         //当前时间戳
+    now()                                       //当前时间
+    注：now()和 current_timestamp() 没有任何区别，都表示的是SQL开始执行时的系统时间，返回类型根据上下文决定是字符串还是数字
+    sysdate()                                   //执行这个函数时的系统时间，返回类型和now()相同
+    date(datetime)                              //返回datetime的日期部分
+    date_add(date2, interval d_value d_type)    //在date2中加上日期或时间
+    date_format(datetime,formatcodes)           //使用formatcodes格式显示datetime
+    date_sub(date2, interval d_value d_type)    //在date2上减去一个时间
+    datediff(date1,date2)                       //两个日期差
+    day(date)                                   //返回日期的天
+    dayname(date )                              //英文星期
+    dayofweek(date )                            //星期(1-7) ,1为星期天
+    dayofyear(date )                            //一年中的第几天
+    extract(interval_name from date )           //从date中提取日期的指定部分
+    makedate(year ,day )                        //给出年及年中的第几天,生成日期串
+    maketime(hour ,minute ,second )             //生成时间串
+    monthname(date )                            //英文月份名
+    sec_to_time(seconds )                       //秒数转成时间
+    str_to_date(string ,format )                //字串转成时间,以format格式显示
+    timediff(datetime1 ,datetime2 )             //两个时间差
+    time_to_sec(time )                          //时间转秒数]
+    week(date_time [,start_of_week ])           //第几周
+    year(datetime )                             //年份
+    dayofmonth(datetime)                        //月的第几天
+    hour(datetime)                              //小时
+    last_day(date)                              //date的月的最后日期
+    microsecond(datetime)                       //微秒
+    month(datetime)                             //月
+    minute(datetime)                            //分返回符号,正负或0
+    to_days(datetime)                           //
+其他函数：
+    md5(x)                                      //获取MD5值（32位）
 指定mysql运行时参数：
     通过命令行参数指定：
         mysqld_safe --datadir=/data/sql_data
@@ -333,10 +561,10 @@ functions:
     
 查看session变量：
     show variables where variable_name in ('wait_timeout','interactive_timeout');
+    select variable_name,variable_value from performance_schema.session_variables where variable_name like '%isolation%';
 查看对应的全局变量：
-    select variable_name,variable_value 
-    from information_schema.global_variables 
-    where variable_name in ('interactive_timeout','wait_timeout');
+    select variable_name,variable_value from information_schema.global_variables where variable_name in ('interactive_timeout','wait_timeout');
+注：mysql5.7.6开始，全局变量表和session变量表从information_schema迁移到 performance_schema。
 修改session变量：
     set session wait_timeout=3600;
 修改全局变量：
@@ -390,12 +618,12 @@ join语句执行过程：
 
 索引类型：
     B-tree索引，使用B+树保存索引数据，支持联合索引只使用左侧部分列进行查询，支持范围查询和排序。
-    hash索引，使用hash函数计算索引列的值后散列，索引hash索引只支持精确查询，不支持范围查询、排序等。（innodb会在合适的时候
-创建hash索引，不能手动设置）
+    hash索引，使用hash函数计算索引列的值后散列，hash索引只支持精确查询，不支持范围查询、排序等。（innodb会在合适的时候
+    创建hash索引，不能手动设置）
 建立索引：
-    create index index_name on table_name(col_name;
-建立前缀索引(主要是针对字符串，因为索引的长度有限制，innodb要求索引长度小于767)：
-    create index index_name on table_name(col_name(n));
+    create index index_name on table_name(col_name);
+建立前缀索引(主要是针对字符串，因为索引的长度有限制，innodb要求索引长度小于767字节)：
+    create index index_name on table_name(col_name(n));     //n单位为字符
 建立unique索引：
     create unique index index_name on table_name(col_name);
 标准sql中可以建立cluster索引：
@@ -404,6 +632,8 @@ join语句执行过程：
     建立这种索引后加入的数据在写入物理文件时将尽可能按照 cluster 索引属性进行靠近存储。
     mysql的 MyISAM 存储引擎不支持 cluster 索引，而 InnoDB 存储引擎默认使用主键作为 cluster 索引，
     而且不能修改。所以在 mysql 中手动创建 cluster 索引会提示语法错误。
+删除索引：
+    drop index index_name on table_name;
 建表时建立索引：
         CREATE TABLE `rental` (
         `rental_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -436,9 +666,129 @@ join语句执行过程：
     3、联合索引中，查询时左侧列使用了范围查询，则右侧列索引将失效。
     4、使用索引排序时，需要索引列的顺序和排序的列顺序保保持一致、且排序列的升降序需要和索引的列排序保存一致，
        如果是关联查询，则排序的列必须是第一张表中的列。
+    5、在同一列上建立多个索引，同一列可以也可能需要建立单独索引和联合索引，但是在同一列上建立多个单独列索引是没有意义的。
 索引优化：
     1、使用联合索引替换多个独立索引，因为多个独立索引占用更多内存空间；
-    2、建立联合索引时，左侧的列优先使用，所以应该选择最常使用、选择性高（列重复数据少）、宽度小的列作为左侧的列。
+    2、建立联合索引时，左侧的列会被优先使用，所以应该选择最常使用、选择性高（列重复数据少）、宽度小的列作为左侧的列。
     3、使用覆盖索引作为缓存，即把select子句、from子句、order by子句以及group by子句中的列建立联合索引。
     4、使用索引可以优化锁，因为索引可以减少锁定的行数，同时也加快了处理的速度，也就使得锁的释放更快了。
+更新索引统计信息：
+    analyze table table_name;   //innodb引擎执行这个命令更新索引统计信息并不十分靠谱
+整理表碎片：
+    optimize table table_name;  //这个命令会锁表
 
+慢查询日志配置：
+    开启记录慢查询日志（默认关闭）：
+        //配置文件中配置
+        slow_query_log=ON
+        //在已启动的mysql中执行：
+        set global slow_query_log=ON
+    指定慢查询日志的保存路径和文件名：
+        //配置文件中配置
+        slow_query_log_file=D:\devtools\mysql-5.7.25-winx64\log
+    指定记录慢查询日志的sql执行时间的阈值：
+        long_query_time=0.001   //单位为秒，默认为10s，建议值设小一点，如1ms
+    指定是否记录未使用索引的sql:
+        log_queries_not_using_indexes=ON    //记录所有没有使用索引的SQL
+
+
+二进制日志：
+查看二进制日志状态：
+    show variables like 'log_bin';
+查看二进制日志列表：
+    #如果没有开启二进制日志，将返回提示
+    show binary logs;
+开启二进制日志：
+    # 不能通过命令修改变量 log_bin
+    # 需要在配置文件 my.ini 中配置：
+    # 这样配置二进制日志会保存在data目录下
+    log-bin=mysql-bin-log
+    # 可以指定保存二进制日志的完整路径（需要注意路径命名不能是bin开始）
+    # log-bin=D:\devtools\mysql-5.7.25-winx64\log\mbinlog\mysql-bin-log
+    # 指定二进制日志格式，可选row/statement/mixed
+    binlog-format=Row
+    # windows开启二进制日志必须要配置server-id，随意指定一个数值
+    server-id=123456
+设置当前会话的二进制日志格式(如果配置文件中没有设置，则默认为 row 格式)：
+    set session binlog_format=statement;
+刷新使用新的日志文件：
+    flush logs;
+使用 mysqlbinlog 工具查看二进制日志：
+    mysqlbinlog mysql-bin-log.000004
+使用 row 格式的二进制日志记录行数据的改变，mysql5.6开始提供下面这个参数来控制记录列的范围
+    binlog_row_image=FULL/MINIMAL/NOBLOB
+    # FULL会记录被影响行的所有列的前后值
+    # MINIMAL只记录被影响行的被改变列的前后值
+    # NOBLOB记录被影响行的除了BLOG、TEXT字段的所有列的前后值（BLOB、TEXT列没有改变就不记录，否则要被记录）
+使用mysqlbinlog -vv mysql-bin-log.000005 查看 row 格式日志。
+binlog_row_image默认为FULL，执行 update book set name='hello java' where id=1001; 日志如下：
+    ### UPDATE `java`.`book`
+    ### WHERE
+    ###   @1=1001 /* INT meta=0 nullable=0 is_null=0 */
+    ###   @2='hello' /* VARSTRING(60) meta=60 nullable=0 is_null=0 */
+    ###   @3=25.5 /* DOUBLE meta=8 nullable=0 is_null=0 */
+    ### SET
+    ###   @1=1001 /* INT meta=0 nullable=0 is_null=0 */
+    ###   @2='hello java' /* VARSTRING(60) meta=60 nullable=0 is_null=0 */
+    ###   @3=25.5 /* DOUBLE meta=8 nullable=0 is_null=0 */
+设置binlog_row_image为MINIMAL：
+    set session binlog_row_image=minimal;
+执行 update book set price=30.5 where id=1001; 日志如下：
+    ### UPDATE `java`.`book`
+    ### WHERE
+    ###   @1=1001 /* INT meta=0 nullable=0 is_null=0 */
+    ### SET
+    ###   @3=30.5 /* DOUBLE meta=8 nullable=0 is_null=0 */
+混合二进制日志格式：binlog_format=mixed，这种格式混合记录sql语句和变化列数据，在大多数情况下，
+都是使用基于sql语句的记录，只有在使用sql语句记录会导致数据不一致时才采用基于 row的格式记录（例如
+sql中使用了非确定性函数，如uuid等）。
+
+锁：
+    MySQL InnoDB存储引擎使用基于多版本的并发控制协议——MVCC (Multi-Version Concurrency Control) 来
+提供非锁定读，即允许读取行的一个快照，而不需要等待访问行上的锁释放。MVCC使得系统可以“读不加锁，读写不冲突”，
+读写不冲突极大的增加了系统的并发性能。
+    在MVCC并发控制中，读操作可以分成两类：快照读 (snapshot read)与当前读 (current read)。快照读，读取的
+是记录的可见版本 (有可能是历史版本)，不用加锁。当前读，读取的是记录的最新版本，并且，当前读返回的记录，都会
+加上锁，保证其他事务不会再并发修改这条记录。
+    快照读：简单的select操作，属于快照读，不加锁。(当然，也有例外，下面会分析)
+        select * from table_name where ?;
+    当前读：特殊的读操作，插入/更新/删除操作，属于当前读，需要加锁。
+        //加共享锁（读锁）
+        select * from table_name where ? lock in share mode;
+        //加排他锁（写锁）
+        select * from table where ? for update;
+        insert into table_name values (…);
+        update table_name set ? where ?;
+        delete from table_name where ?;
+    注：需要在事务中使用锁，手动进入事务：
+            begin;/begin work;/start transaction;
+        也可以关闭自动提交：
+            set autocommit=OFF;
+    产生死锁的情况：
+        进入session1：
+            begin;
+            select * from t where s1=18 for update;
+        进入session2：
+            begin;
+            select * from t where s1=20 for update;
+        再进入session1；
+            update t set s1=21 where s1=20;
+            //被阻塞
+        再进入session2：
+            update t set s1=19 where s1=18;
+            //出现死锁，mysql将会回滚当前事务并推出事务
+            //ERROR 1213 (40001): Deadlock found when trying to get lock; try restarting transaction
+            //session1执行成功
+事务隔离级别：
+    SQL标准定义了4类隔离级别：
+        Read Uncommitted（读未提交），所有事务都可以看到其他未提交事务的执行结果，产生“脏读”，实际应用不多；
+        Read Committed（读已提交），当前事务能看见已经提交事务所做的改变，产生“不可重复读”，是大多数数据库系统的
+                        默认隔离级别；
+        Repeatable Read（可重复读），同一事务多次读取相同数据源时，会看到同样的数据行，但是会产生“幻读”，是MySQL的
+                        默认事务隔离级别（InnoDB引擎已经解决了幻读问题）；
+                        幻读：多次读取一定范围的数据，得到的数据范围不相同，这是其他事务提交insert或delete后的结果。
+        Serializable（串行化），在每个读的数据行上加上共享锁，提交事务释放共享锁后才能继续申请排它锁，导致锁竞争。
+    mysql查询事务隔离级别：
+        select @@tx_isolation;
+    修改事务隔离级别：
+        set session transaction isolation level [read uncommitted]/[read committed]/[repeatable read]/[serializable]

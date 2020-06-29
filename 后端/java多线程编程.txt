@@ -1924,12 +1924,14 @@ tryLock(long timeout, TimeUnit unit)方法则死锁线程状态为TIMED_WAITING�
 失效。嵌套监视器的典型形式：
 		synchronized(monitorX){
 			synchronized(monitorY){
-				which(!status){
+				while(!status){
+                    //wait方法执行后会释放当前线程持有的监视器monitorY，但是不会释放监视器monitorX
 					monitorY.wait();
 				}
 			}
 		}
 		//唤醒
+        //因为monitorX没有被释放，所以这里就会一直等待，导致monitorY永远不会被唤醒。
 		synchronized(monitorX){
 			synchronized(monitorY){
 				status = true;
