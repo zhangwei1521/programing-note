@@ -223,15 +223,33 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
 	flushdb: 删除当前所选数据库的所有键。此命令永远不会失败。（使用需谨慎）
 	flushall: 删除所有数据库的所有键。此命令永远不会失败。（使用需谨慎）
 
-	设置键的过期时间：expire artAB 60	60秒后artAB将过期
-	使用 ttl artAB 检查键距离过期的时间（秒）
-	过期后使用exists artAB 将返回0
+	设置键的过期时间：
+        # 60秒后artAB将过期
+        expire artAB 60	
+	检查键距离过期的时间（秒）
+        ttl artAB
+	过期后使用 exists artAB 将返回0
 	过期时间实际被存为一个unix时间戳，所以在redis重启后将继续有效，同时当访问已过期的键时，redis才去执行删除。
 实际上redis会定期执行一个概率算法去删除过期的键，因此某个过期的键有可能永远都不会被删除。
-	使用persist名取消过期时间设置：persist artAB
+	使用persist名取消过期时间设置：
+        persist artAB
 	将替换或删除键的值时，键的过期时间将被清除，但是修改键的值不会清除过期时间。
-	expireat可以直接指定一个过期时间戳。
-    
+	expireat可以直接指定一个过期时间戳(从1970年开始的秒数)：
+        expireat artAB 1593577719
+    指定毫秒过期时间：
+        # 60秒后artAB将过期
+        pexpire artAB 60000
+    检查过期时间（毫秒）
+        pttl artAB
+    过期时间戳精确到毫秒：
+        pexpireat artAB 1593577719000
+    创建字符串型key-value 时设置过期时间：
+        #使用秒
+        set key value ex seconds
+        setex key seconds valule
+        #使用毫秒
+        set key value px milliseconds
+
 	排序：
 		sadd scores 88 55 89 92 100
 		数字可以直接排序：sort scores	//默认为升序
