@@ -1,0 +1,14 @@
+                                                    kafka实践
+
+启动kafka:
+    1、首先启动zookeeper：
+        zkServer.cmd
+        也可以使用kafka附带的zookeeper：
+        zookeeper-server-start.bat zookeeper.properties
+    2、启动kafka：
+        kafka-server-start.bat server.properties
+使用kafka：
+    建立topic并发送数据：
+        kafka-console-producer.bat --broker-list localhost:9092 --topic test
+    监听topic：
+        kafka-console-consumer.bat  --bootstrap-server localhost:9092 --topic test --from-beginning
