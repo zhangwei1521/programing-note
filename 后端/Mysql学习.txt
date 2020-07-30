@@ -123,6 +123,17 @@ centos7 安装 mariadb 10.4.10:
         mysqld --help --verbose | grep -A 1 'Default options'
         返回：/etc/my.cnf /etc/mysql/my.cnf ~/.my.cnf
 
+管理数据库：(如果数据库名称存在-，则需要使用`数据库名`)
+    创建数据库：
+        create database tempdb;
+        create database `temp-db`;
+    删除数据库：
+        drop database tempdb;
+    查看所有数据库：
+        show databases;
+    使用指定数据库：
+        use `db-name`;
+
 
 mysql数据类型：
 	整数型：
