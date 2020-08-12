@@ -9,43 +9,12 @@ Windows命令：
 修改指定环境变量为空：set JAVA_HOME=
 追加变量内容：set path=%path%;%JAVA_HOME%\bin
 
-PowerShell环境的4种运行权限：
-	Restricted——默认的设置， 不允许任何script运行
-	AllSigned——只能运行经过数字证书签名的script
-	RemoteSigned——运行本地的script不需要数字签名，但是运行从网络上下载的script就必须要有数字签名
-	Unrestricted——允许所有的script运行
-解决powershell下使用curl访问http报错：powershell:Invoke-WebRequest : 请求被中止: 未能创建 SSL/TLS 安全通道
-	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-查看powershell版本：
-    Get-Host | Select-Object Version
-下载 Windows Management Framework 5.15.0 地址：
-    https://www.microsoft.com/en-us/download/details.aspx?id=54616
-PowerShell中安装scoop：
-1、制定执行策略，确认当前用户远程签名范围
-set-executionpolicy remotesigned -s cu
-
-2、安装
-iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
-
-配置全局Scoop目录
-执行命令如下：
-$env:SCOOP_GLOBAL='c:\apps'
-[environment]::setEnvironmentVariable('SCOOP_GLOBAL',$env:SCOOP_GLOBAL,'Machine')
-scoop install -g <app>
-Using Scoop
-
-nginx命令：
-启动：
-start nginx
-停止：
-nginx.exe -s stop
-或
-nginx.exe -s quit
-注：stop是快速停止nginx，可能并不保存相关信息；quit是完整有序的停止nginx，并保存相关信息。
-重启：
-nginx.exe -s reload
-查看版本：
-nginx -v
+列出进程：
+	tasklist
+查找进程：
+	tasklist | findstr chrome
+结束进程:
+	taskkill /im /f nginx.exe
 
 计算下载文件的SHA512哈希值：
 certutil -hashfile .\apache-tomcat-8.5.39-windows-x64.zip SHA512 > SHA512.txt
@@ -67,3 +36,40 @@ certutil支持的算法还有：MD2 MD4 MD5 SHA1 SHA256 SHA384
     mklink /H file01 file0                  //创建硬链接，不能为目录创建硬链接
 目录的符号链接和软链接的区别：使用相对路径创建的符号链接使用相对路径保存链接关系，所以绝对路径变化而相对路径不变化
 不会导致符号链接失效，而软链接总是使用绝对路径保存链接关系，所以绝对路径变化就会导致软链接失效。
+
+
+PowerShell环境的4种运行权限：
+	Restricted——默认的设置， 不允许任何script运行
+	AllSigned——只能运行经过数字证书签名的script
+	RemoteSigned——运行本地的script不需要数字签名，但是运行从网络上下载的script就必须要有数字签名
+	Unrestricted——允许所有的script运行
+解决powershell下使用curl访问http报错：powershell:Invoke-WebRequest : 请求被中止: 未能创建 SSL/TLS 安全通道
+	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+查看powershell版本：
+    Get-Host | Select-Object Version
+下载 Windows Management Framework 5.15.0 地址：
+    https://www.microsoft.com/en-us/download/details.aspx?id=54616
+
+PowerShell中安装scoop：
+1、制定执行策略，确认当前用户远程签名范围
+	set-executionpolicy remotesigned -s cu
+2、安装
+	iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
+3、配置全局Scoop目录，执行命令如下：
+	$env:SCOOP_GLOBAL='c:\apps'
+	[environment]::setEnvironmentVariable('SCOOP_GLOBAL',$env:SCOOP_GLOBAL,'Machine')
+	scoop install -g <app>
+	Using Scoop
+
+nginx命令：
+启动：
+start nginx
+停止：
+nginx.exe -s stop
+或
+nginx.exe -s quit
+注：stop是快速停止nginx，可能并不保存相关信息；quit是完整有序的停止nginx，并保存相关信息。
+重启：
+nginx.exe -s reload
+查看版本：
+nginx -v
