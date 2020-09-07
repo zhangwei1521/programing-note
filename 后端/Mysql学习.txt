@@ -650,7 +650,15 @@ functions:
     select md5(rand());
 使用substring函数从上面的随机字符串中获取小于32位的随机字符串：
     select substring(md5(rand()), 1, 20);
-
+使用count和if函数进行按条件统计：
+	count(*)计数总行数时，包括空值；count(col_name)计数总行数时，忽略空值；
+	if(expr, v1, v2)函数中，如果表达式expr为true（expr<>0 and expr <> NULL），则if()返回v1，否则返回v2
+	
+	select OWNER,count(owner),count(if(task_status='3',owner,null)),count(if((task_status!='3' and deadline<current_date()),owner,null))
+	from task_instance t 
+	where CREATE_TIME>='2020-08-27 16:44:25' and CREATE_TIME<'2020-09-28 16:44:25'
+	group by OWNER
+	
 join语句执行过程：
     sql: 
         SELECT 
