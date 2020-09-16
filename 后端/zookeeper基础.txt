@@ -1,0 +1,62 @@
+                                            zookeeper基础
+    
+    zookeeper是一种开源的高可用、高效的分布式协调服务实现。
+    分布式协调服务是用来对分布式环境中的多个进程进行同步控制的通用解决方案。分布式协调服务的核心是实现分布式锁，用来控制分布式多进程对临界资源的访问。
+    
+    zookeeper数据模型：
+    zookeeper使用树形数据结构，class是DataTree，和标准文件系统非常类似，一个树有一个根节点（/），根节点下有多个子节点，节点称为Znode，class是DataNode。
+Znode需要通过以 / 打头的绝对路径来引用，根节点下有一个默认节点：/zookeeper，是zookeeper用于保存管理数据的节点。
+    每个Znode由3部分组成：
+        data：数据
+        stat：描述节点版本、权限等的状态信息
+        children：子节点
+    Znode节点不应该也不能存储大数据，通常只用于存储KB级别的配置数据，最大只能存储1MB数据。
+    每个Znode都拥有自己的ACL，限定了用户可以对节点进行的操作。
+    每个节点在创建时需要指定节点类型，可以选择是临时节点或永久节点，创建后不能再修改节点类型。临时节点在客户端会话连接断开后就会被自动删除，永久节点则
+不依赖于客户端会话，只能通过客户端显示命令删除。临时节点不能有子节点，临时节点对于所有的客户端都是可见的。   
+    客户端创建节点时可以请求服务端给节点路径添加一个递增计数后缀，这个后缀在父节点下是唯一的，服务端会在节点路径后添加一个10位整数，不足位补0.
+    节点属性记录了节点操作历史等相关信息，包括：
+        cZxid                   节点创建时生成的zxid
+        mZxid                   节点最后一次修改时生成的zxid
+        ctime                   节点创建时间
+        mtime                   节点最后一次修改时间
+        dataVersion             节点版本（节点创建后为0，每次修改加1）
+        cversion                子节点版本（看起来和numChildren没什么不同）
+        aclVersion              acl版本（节点创建后为0，每次修改权限加1）
+        ephermeralOwner         临时节点则为会话ID，否则为0
+        dataLength              数据字节数
+        numChildren             子节点数量
+        pZxid                   没有子节点则为自己的cZxid，否则为最新创建子节点的cZxid
+    zookeeper客户端命令：
+        stat path [watch]
+        set path data [version]
+        ls path [watch]
+        delquota [-n|-b] path
+        ls2 path [watch]
+        setAcl path acl
+        setquota -n|-b val path
+        history
+        redo cmdno
+        printwatches on|off
+        delete path [version]
+        sync path
+        listquota path
+        rmr path
+        get path [watch]
+        create [-s] [-e] path data acl
+        addauth scheme auth
+        quit
+        getAcl path
+        close
+        connect host:port
+    zookeeper客户端api:
+        String create(final String path, byte data[], List<ACL> acl,CreateMode createMode)
+        void delete(final String path, int version)
+        Stat exists(final String path, Watcher watcher)
+        byte[] getData(final String path, Watcher watcher, Stat stat)
+        Stat setData(final String path, byte data[], int version)
+        List<ACL> getACL(final String path, Stat stat)
+        Stat setACL(final String path, List<ACL> acl, int version)
+        List<String> getChildren(final String path, Watcher watcher)
+        void sync(final String path, VoidCallback cb, Object ctx)
+    读操作都可以设置watch，包括：exists()、getChildren()及getData()。
