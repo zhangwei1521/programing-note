@@ -60,3 +60,107 @@ Znode需要通过以 / 打头的绝对路径来引用，根节点下有一个默
         List<String> getChildren(final String path, Watcher watcher)
         void sync(final String path, VoidCallback cb, Object ctx)
     读操作都可以设置watch，包括：exists()、getChildren()及getData()。
+    通过getData()和exists()设置的watch属于数据watch，而getChildren()设置的watch属于孩子watch。
+    通过exists()设置的watch，在观察的Znode被创建、删除或进行数据更新时被触发。
+    通过getData()设置的watch，在观察的Znode被删除或进行数据更新时被触发。
+    通过getChildren()设置的watch，在观察的Znode的子节点被删除或创建，或者观察Znode自身被删除时被触发。
+    设置的watch都是一次性的，当被触发后就失效，后续的事件不会再通知watch，如果需要继续收到通知，需要重新注册。
+
+    zookeeper安装及配置：
+    单机模式：
+        下载后解压解包：
+            tar -zxvf zookeeper-3.4.14.tar.gz
+            mv zookeeper-3.4.14 /usr/local/zookeeper
+        编辑配置文件：
+            cd /usr/local/zookeeper/conf
+            cp zoo_sample.cfg zoo.cfg
+            vim zoo.cfg
+
+            #zoo.cfg内容
+            #发送心跳的时间间隔（微秒）
+            tickTime=2000
+            dataDir=/usr/local/zk/data
+            #事务日志保存路径
+            dataLogDir=/usr/local/zk/dataLog        
+            clientPort=2181
+            #限制连接到Zookeeper的客户端数量，为零或忽略不进行设置将会取消对并发连接的限制
+            maxClientCnxns=2
+        启动：
+            #zoo.cfg是默认的配置文件
+            zkServer.sh start
+        停止：
+            zkServer.sh stop
+    伪集群模式（3个server）：
+        server1：
+            cp zoo.cfg zoo1.cfg
+            vim zoo1.cfg
+
+            # zoo1.cfg
+            tickTime=2000
+            #follower连接并同步leader的初始化时间，以tickTime为单位，超过该时间就表示连接失败
+            initLimit=10
+            #follower同步leader的时间，以tickTime为单位，超过该时间leader就丢弃该follower
+            syncLimit=5
+            dataDir=/usr/local/zk/data_1
+            dataLogDir=/usr/local/zk/dataLog_1        
+            clientPort=2181
+            #server.A=B：C：D   其中，A是集群中server的唯一编号，B是该server的ip，C是server间同步通信的端口，D是用于leader选举的端口
+            server.0=localhost:2287:3387
+            server.1=localhost:2288:3388
+            server.2=localhost:2289:3389
+        
+        server2：
+            cp zoo.cfg zoo2.cfg
+            vim zoo2.cfg
+
+            # zoo2.cfg
+            tickTime=2000
+            initLimit=10
+            syncLimit=5
+            dataDir=/usr/local/zk/data_2
+            dataLogDir=/usr/local/zk/dataLog_2        
+            clientPort=2182
+            server.0=localhost:2287:3387
+            server.1=localhost:2288:3388
+            server.2=localhost:2289:3389
+        
+        server3：
+            cp zoo.cfg zoo3.cfg
+            vim zoo3.cfg
+
+            # zoo3.cfg
+            tickTime=2000
+            initLimit=10
+            syncLimit=5
+            dataDir=/usr/local/zk/data_3
+            dataLogDir=/usr/local/zk/dataLog_3        
+            clientPort=2181
+            server.0=localhost:2287:3387
+            server.1=localhost:2288:3388
+            server.2=localhost:2289:3389
+        
+        启动：
+            zkServer.sh start zoo1.cfg
+            zkServer.sh start zoo2.cfg
+            zkServer.sh start zoo3.cfg
+        查看状态：
+            zkServer.sh status zoo1.cfg
+            zkServer.sh status zoo2.cfg
+            zkServer.sh status zoo3.cfg
+    集群模式（3个server）：
+        每台机器上的配置文件都相同（使用相同的端口，也可以配置使用不同端口）
+            #zoo.cfg
+            tickTime=2000
+            initLimit=10
+            syncLimit=5
+            dataDir=/usr/local/zk/data
+            dataLogDir=/usr/local/zk/dataLog        
+            clientPort=2181
+            server.0=192.168.56.2:2287:3387
+            server.1=192.168.56.3:2287:3387
+            server.2=192.168.56.4:2287:3387
+        在每台集群的dataDir(/usr/local/zk/data)目录创建myid文件，文件内容为zoo.cfg中server.N中的N值。
+        zookeeper启动时会读取这个文件，拿到里面的数据与 zoo.cfg 里面的配置信息比较从而判断到底是那个 server。
+        在每台机器上启动zookeeper：
+            zkServer.sh start
+    

@@ -1,0 +1,62 @@
+                                            linux-sh脚本编程
+    shell是一种应用程序，这个应用程序提供了一个界面，用户通过这个界面访问操作系统内核的服务（主要是启动、管理其他程序）。
+    Ken Thompson的sh是第一种Unix Shell，Windows Explorer是一个典型的图形界面Shell。
+    shell脚本（shell script），是一种为shell编写的脚本程序，是可以被shell理解执行的文本文件。
+    POSIX标准采用sh为其shell标准，在POSIX机器上其路径通常是/bin/sh；GNU Project开发的bash是sh的替代品，其路径通常是/bin/bash；
+在CentOS里，/bin/sh是一个指向/bin/bash的符号链接。
+    通常，在linux系统中shell、sh、bash会被混用，因为大多数linux发行版采用bash作为shell，并把sh作为bash的符号链接，所以不会导致
+理解错误，所以下文中shell就是bash、sh的同义词。
+    
+    第一个shell脚本：first.sh
+        #!/bin/sh
+        cd ~
+        mkdir shell_tut
+        cd shell_tut
+
+        for ((i=0; i<10; i++)); do
+            touch test_$i.txt
+        done
+    第一行的“#!”是一个约定的标记，它告诉系统这个脚本需要什么解释器来执行。
+    可以给这个文件加上执行权限，然后直接执行：
+        chmod +x first.sh
+        ./first.sh
+    直接执行实际就是用shell来读取这个文件，然后shell将根据第一行找到对应的解释器来执行后面的脚本内容，由于这里的shell就是解释器sh，所以可以
+把第一行 #!/bin/sh 删除。如果是其他脚本，如php脚本则不能删除这一行。
+    另一种执行方式是把文件路径作为解释器参数：
+        sh ./first.sh
+    这种执行方式下解释器会忽略第一行，所以可以不写。
+    文件名后缀不影响文件执行，但是通常采用.sh作为shell脚本的文件名后缀，便于识别。
+    
+    定义变量：
+        val_name="hello"
+    使用变量：
+        echo $val_name
+        echo ${val_name}
+    {}用于帮助解释器识别变量的边界，如果解释器可以通过空格等正确识别变量名，则可以省略{}。推荐给所有变量加上花括号，这是个好的编程习惯。
+    已定义的变量，可以被重新定义：
+        val_name="hello"
+        val_name="shell"
+    
+    sh里使用#作为注释标记，每个#注释其所在行所在位置后面的内容，sh没有多行注释，只能每一行加一个#号。
+    想要注释多行内容，也可以把这一段要注释的代码用一对花括号括起来，定义成一个函数，没有地方调用这个函数，这块代码就不会执行，达到和注释一样的效果。
+    
+    sh的字符串可以使用单引号和双引号。
+    单引号里的任何字符都会原样输出，单引号字符串中的变量是无效的，单引号字串中不能出现单引号（对单引号使用转义符后也不行）
+    双引号里可以有变量，双引号里可以出现转义字符。
+    字符串拼接：
+        val1="a"
+        val2="b"$val1"c"
+        val3="d""e"
+        val4="f${val1}"
+        echo $val2
+        echo $val3
+        echo $val4
+    获取字符串长度：
+        echo ${#PATH}
+    提取子字符串:
+        echo ${PATH:0:4}    #提前从index为0开始长度为4的子串
+    查找子字符串：
+        str1="hello shell"
+        echo `expr index "$str1" s`
+        idx_s=`expr index "$str1" s`
+        echo $idx_s
