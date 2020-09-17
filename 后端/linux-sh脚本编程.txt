@@ -60,3 +60,75 @@
         echo `expr index "$str1" s`
         idx_s=`expr index "$str1" s`
         echo $idx_s
+
+    条件判断语句：
+    只有if有执行内容，else没有执行内容时不能写else：
+        if condition
+        then 
+            command1
+            command2
+            ...
+            commandN
+        fi
+    else有执行内容的if...else
+        if condition
+        then 
+            command1
+            command2
+            ...
+            commandN
+        else
+            command
+        fi
+    if...else if...[else]   #else是可选的
+        if condition
+        then 
+            command1
+        elif 
+            command2
+        else
+            command3
+        fi
+    if后的condition如果使用[]，需要注意 [ 是一个程序，所以需要空格分隔： if [ $p1 -eq 0]
+    
+    循环语句
+    for循环：
+        for var in item1 item2 ... itemN
+        do
+            command1
+            command2
+        done
+    可以写在一行内：
+        for var in item1 item2 ... itemN; do command1; command2; done
+    C风格的for循环：
+        for ((EXP1; EXP2; EXP3))
+        do
+            command1
+            command2
+        done
+    while循环
+        while condition
+        do
+            command
+        done
+    无限循环：
+        while :
+        do 
+            command
+        done
+        #或者
+        while true
+        do 
+            command
+        done
+        #或者
+        for (( ; ;))
+        do
+            command
+        done
+    until循环：
+        until condition
+        do 
+            command
+        done 
+    
