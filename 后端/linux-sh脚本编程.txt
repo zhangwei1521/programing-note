@@ -5,7 +5,7 @@
     POSIX标准采用sh为其shell标准，在POSIX机器上其路径通常是/bin/sh；GNU Project开发的bash是sh的替代品，其路径通常是/bin/bash；
 在CentOS里，/bin/sh是一个指向/bin/bash的符号链接。
     通常，在linux系统中shell、sh、bash会被混用，因为大多数linux发行版采用bash作为shell，并把sh作为bash的符号链接，所以不会导致
-理解错误，所以下文中shell就是bash、sh的同义词。
+理解错误，所以下文中shell脚本指的是bash、sh的脚本。
     
     第一个shell脚本：first.sh
         #!/bin/sh
