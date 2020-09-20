@@ -18,117 +18,285 @@
         done
     第一行的“#!”是一个约定的标记，它告诉系统这个脚本需要什么解释器来执行。
     可以给这个文件加上执行权限，然后直接执行：
-        chmod +x first.sh
+        chmod u+x first.sh
         ./first.sh
     直接执行实际就是用shell来读取这个文件，然后shell将根据第一行找到对应的解释器来执行后面的脚本内容，由于这里的shell就是解释器sh，所以可以
 把第一行 #!/bin/sh 删除。如果是其他脚本，如php脚本则不能删除这一行。
     另一种执行方式是把文件路径作为解释器参数：
-        sh ./first.sh
+        sh first.sh
     这种执行方式下解释器会忽略第一行，所以可以不写。
+    因为 . 表示当前shell，所以可以使用 . first.sh 来执行shell脚本，也可以使用 source first.sh执行此脚本文件。
+    还可以使用重定向执行脚本文件：sh < first.sh
     文件名后缀不影响文件执行，但是通常采用.sh作为shell脚本的文件名后缀，便于识别。
     
-    定义变量：
-        val_name="hello"
-    使用变量：
-        echo $val_name
-        echo ${val_name}
-    {}用于帮助解释器识别变量的边界，如果解释器可以通过空格等正确识别变量名，则可以省略{}。推荐给所有变量加上花括号，这是个好的编程习惯。
-    已定义的变量，可以被重新定义：
-        val_name="hello"
-        val_name="shell"
+    变量：
+        定义变量：
+            val_name="hello"
+            #使用关键字 let
+            let val1='shell'
+        使用变量：
+            echo $val_name
+            echo ${val_name}
+        {}用于帮助解释器识别变量的边界，如果解释器可以通过空格等正确识别变量名，则可以省略{}。推荐给所有变量加上花括号，这是个好的编程习惯。
+        已定义的变量，可以被重新定义：
+            val_name="hello"
+            val_name="shell"
+        将一个命令执行结果赋值给变量：
+            dir=`pwd`
+            #或者
+            dir=$(pwd)
     
-    sh里使用#作为注释标记，每个#注释其所在行所在位置后面的内容，sh没有多行注释，只能每一行加一个#号。
-    想要注释多行内容，也可以把这一段要注释的代码用一对花括号括起来，定义成一个函数，没有地方调用这个函数，这块代码就不会执行，达到和注释一样的效果。
+    运算：
+        算数运算：
+            i=0
+            i=`expr $i + 1`
+            i=`expr $i - 1`
+            i=`expr $i \* 4`    #这里*需要转义
+            i=`expr $i / 2`
+            i=`expr $i % 2`
+            i=`expr $i == 0`    #用1表示true，0表示false，通常统一使用 -eq -ne进行数值比较，而用 == 和 != 比较字符串
+            i=`expr $i != 1`    #用1表示true，0表示false
+        数值比较：
+            -lt     litter than
+            -gt     greater than
+            -eq     equals
+            -ne     not equals
+            -ge     greater or equals
+            -le     litter or equals
+        布尔运算：
+            !       取反
+            -o      or      #和||不同在于，前面的表达式成功了仍然会执行后面的表达式
+            -a      and     
+        逻辑运算
+            ||      or      #前边表达式返回成功的话，就不执行后边的表达式，否则执行后面的表达式
+            &&      and     #前边表达式返回成功的话，仍然需要执行后边的表达式，否则不执行后面的表达式
+        
+
+    注释：
+        sh里使用#作为注释标记，每个#注释其所在行所在位置后面的内容，sh没有多行注释，只能每一行加一个#号。
+        ?想要注释多行内容，也可以把这一段要注释的代码用一对花括号括起来，定义成一个函数，没有地方调用这个函数，这块代码就不会执行，达到和注释一样的效果。
     
-    sh的字符串可以使用单引号和双引号。
-    单引号里的任何字符都会原样输出，单引号字符串中的变量是无效的，单引号字串中不能出现单引号（对单引号使用转义符后也不行）
-    双引号里可以有变量，双引号里可以出现转义字符。
-    字符串拼接：
-        val1="a"
-        val2="b"$val1"c"
-        val3="d""e"
-        val4="f${val1}"
-        echo $val2
-        echo $val3
-        echo $val4
-    获取字符串长度：
-        echo ${#PATH}
-    提取子字符串:
-        echo ${PATH:0:4}    #提前从index为0开始长度为4的子串
-    查找子字符串：
-        str1="hello shell"
-        echo `expr index "$str1" s`
-        idx_s=`expr index "$str1" s`
-        echo $idx_s
+    数组：
+        数组可以不显示声明就赋值：
+            city[0]=bj
+            city[2]=gz
+            echo $city          #等价于city[0]
+            echo ${city[0]}
+            echo ${city[1]}     #返回空串
+            echo ${city[2]}
+            echo ${city[8]}     #不会报错，返回空串
+        也可以显示声明数组：
+            declare -a addr
+        组合赋值：
+            city=(bj gz sh hk)
+            echo ${city[0]} ${city[1]}
+        返回数组所有元素：
+            echo ${city[*]}     #没有赋值的单元将被忽略
+        返回数组元素数量：
+            echo ${#city[*]}    #不计算没有赋值的单元
+
+    字符串：
+        sh的字符串可以使用单引号和双引号。
+        单引号里的任何字符都会原样输出，单引号字符串中的变量是无效的，单引号字串中不能出现单引号（对单引号使用转义符后也不行）
+        双引号里可以有变量，双引号里可以出现转义字符。
+        字符串拼接：
+            val1="a"
+            val2="b"$val1"c"
+            val3="d""e"
+            val4="f${val1}"
+            echo $val2
+            echo $val3
+            echo $val4
+        获取字符串长度：
+            echo ${#PATH}
+        提取子字符串:
+            echo ${PATH:0:4}    #提取从index为0开始长度为4的子串
+        查找子字符串：
+            str1="hello shell"
+            echo `expr index "$str1" s`
+            idx_s=`expr index "$str1" s`
+            echo $idx_s
 
     条件判断语句：
-    只有if有执行内容，else没有执行内容时不能写else：
-        if condition
-        then 
-            command1
-            command2
-            ...
-            commandN
+        只有if有执行内容，else没有执行内容时不能写else：
+            if condition
+            then 
+                command1
+                command2
+                ...
+                commandN
+            fi
+        else有执行内容的if...else
+            if condition
+            then 
+                command1
+                command2
+                ...
+                commandN
+            else
+                command
+            fi
+        if...else if...[else]   #else没有内容则不能写
+            if condition
+            then 
+                command1
+            elif 
+                command2
+            else
+                command3
+            fi
+        if后的condition如果使用[]，需要注意 [ 是一个程序，和 test命令具有相同的作用：判断结果，所以需要空格分隔： if [ $p1 -eq 0]
+        
+    #eleventh.sh
+        #!/bin/sh
+        i=10
+        j=20
+        if [ $i -gt 0 -a $i -lt 100 ]
+        then
+                echo "100 > $i > 0"
         fi
-    else有执行内容的if...else
-        if condition
-        then 
-            command1
-            command2
-            ...
-            commandN
+
+        if [[ $i -gt 0 && $i -lt 100 ]]
+        then
+                echo "100 >> $i >> 0"
+        fi
+
+        if [ $i -lt $j ]
+        then
+                echo "$i < $j"
+        fi
+
+        if test $i -gt $j
+        then
+                echo "$i > $j"
+        elif test $i -gt `expr $j \* 3 / 4`
+        then
+                echo `expr $j \* 3 / 4` "< $i < $j "
         else
-            command
+                echo "$i < " `expr $j \* 3 / 4`
         fi
-    if...else if...[else]   #else是可选的
-        if condition
-        then 
-            command1
-        elif 
-            command2
-        else
-            command3
-        fi
-    if后的condition如果使用[]，需要注意 [ 是一个程序，所以需要空格分隔： if [ $p1 -eq 0]
-    
+
     循环语句
-    for循环：
-        for var in item1 item2 ... itemN
-        do
-            command1
-            command2
-        done
-    可以写在一行内：
-        for var in item1 item2 ... itemN; do command1; command2; done
-    C风格的for循环：
-        for ((EXP1; EXP2; EXP3))
-        do
-            command1
-            command2
-        done
-    while循环
-        while condition
-        do
-            command
-        done
-    无限循环：
-        while :
-        do 
-            command
-        done
-        #或者
-        while true
-        do 
-            command
-        done
-        #或者
-        for (( ; ;))
-        do
-            command
-        done
-    until循环：
-        until condition
-        do 
-            command
-        done 
+        for循环：
+            for var in item1 item2 ... itemN
+            do
+                command1
+                command2
+            done
+        可以写在一行内：
+            for var in item1 item2 ... itemN; do command1; command2; done
+
+        #eighth.sh
+            #!/bim/sh
+            file="first.sh second.sh third.sh"
+            for i in $file
+            do
+                pwd
+                cp $i $i.old
+                echo "$i copied"
+            done
+            #
+            for i in $file ; do cp $i $i.new; echo "$i.new create"; done
+        C风格的for循环：
+            for ((EXP1; EXP2; EXP3))
+            do
+                command1
+                command2
+            done
+        while循环
+            while condition
+            do
+                command
+            done
+
+        #ninth.sh
+            #!/bin/sh
+            i=0
+            while [ $i -lt 5 ]
+            do
+                    echo $i
+                    i=`expr $i + 1`
+            done
+            echo i=$i
+        无限循环：
+            while :
+            do 
+                command
+            done
+            #或者
+            while true
+            do 
+                command
+            done
+            #或者
+            for (( ; ;))
+            do
+                command
+            done
+        until循环：
+            until condition
+            do 
+                command
+            done 
+        #tenth/sh
+            #!/bin/sh
+            i=1
+            #while :
+            #while true
+            #for ((;;))
+            until [ $i -gt 100 ]
+            do
+                    echo $i
+                    i=`expr $i + 1`
+            done
+
+    传参：
+        shell脚本内可以使用外部变量，如 PATH，另外执行脚本时指定的参数在脚本内通过 $1 $2 ...引用：
+            $cat > add.sh
+            let sum1=$1+$2
+            echo $sum1
+            let sum2=$x+$y
+            #执行：
+            $chmod a+x add.sh
+            $x=4 y=5 ./add.sh 2 3       #这样创建的变量x和y在脚本执行结束后就不存在了
+            5
+            9
+    
+    使用export
+        每次执行shell脚本，都会创建一个新的shell执行环境。
+        使用export把一个变量导出，导出的变量可以在子shell中访问，否则不能被子shell访问。
+            vim sixth.sh
+            #!/bin/sh
+            val1='hello'
+            val2='linux shell'
+            export val1
+            bash
+        执行这个脚本时，会先创建一个新的shell，然后执行命令，最后一个命令bash将会创建一个子shell，在此子shell中执行：
+            echo $val1
+            hello
+            echo $val2
+            //返回为空
+            exit
+            echo $val1
+            //返回为空
+    
+    函数
+        声明函数有三种语法：
+            #!/bin/sh
+            show1(){
+                echo $1 $2;
+            }
+            function show2(){
+                echo $1 $2;
+            }
+            function show3 {
+                echo $1 $2;
+            }
+            H="hello "
+            W="world "
+            show1 $H $W
+            show2 $H $W
+            show3 $H $W
+    
+        
     

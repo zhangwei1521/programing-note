@@ -590,10 +590,14 @@ work.xml，即9个规则集。public.xml内容入下：
 	示例：
 		# 列出当前的环境变量值
 		export -p
+		#或者
+		env
 		# 自定义环境变量
 		export MYENV
 		# 赋值
 		export MYENV=7
+	linux登录使用一个shell，登录后为每个用户创建一个新的shell。创建用户shell应该不是直接完成的，而是层级式创建，即每执行一个profile、
+sh配置文件就在上一级shell下建立一个新的shell，所以在profile等配置脚本文件中需要通过export来导出变量，这样才能在子shell中访问这些变量。
     
     使用cat创建文件：
         #使用b作为结束
