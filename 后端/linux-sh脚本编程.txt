@@ -146,7 +146,17 @@
                 command3
             fi
         if后的condition如果使用[]，需要注意 [ 是一个程序，和 test命令具有相同的作用：判断结果，所以需要空格分隔： if [ $p1 -eq 0]
-        
+        可用参数：
+            -z string 测试指定字符是否为空，空着真，非空为假
+            -n string 测试指定字符串是否为不空，空为假 非空为真
+            -e FILE 测试文件是否存在
+            -f file 测试文件是否为普通文件
+            -d file 测试指定路径是否为目录
+            -r file 测试文件对当前用户是否可读
+            -w file 测试文件对当前用户是否可写
+            -x file 测试文件对当前用户是都可执行
+            -z  是否为空  为空则为真
+            -a  是否不空
     #eleventh.sh
         #!/bin/sh
         i=10
@@ -208,6 +218,7 @@
             do
                 command
             done
+            while [ -h "FILE"] 中 -h用于检查FILE是否存在且是否是符号链接
 
         #ninth.sh
             #!/bin/sh
