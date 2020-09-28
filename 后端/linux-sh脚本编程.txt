@@ -32,8 +32,6 @@
     变量：
         定义变量：
             val_name="hello"
-            #使用关键字 let
-            let val1='shell'
         使用变量：
             echo $val_name
             echo ${val_name}
@@ -45,6 +43,12 @@
             dir=`pwd`
             #或者
             dir=$(pwd)
+        注：在 Bash Shell 中，如果不特别指明，每一个变量的值都是字符串，无论给变量赋值时有没有使用引号，值都会以字符串的形式存储。
+            echo 2+3        #2+3
+            val1=2
+            val2=3
+            val3=$val1+$val2
+            echo $val3      #2+3
     
     运算：
         算数运算：
@@ -70,6 +74,25 @@
         逻辑运算
             ||      or      #前边表达式返回成功的话，就不执行后边的表达式，否则执行后面的表达式
             &&      and     #前边表达式返回成功的话，仍然需要执行后边的表达式，否则不执行后面的表达式
+        整数运算除了使用expr外，还可以使用(())、let、$[]、bc，其中(())、let、$[]由shell直接支持，而bc是一个外部程序。
+        shell不支持小数运算，需要使用bc来实现。
+            #计算赋值
+            ((a=10+20))((b=20+30))
+            ((a=10+20,b=20+20))
+            a=$((10+20))
+            c=$((a>10 && b==100))
+            echo $c
+            let d=a+b e=a-b
+            echo $d
+            echo $e
+            echo $[a+b]
+            a=10
+            b=3
+            f=`echo "scale=9; $a / $b" | bc`    #scale指定精度，但是只在除法中有效
+            echo $f
+            f=`echo "1.1 * 1.1" | bc`
+            echo $f
+
         
 
     注释：
@@ -309,5 +332,22 @@
             show2 $H $W
             show3 $H $W
     
-        
-    
+    常量BASH_SOURCE
+    shell脚本中使用 $0 表示脚本source的名称，即如果脚本是被其他脚本调用，则其source为调用脚本，如果是直接被sh执行则为脚本自己的名称。
+    shell脚本中常用 ${BASH_SOURCE-$0} 来获取当前脚本名称。
+    t2.sh
+        #!/bin/sh
+        echo "\$0 => " $0
+        echo "\$BASH_SOURCE => " $BASH_SOURCE
+        echo ${BASH_SOURCE-$0}
+        source ./t3.sh
+    t3.sh
+        #!/bin/sh
+        echo "\$0 => " $0
+        echo "\$BASH_SOURCE => " $BASH_SOURCE
+        echo ${BASH_SOURCE-$0}
+    BASH_SOURCE 本质是一个数组，它的第一个元素是当前脚本的名称，而且 BASH_SOURCE 等价于 BASH_SOURCE[0]
+
+    常量FUNCNAME
+    FUNCNAME 也是一个数组，用在函数中，其第一个元素是当前函数的名称，而且 FUNCNAME 等价于 FUNCNAME[0]
+     
