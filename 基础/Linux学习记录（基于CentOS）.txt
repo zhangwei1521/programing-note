@@ -746,6 +746,15 @@ sh配置文件就在上一级shell下建立一个新的shell，所以在profile�
         echo $x $y
         awk -v val=$x '{print $1,$2,$3,$4+val,$5+ENVIRON["y"]}' OFS='\t' score.txt
 
+	安装ntpdate
+		yum install ntpdate
+	同步时间
+		ntpdate cn.pool.ntp.org
 
+
+	获取系统时间：
+		date
+	获取系统时间戳（不计入闰秒，即跳过闰秒，现在都是减去闰秒）：
+		date +%s
 
 	

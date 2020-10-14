@@ -874,7 +874,7 @@ sql中使用了非确定性函数，如uuid等）。
                 SUBQUERY：在select 或 where列表中包含了子查询；
                 UNION：出现在union之后的第二个select，被标记为union；
                 UNION RESULT：执行union操作；这一行通常没有id，table显示<unionx,y>，x、y是对应的查询id，所以这一行应该是在x、y后执行。
-                DERIVED：在from列表中包含的子查询被标记为derived（衍生），把结果放在零时表里,子查询中出现在union之前的第一个select，也被标记为derived；
+                DERIVED：在from列表中包含的子查询被标记为derived（衍生），把结果放在临时表里,子查询中出现在union之前的第一个select，也被标记为derived；
             使用子查询：
                 explain select * from actor where actor_id=(select a.actor_id from actor a where a.first_name like '%PENELOPE%' limit 0,1);
             使用union：
