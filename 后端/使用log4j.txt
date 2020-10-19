@@ -85,6 +85,41 @@
 	如果将log level设置在某一个级别上，那么比此级别优先级高的log都能打印出来。例如，如果设置优先级为WARN，那么OFF、FATAL、
 ERROR、WARN 4个级别的log能正常输出，而INFO、DEBUG、TRACE、 ALL级别的log则会被忽略。Log4j建议只使用四个级别，优先级从高到低分别是ERROR、WARN、INFO、DEBUG。
 
+	log4j2.x
+	log4j的1.x版本最后一个版本是1.2.17，从2.0版本开始，log4j更换了包名，新的maven坐标如下：
+		<dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.13.3</version>
+        </dependency>
+	log4j2.x使用log4j2.xml作为配置文件。
+	log4j2.xml 示例如下：
+		<?xml version="1.0" encoding="UTF-8"?>
+		<Configuration status="WARN">
+			<!-- Define custom levels before using them for filtering below. -->
+			<CustomLevels>
+				<CustomLevel name="NOTICE" intLevel="450" />
+				<CustomLevel name="VERBOSE" intLevel="550" />
+			</CustomLevels>
+
+			<Appenders>
+				<Console name="Console" target="SYSTEM_OUT">
+					<PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [%t] %-7level %logger{36}.%M - %msg%n"/>
+				</Console>
+				<File name="MyFile" fileName="logs/app.log">
+					<PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [%t] %-7level %logger{36}.%M - %msg%n"/>
+				</File>
+			</Appenders>
+			<Loggers>
+				<Root level="TRACE">
+					<AppenderRef ref="Console" level="NOTICE" />
+					<AppenderRef ref="MyFile" level="ERROR" />
+				</Root>
+			</Loggers>
+		</Configuration>
+	获取Logger对象：
+		private static final Logger LOGGER = LogManager.getLogger();
+
 	SLF4J：简单日志门面（Simple Logging Facade for Java），不是具体的日志解决方案，它只服务于各种各样的日志系统。
 	slf4j定义了一组日志接口，使用slf4j时还需要引入其他具体的实现了slf4j接口的日志框架：logback、log4j等
 	slf4j的maven坐标：

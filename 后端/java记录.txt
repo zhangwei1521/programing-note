@@ -908,7 +908,7 @@ Object引用所有类型对象，这样的方式并不安全，比如手动类�
 	Gen类定义方法 public double sum2(Stats<?> stats){//对stats中的数组的元素先开方再求和}
 	这里如果使用NegNumber作为泛型类型的对象是可以传入sum2方法的，但是会出现错误。
 	使用有界的通配符： public double sum2(Stats<? extends PosNumber> stats){//对stats中的数组的元素先开方再求和}
-	也可以定义通配符下界： <? super subClass> //这里不包括subClass
+	也可以定义通配符下界： <? super subClass> //包括subClass
 	泛型方法：<type-param-list> ret-type method-name(param-list){...}
 	这里泛型参数类型声明需要放在返回值类型前面。泛型方法可以是静态的，也可以是非静态的。
 	泛型构造函数：可以在非泛型类中定义泛型构造方法：
