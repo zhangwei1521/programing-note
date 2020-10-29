@@ -924,4 +924,37 @@ sql中使用了非确定性函数，如uuid等）。
             3.Using filesort 使用文件排序，使用非索引列进行排序时出现，非常消耗性能，尽量优化。
             4.Using temporary 使用了临时表，常见于order by 和 group by。
 
-    
+    有一张calendar表，表结构如下：
+        CREATE TABLE `calendar` (
+        `date` date NOT NULL COMMENT '日期',
+        `work` tinyint(1) NOT NULL COMMENT '是否为工作日',
+        `dep_id` varchar(128) DEFAULT NULL COMMENT '部门ID'
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='公司日历表'
+    需要查出指定部门今天以后的工作日，如果该部门在某日没有工作日历记录，则使用该日dep_id为空的记录作为工作日历记录。
+    第一种sql实现：
+        select date,dep_id,work
+        from calendar b
+        where work=1 and date>current_date 
+            and (if(b.dep_id='9f3ff336f6f84bc582a5a5d830192ac7',
+                1=1,
+                (if((select count(0) from calendar a where a.date=b.date and a.dep_id='9f3ff336f6f84bc582a5a5d830192ac7')=0,b.dep_id is null,1=2)))
+            )
+        order by date
+        这条sql中where中的子查询依赖了外部查询结果，所以性能很差，使用explain查看执行计划可以看到 where中的子查询的select_type是DEPENDENT SUBQUERY。
+    第二种sql实现：
+        select date,work,dep_id
+            from calendar
+            where work=1 and date>current_date 
+                and dep_id='9f3ff336f6f84bc582a5a5d830192ac7'
+        union
+        select date,work,dep_id
+        from calendar a
+        where a.work=1 and date>current_date 
+            and a.dep_id is null and a.date not in 
+            (
+                select date
+                from calendar
+                where date>current_date 
+                and dep_id='9f3ff336f6f84bc582a5a5d830192ac7'
+            )
+        order by date
