@@ -1,0 +1,45 @@
+                                solr基础
+    安装solr：
+        1.下载 solr 8.2
+            https://archive.apache.org/dist/lucene/solr/8.2.0/solr-8.2.0.zip
+            或者
+            https://archive.apache.org/dist/lucene/solr/8.2.0/solr-8.2.0.tgz
+        2.解压下载的solr压缩包
+            unzip solr-8.2.0.zip
+            或者
+            tar zxf solr-8.2.0.tgz
+    启动solr:
+        cd  solr-8.2.0
+        # 默认使用 standalone 模式，默认监听 8983 端口
+        bin/solr start
+
+        # 使用 SolrCloud 模式启动，可以使用 solr提供的 cloud 交互式示例创建节点
+        # bin/solr start -e cloud
+        # 手动创建node目录
+        # mkdir -p demo/cloud/node1/solr
+        # mkdir -p demo/cloud/node2
+        # cp server/solr/solr.xml demo/cloud/node1/solr/
+        # cp server/solr/zoo.cfg  demo/cloud/node1/solr/
+        # cp demo/cloud/node1/solr demo/cloud/node2/
+        # 启动 node1
+        # bin/solr start -c -p 8983 -s demo/cloud/node1/solr
+        # 启动 node2
+        # bin/solr start -c -p 7574 -s demo/cloud/node2/solr -z localhost:9983
+
+        # 创建 core/collection (standalone模式创建core，SolrCloud模式创建collection)
+        bin/solr create -c mycore
+        # SolrCloud模式下创建 collection 可指定 shard 和 replicas
+        # bin/solr create -c mycollection1 -s 2 -rf 2 
+
+        # 查看状态(也可以通过浏览器访问 http://localhost:8983/solr 查看solr信息)
+        bin/solr status
+    建立索引：
+        # 使用 solr 为文档建立索引(这里使用solr提供的实例数据集)
+        bin/post -c mycore example/exampledocs/*
+        # bin/post -c mycollection1 example/exampledocs/*
+    执行搜索：
+        # 浏览器访问 http://localhost:8983/solr/mycore/query 页面，在此页面中填写查询内容和其他参数，然后发起搜索
+        # 通过curl 发起搜索
+        curl http://localhost:8983/solr/mycore/select?q=*:*
+
+
