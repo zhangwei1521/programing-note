@@ -27,6 +27,8 @@
         # bin/solr start -c -p 7574 -s demo/cloud/node2/solr -z localhost:9983
 
         # 创建 core/collection (standalone模式创建core，SolrCloud模式创建collection)
+        # 可以使用 -d 参数指定创建的 core/collection的配置文件目录（包括solrconfig.xml、managed-schema等配置文件），
+        # 默认为 _default，位于server/solr/configsets下，SolrCloud模式下指定的配置文件目录将被上传到zookeeper中
         bin/solr create -c mycore
         # SolrCloud模式下创建 collection 可指定 shard 和 replicas
         # bin/solr create -c mycollection1 -s 2 -rf 2 
@@ -41,5 +43,22 @@
         # 浏览器访问 http://localhost:8983/solr/mycore/query 页面，在此页面中填写查询内容和其他参数，然后发起搜索
         # 通过curl 发起搜索
         curl http://localhost:8983/solr/mycore/select?q=*:*
+
+    solr目录结构说明：
+        SOLR_HOME
+            bin
+            server
+                solr            # 默认的工作目录，保存索引数据
+                    solr.xml
+                    zoo.cfg
+                    core1
+                        conf    # -d 指定的配置文件目录内容被复制这里
+                        core.properties
+                        data    # 保存索引及其他元数据
+                    core2
+                solr-webapp     # 处理请求的代码目录
+            example             # 示例
+            contrib
+            dist
 
 

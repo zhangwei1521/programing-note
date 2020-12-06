@@ -359,8 +359,9 @@ defaults 包含rw、exec、auto、nouser、async
 	RPM包是预先在Linux上编译并打包的文件，安装起来非常快捷
 	软件为什么需要安装：安装的目的是把执行程序放到执行路径下来，把配置文件放到程序可读位置，把需要的链接库放到可
 找到的位置，以及配置一些需要预先配置的参数等。如果一个程序不需要这些准备就可以执行，就不需要安装了。
-	挂载安装linux的光盘：mount /dev/cdrom /mnt
-	查看安装光盘里的rpm包：ls /mnt/Packages | head
+	挂载安装linux的光盘：mount /dev/cdrom /mnt/cdrom		#如果没有/mnt/cdrom目录，将会报错，直接创建这个目录就可以
+	#卸载挂载的光盘：umount -v /mnt/cdrom
+	查看安装光盘里的rpm包：ls /mnt/cdrom/Packages | head
 	rpm包：	abrt-2.1.11-48.el7.centos.x86_64.rpm
 			包名 版本号  发布版本号	  运行平台
 	安装：rpm -ivh libjpeg-turbo-devel-1.2.90-5.el7.x86_64.rpm
@@ -382,13 +383,13 @@ defaults 包含rw、exec、auto、nouser、async
 	卸载：yum remove name（卸载时最好不使用-y，防止卸载了某些依赖的重要的包）
 	升级：yum update name 
 	使用光盘作为yum源：
-	先挂载光盘：mount /dev/cdroom /mnt
+	先挂载光盘：mount /dev/cdroom /mnt/cdrom
 	删除/etc/yum.repos.d目录下的文件：cp -r /etc/yum.repos.d /etc/yum.repos.bak
 		rm -rf /etc/yum.repos.d/*
 	在/etc/yum.repos.d创建新文件：dvd.repo:  vim /etc/yum.repos.d/dvd.repo
 		[dvd]
 		name=install dvd
-		baseurl=file:///mnt
+		baseurl=file:///mnt/cdrom
 		enabled=1
 		gpgcheck=0
 	刷新repos生成缓存：yum makecache
@@ -409,6 +410,9 @@ defaults 包含rw、exec、auto、nouser、async
 		执行：make install
 	yum-config-manager: command not found
 	这个是因为系统默认没有安装这个命令，这个命令在yum-utils 包里，可以通过命令yum -y install yum-utils 安装就可以了。
+	安装scl仓库：
+		yum install -y centos-release-scl
+
 	
 	kill 命令
 	执行一个 kill 命令，实际上是发送一个信号给系统，让系统去终结指定的应用。使用 kill -l 可以查看可以使用的信号，常用的
@@ -533,8 +537,10 @@ work.xml，即9个规则集。public.xml内容入下：
 			rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
 		2、安装yum源，使用elrepo源
 			rpm -Uvh http://www.elrepo.org/elrepo-release-7.0-3.el7.elrepo.noarch.rpm
+		   查看当前可以升级到的内核版本：
+		    yum --disablerepo="*" --enablerepo="elrepo-kernel" list available
 		3、安装内核
-			yum --enablerepo=elrepo-kernel install kernel-ml-devel kernel-ml -y
+			yum --enablerepo=elrepo-kernel install kernel-ml-devel.x86_64 kernel-ml.x86_64 -y
 		4、更改内核默认启动顺序
 			grub2-set-default 0
 		5、重启
@@ -546,7 +552,8 @@ work.xml，即9个规则集。public.xml内容入下：
     查看其他内核：
         rpm -q kernel
     查看当前启动时默认内核：
-        grub2-editenv list
+        #grub2-editenv list
+		awk -F\' '$1=="menuentry " {print $2}' /etc/grub2.cfg
     修改启动时默认内核：
         grub2-set-default "CentOS Linux (5.4.3-1.el7.elrepo.x86_64) 7 (Core)"
     删除旧的内核（如果不删除，旧内核会继续占用/boot空间）：
@@ -800,4 +807,8 @@ sh配置文件就在上一级shell下建立一个新的shell，所以在profile�
 		scp c1:~/file2 ./
 	下载目录：
 		scp -r c1:~/dir2 ./
+
+	开机时输出的信息会被内核保存在 /var/log/ 下的 dmesg 文件中，使用 dmesg 命令也可以查看这些信息。
+	使用 dmesg | grep -i virtual 可查看当前Linux系统是运行在虚拟机上还是物理机上，在此命令输出中，如果有 Booting paravirtualized kernel on KVM，则表示运行环境位KVM，如果是
+Booting paravirtualized kernel on bare hardware，则表示运行在物理机上。
 	
