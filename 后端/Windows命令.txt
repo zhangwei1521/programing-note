@@ -73,3 +73,26 @@ nginx.exe -s quit
 nginx.exe -s reload
 查看版本：
 nginx -v
+
+nginx简单bat脚本：ng.bat
+    ::ng.bat
+    @echo off
+
+    if "%1"=="start" (
+        echo %1 nginx 
+        start nginx.exe
+    )
+    if "%1"=="stop" (
+        echo %1 nginx
+        nginx.exe -s quit
+    )
+    if "%1"=="reload" (
+        echo %1 nginx
+        nginx.exe -s reload
+    )
+    if "%1"=="check" (
+        nginx.exe -t
+    )
+    if "%1"=="status" (
+        tasklist | findstr nginx
+    )
