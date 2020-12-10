@@ -14,7 +14,7 @@ Windows命令：
 查找进程：
 	tasklist | findstr chrome
 结束进程:
-	taskkill /im /f nginx.exe
+	taskkill /f /im nginx.exe
 
 计算下载文件的SHA512哈希值：
 certutil -hashfile .\apache-tomcat-8.5.39-windows-x64.zip SHA512 > SHA512.txt
@@ -96,3 +96,10 @@ nginx简单bat脚本：ng.bat
     if "%1"=="status" (
         tasklist | findstr nginx
     )
+
+查看cmd窗口编码：
+    chcp
+修改cmd窗口编码为UTF-8：
+    chcp 65001
+修改cmd窗口编码为GBK：
+    chcp 936

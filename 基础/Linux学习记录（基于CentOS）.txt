@@ -812,3 +812,56 @@ sh配置文件就在上一级shell下建立一个新的shell，所以在profile�
 	使用 dmesg | grep -i virtual 可查看当前Linux系统是运行在虚拟机上还是物理机上，在此命令输出中，如果有 Booting paravirtualized kernel on KVM，则表示运行环境位KVM，如果是
 Booting paravirtualized kernel on bare hardware，则表示运行在物理机上。
 	
+	使用openssl自签CA证书并使用自签证书签发次级证书
+	1.生成CA密钥
+		openssl genrsa -out caroot.key 2048
+	2.生成CA证书请求文件
+		openssl req -new -key caroot.key -out caroot.csr
+		#查看证书请求文件
+		openssl req -in caroot.csr -noout -text
+	3.自签CA证书
+		openssl x509 -req -extensions v3_ca -signkey caroot.key -in caroot.csr -out caroot.crt
+	4.生成客户密钥
+		openssl genrsa -out sps1.key 2048
+	5.生成客户证书请求文件
+		openssl req -new -key sps1.key -out sps1.csr
+	6.使用CA证书签发客户证书
+		#签发次级证书需要读openssl.cnf文件，Centos7中位于/etc/pki/tls/目录下，默认配置中openssl需要使用/etc/pki/CA/index.txt 、/etc/pki/CA/serial文件和/etc/pki/CA/newcerts目录
+		#如果不存在这几个文件和目录就创建
+		# touch /etc/pki/CA/index.txt
+		# echo '01' > /etc/pki/CA/serial
+		# mkdir /etc/pki/CA/newcerts
+		#签发证书需要知道客户的身份，可以在openssl.cnf文件中配置，这里把这个文件复制到/root/ssl目录下，并把/etc/pki/CA复制到/root/ssl目录下
+		#修改/root/ssl/openssl.cnf：
+			#openssl.cnf
+			#修改dir
+			dir = /root/ssl/CA
+			#在 [ v3_req ]下增加
+			subjectAltName = @alt_names
+			#增加[alt_names]
+			[alt_names]
+			DNS.1 = localhost
+		使用/root/ssl/openssl.cnf签发证书：
+			openssl x509 -req -days 365 -in sps1.csr -CAkey caroot.key -CA caroot.crt -CAcreateserial -out sps1.crt -extensions v3_req -extfile openssl.cnf
+		也可以使用单独的文件：
+			#dnsext.cnf
+			authorityKeyIdentifier=keyid,issuer
+			basicConstraints=CA:FALSE
+			keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+			subjectAltName = @alt_names
+			[alt_names]
+			DNS.1 = zhangwei.org
+		签发：
+			openssl x509 -req -days 365 -in sps1.csr -CAkey caroot.key -CA caroot.crt -CAcreateserial -out sps1.crt -extfile dnsext.cnf
+			#也可以使用openssl ca 签发
+			openssl ca -policy policy_anything -days 365 -cert caroot.crt -keyfile caroot.key -in sps2.csr -out sps2.crt -extfile dnsext.cnf
+	7.查看证书
+		openssl x509 -in sps1.crt -nonout -text
+
+	locate命令是mlocate提供的命令，作用和find -name相同，但是它是通过检索索引库文件而不是搜索目录查找，所以效率更高。
+	安装mlocate:
+		yum install -u mlocate
+	手动更新索引库(默认为/var/lib/mlocate/mlocate.db，每天自动更新)：
+		updatedb
+	查询文件位置：
+		locate openssl.cnf
