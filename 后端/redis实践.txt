@@ -3,20 +3,20 @@
 	Redis是一个基于内存的轻量级键值数据库，或者说是一个数据结构服务器。Redis在内存中中实现了多种数据
 结构的存储，并提供了操作这些数据结构的API。
 	安装Redis：
-	 1、mkdir -p /mytools/redis
-	 2、cd /mytools/redis 
+	 1、mkdir -p /usr/local/redis
+	 2、cd /usr/local/download 
 		wget http://download.redis.io/releases/redis-4.0.1.tar.gz
 	 3、tar xzvf redis-4.0.1.tar.gz	
 		cd redis-4.0.1
-	 4、mkdir /mytools/redis/conf
-		cp redis.conf /mytools/redis/conf/
+	 4、mkdir /usr/local/redis/conf
+		cp redis.conf /usr/local/redis/conf/
 	 5、cd deps
 		make hiredis lua jemalloc linenoise
 		cd ..
 	 6、make
-	 7、make PREFIX=/mytools/redis install
+	 7、make PREFIX=/usr/local/redis install
 	Redis的版本号规则：major.minor.patch
-	/mytools/redis/bin目录下的可执行文件：
+	/usr/local/redis/bin目录下的可执行文件：
 		redis-server:	redis服务端
 		redis-cli:		redis命令行工具
 		redis-sentinel: redis-server的软链接
@@ -25,7 +25,7 @@
 		redis-benchmark:	redis基准/性能测试工具
 	
 	使用默认配置启动一个Redis实例：
-		cd /mytools/redis
+		cd /usr/local/redis
 		bin/redis-server
 	使用指定配置文件启动一个Redis实例：
 		bin/redis-server conf/redis.conf

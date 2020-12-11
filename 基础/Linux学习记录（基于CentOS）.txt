@@ -375,7 +375,8 @@ defaults 包含rw、exec、auto、nouser、async
 	查询某个文件属于哪个rpm包：rpm -qf filename
     查看系统自带的jdk：rpm -qa | grep java
     强制卸载已安装的jdk rpm包：rpm -e --nodeps java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64
-	使用rpm安装需要自己处理依赖问题，也就是说需要自己先手动安装依赖包，才能安装当前包
+	使用rpm安装需要自己处理依赖问题，也就是说需要自己先手动安装依赖包，才能安装当前包。
+	
 	yum工具可以联网下载需要的rpm包，同时会自动解决依赖包的安装
 	列出所有的rpm包资源：yum list | head
 	搜索rpm包：yum search vim 也可以使用：yum list | grep 'vim'
@@ -410,9 +411,25 @@ defaults 包含rw、exec、auto、nouser、async
 		执行：make install
 	yum-config-manager: command not found
 	这个是因为系统默认没有安装这个命令，这个命令在yum-utils 包里，可以通过命令yum -y install yum-utils 安装就可以了。
+
+	centos默认使用的软件库提供的软件通常都是经过充分测试的版本，因此版本比较旧，scl软件仓库则较新的软件版本。
 	安装scl仓库：
 		yum install -y centos-release-scl
-
+	安装scl工具：
+		yum install -u scl
+	查看base库中的gcc版本：
+		yum --disablerepo=\* --enablerepo=base info gcc
+	查看scl库中gcc 8.x的最新版本：
+		yum --disablerepo=\* --enablerepo=centos-sclo-rh info devtoolset-8-gcc.x86_64
+	安装devtoolset-8，其中包含gcc等一系列软件：
+		yum install devtoolset-8
+	也可以直接安装gcc 8.x，scl允许安装多个不同版本的软件，这里安装devtoolset-9-gcc.x86_64
+		yum install devtoolset-9-gcc.x86_64
+	scl库的软件不会被安装到/usr/bin等路径，所以不能直接使用，需要使用 scl enable命令进入新的shell环境：
+		scl enable devtoolset-8 bash
+	如果要把新版本的gcc加入默认的shell环境中，可以新增文件：/etc/profle.d/gcc.sh
+		#!/bin/bash
+		source /opt/rh/devtoolset-8/enable
 	
 	kill 命令
 	执行一个 kill 命令，实际上是发送一个信号给系统，让系统去终结指定的应用。使用 kill -l 可以查看可以使用的信号，常用的
@@ -857,6 +874,8 @@ Booting paravirtualized kernel on bare hardware，则表示运行在物理机上
 			openssl ca -policy policy_anything -days 365 -cert caroot.crt -keyfile caroot.key -in sps2.csr -out sps2.crt -extfile dnsext.cnf
 	7.查看证书
 		openssl x509 -in sps1.crt -nonout -text
+		指定格式：openssl x509 -in iciba.cer -inform der -text -noout
+
 
 	locate命令是mlocate提供的命令，作用和find -name相同，但是它是通过检索索引库文件而不是搜索目录查找，所以效率更高。
 	安装mlocate:
