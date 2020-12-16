@@ -21,7 +21,7 @@ Znode需要通过以 / 打头的绝对路径来引用，根节点下有一个默
         ctime                   节点创建时间
         mtime                   节点最后一次修改时间
         dataVersion             节点版本（节点创建后为0，每次修改加1）
-        cversion                子节点版本（看起来和numChildren没什么不同）
+        cversion                子节点版本（子节点修改次数）
         aclVersion              acl版本（节点创建后为0，每次修改权限加1）
         ephermeralOwner         临时节点则为会话ID，否则为0
         dataLength              数据字节数
@@ -161,6 +161,7 @@ Znode需要通过以 / 打头的绝对路径来引用，根节点下有一个默
             server.2=192.168.56.4:2287:3387
         在每台集群的dataDir(/usr/local/zk/data)目录创建myid文件，文件内容为zoo.cfg中server.N中的N值。
         zookeeper启动时会读取这个文件，拿到里面的数据与 zoo.cfg 里面的配置信息比较从而判断到底是那个 server。
+        这里配置了两个三个端口，2181用于客户端通信，2287用于集群内server之间通信，3387用于集群内leader选举。
         在每台机器上启动zookeeper：
             zkServer.sh start
     

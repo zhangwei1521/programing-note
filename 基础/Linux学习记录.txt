@@ -1,4 +1,4 @@
-										Linux学习记录（基于CentOS）
+										Linux学习记录
 	Linux是一个操作系统内核，RHEL、CentOS、Ubuntu等发行版是将linux内核和各种GNU工具打包在一起后发布的完整操作系统。几种
 常见linux发行版：早期 Red Hat --> Fedora		Debian -->		Slackware -->
 						|						   |				|
@@ -444,6 +444,7 @@ defaults 包含rw、exec、auto、nouser、async
 		kill -9 12345
 	可以在同一时间kill多个进程：
 		kill -9 12345 8023
+	kill -0 pid 不发送任何信号，但是系统会进行错误检查,如果进程存在就返回1，否则返回0
 	pkill 命令使用进程名执行 kill ，它使用扩展的正则表达式和其它匹配方式匹配进程名称然后执行 kill，为了避免 kill 掉错误的
 进程，通常应该先执行 pgrep -l [进程名] 来确认匹配进程的名称。
 		pgrep -l nginx
@@ -884,3 +885,57 @@ Booting paravirtualized kernel on bare hardware，则表示运行在物理机上
 		updatedb
 	查询文件位置：
 		locate openssl.cnf
+	
+	alpine linux
+		网络配置：vi /etc/network/interface
+			#本地环回网卡
+			auto lo
+			iface lo inet loopback
+
+			#NAT网卡
+			auto eth0
+			iface eth0 inet dhcp
+					hostname a1
+
+			#HostOnly网卡
+			auto eth1
+			iface eth1 inet static
+					address 192.168.56.3
+					netmask 255.255.255.0
+					gateway 192.168.56.1
+			#从路由表中删除eth1作为默认网关，因为这个网卡不能访问外网
+			up route del default eth1
+		重启网络
+			ip addr flush eth0
+			ip addr flush eth1
+			/etc/init.d/networking restart
+		关机
+			poweroff
+		安装glic:(JDK依赖glibc)
+			wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub
+			wget -O /usr/local/download/glibc-2.32-r0.apk https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.32-r0/glibc-2.32-r0.apk
+			apk add glibc-2.32-r0.apk
+
+	重定向：
+		cmd > a	等同于 cmd 1> a1		表示将标准输出重定向到文件a
+		cmd 2> b 						表示将标准错误重定向到文件b
+		cmd > a 2>&1					表示将标准错误重定向到标准输出，标准输出重定向到文件a
+		eg：echo aa > a
+			cat -h 2> b
+			cat -h > b 2>&1
+	
+	正则表达式：
+		标准元字符：
+			^	行首
+			$	行尾
+			.	任意字符
+			[a]		字符a
+			[a|b]	字符a或字符b
+			[0-9]	0-9中的任意数字
+			*		数量限定，任意多个前置匹配
+			{n,}	数量限定，至少n个前置匹配，需转义使用：\{1,\}
+			\1		第一个匹配组
+		posix方括号字符集：
+			[:space:]	空白字符
+		示例：
+			grep "^[[:space:]]\{1,\}" test.txt
