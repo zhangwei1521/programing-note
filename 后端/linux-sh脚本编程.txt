@@ -325,7 +325,7 @@
     执行过程中读取输入：read varN
         echo 'please input a number : '
         read aNum
-        echo 'Your number is : $aNum'
+        echo "Your number is : $aNum"
     其他预定义变量：
         $!  Shell最后运行的后台Process的PID(后台运行的最后一个进程的进程ID号)
         $?	上个命令的退出状态，或函数的返回值。退出状态是一个数字，一般情况下，大部分命令执行成功会返回 0，失败返回 1。
@@ -351,7 +351,7 @@
             exit
             echo $val1
             //返回为空
-        在脚本中使用 . source等执行其他脚本没有创建新的shell环境，而是在同一个shell环境中。
+        在脚本中使用 . source等执行其他脚本没有创建新的shell环境（进程），而是在同一个shell环境中。
     
     函数
         声明函数有三种语法：

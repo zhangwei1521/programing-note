@@ -467,6 +467,21 @@ defaults 包含rw、exec、auto、nouser、async
 	可以使用管道将 ps 命令的输出传递给 grep 命令，然后输出匹配的样式：
 		ps -aux | grep chrome
 
+	bash启动需要从两个维度来描述：是否为交互式启动和是否登录。
+	查看当前bash进程是否为交互式模式：
+		#返回字符串包含 字符i 则为交互式启动，否则为非交互式启动 
+		echo $-
+		#返回非空则为交互式启动，否则为非交互式启动
+		echo $PS1
+	查看当前bash进程是否登录：
+		#显示为off，则为非登录，显示为 on 则为已登录
+		shopt login_shell
+	启动bash的几种模式：
+		交互式登录启动：从终端或ssh等正常登录，使用bash --login，使用su - user
+		交互式非登录启动：执行bash，执行su user，从图像用户界面打开终端
+		非交互式非登录启动：执行shell脚本，使用ssh远程执行命令
+		非交互式登录启动：执行shell脚本带有--login选项
+
 	/etc/profile、/etc/bashrc、~/.bash_profile、~/.bashrc文件
 	/etc/profile是一个全局配置文件，系统中每个用户在他们第一次登陆系统时，这个文件都会被读取执行，这个文件会读取 /etc/profile.d/
 下的配置文件为每个用户配置他们的shell。
@@ -475,6 +490,20 @@ defaults 包含rw、exec、auto、nouser、async
 	~/.bashrc是用户的 bash shell配置文件，该文件包含专用于用户自己的bash shell的bash信息，用户登录时和每次打开新的bash shell时，
 该文件被读取执行。
 	修改bashrc文件出现错误导致ls等不可用时，可以使用export PATH=/usr/bin:/usr/sbin:/bin:/sbin先临时修改PATH使ls等可用。
+
+	bash登录启动时，首先读取/etc/profile文件，在这个文件中，会读取 /etc/profile.d/下的配置文件，如果当前为非交互式启动，则输出将被重定向
+到/dev/null。然后继续按顺序搜索~/.bash_profile、~/.bash_login、~/.profile，找到其中一个就不再继续搜索。~/.bash_profile中
+会去读取~/.bashrc文件，~/.bashrc文件又会读取/etc/bashrc文件，/etc/bashrc文件又会读取/etc/profile.d/下的配置文件，非交互式模式下将输出
+重定向到/dev/null。
+	bash非登录启动时，不读取/etc/profile、~/.bash_profile、~/.bash_login、~/.profile这些文件，仅读取~/.bashrc文件。
+	在alpine中通过apk安装的5.0.17(1)-release版本的bash，使用ssh远程执行命令，即使用非登录非交互式启动shell，不会读取~/.bashrc文件，需要
+设置环境变量 BASH_ENV的值为~/.bashrc ：
+		修改sshd配置文件:/etc/ssh/sshd_config：
+			PermitUserEnvironment yes
+		然后在~/.ssh/下新增文件environment：
+			BASH_ENV=~/.bashrc
+		如此即可使用ssh执行远程命令。
+		
 
 	使用防火墙firewalld
 	启动：
@@ -915,6 +944,26 @@ Booting paravirtualized kernel on bare hardware，则表示运行在物理机上
 			wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub
 			wget -O /usr/local/download/glibc-2.32-r0.apk https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.32-r0/glibc-2.32-r0.apk
 			apk add glibc-2.32-r0.apk
+	alpine使用apk作为包管理工具。
+	apk使用：
+		apk --help
+		apk info --help
+		apk list --help
+	
+	alpine使用OpenRC管理服务：
+		apk info openrc
+		apk add openrc
+		rc-service --help
+		rc-service --list
+		#开机启动sshd服务
+		rc-update add sshd
+		#启动sshd
+		rc-service sshd start/stop/restart
+		#也可以使用
+		/etc/init.d/sshd restart
+		#查询服务状态
+		rc-status
+
 
 	重定向：
 		cmd > a	等同于 cmd 1> a1		表示将标准输出重定向到文件a
