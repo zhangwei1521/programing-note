@@ -503,7 +503,26 @@ defaults 包含rw、exec、auto、nouser、async
 		然后在~/.ssh/下新增文件environment：
 			BASH_ENV=~/.bashrc
 		如此即可使用ssh执行远程命令。
-		
+	
+	export 命令
+	export 命令用于设置或显示环境变量。export 的效力仅限于该次登陆操作。
+	语法：
+		export [-fnp][变量名称]=[变量设置值]
+		-f 　代表[变量名称]中为函数名称。
+		-n 　删除指定的变量。变量实际上并未删除，只是不会输出到后续指令的执行环境中。
+		-p 　列出所有的shell赋予程序的环境变量。
+	示例：
+		# 列出当前的环境变量值
+		export -p
+		#或者
+		env
+		# 自定义环境变量
+		export MYENV
+		# 赋值
+		export MYENV=7
+	在~/.bashrc、/etc/bashrc、/etc/profile.d/*.sh中的变量不需要export，因为进入新的shell环境总是会执行这些文件，/etc/profile、~/.bash_profile
+中的变量最好是使用export导出，这样可以让登录后进入新的shell环境时仍然可以使用这些变量。
+	
 
 	使用防火墙firewalld
 	启动：
@@ -633,25 +652,6 @@ work.xml，即9个规则集。public.xml内容入下：
 			deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic main restricted universe multiverse
 			...
 			-EOF
-	
-	export 命令
-	export 命令用于设置或显示环境变量。export 的效力仅限于该次登陆操作。
-	语法：
-		export [-fnp][变量名称]=[变量设置值]
-		-f 　代表[变量名称]中为函数名称。
-		-n 　删除指定的变量。变量实际上并未删除，只是不会输出到后续指令的执行环境中。
-		-p 　列出所有的shell赋予程序的环境变量。
-	示例：
-		# 列出当前的环境变量值
-		export -p
-		#或者
-		env
-		# 自定义环境变量
-		export MYENV
-		# 赋值
-		export MYENV=7
-	linux登录使用一个shell，登录后为每个用户创建一个新的shell。创建用户shell应该不是直接完成的，而是层级式创建，即每执行一个profile、
-sh配置文件就在上一级shell下建立一个新的shell，所以在profile等配置脚本文件中需要通过export来导出变量，这样才能在子shell中访问这些变量。
     
     使用cat创建文件：
         #使用b作为结束
