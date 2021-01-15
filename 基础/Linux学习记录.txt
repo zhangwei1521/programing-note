@@ -800,6 +800,11 @@ work.xml，即9个规则集。public.xml内容入下：
         echo $x $y
         awk -v val=$x '{print $1,$2,$3,$4+val,$5+ENVIRON["y"]}' OFS='\t' score.txt
 
+	使用awk获取当前目录下最新修改的文件的文件名：
+		# 第一行是文件数
+		# 如果最新修改的是 . 和 ..，可以调整为 NR==3 或 NR==4
+		ls -alt | awk 'NR==2 {print $0}'
+
 	安装ntpdate
 		yum install ntpdate
 	同步时间
@@ -963,6 +968,8 @@ Booting paravirtualized kernel on bare hardware，则表示运行在物理机上
 		/etc/init.d/sshd restart
 		#查询服务状态
 		rc-status
+	
+	alpine使用busybox来提供常用的命令，如cat、ps等，其中的ps命令输出超出一定长度后会被截断。
 
 
 	重定向：
@@ -988,3 +995,36 @@ Booting paravirtualized kernel on bare hardware，则表示运行在物理机上
 			[:space:]	空白字符
 		示例：
 			grep "^[[:space:]]\{1,\}" test.txt
+	
+	syslog
+	syslog日志系统用于记录系统中发生的各类事件，虽然被标准化为一种标准协议，但是由于历史实现各异，导致这个标准不是特别严格。syslog报文并没有对最小
+长度有所定义，只要求报文的总长度必须在1024字节之内。
+	syslog报文由三部分组成：PRI、HEADER、MSG。
+	PRI是报文的第一部分，使用<x>表示日志的优先级，这个优先级根据产生日志的源（Facility）和日志级别（Severity）计算得到，计算规则为：
+		PRI = Facility << 3 + Severity
+	Facility取值范围为为0-23，标准没有规定每个编码代表的具体源，主流操作系统同一使用 0 用于内核日志，2 用于邮件系统日志， 1，16-23则留给用户程序
+使用，其他编码则在不同实现中表示不同的日志源。
+	Severity只有0-7共8个级别。0为最高级，表示系统不可用，7为最低级，表示debug日志。
+	HEADER部分包括两个字段，时间和主机名（或IP）。时间紧跟在PRI后面，中间没有空格，格式必须是“Mmm dd hh:mm:ss”，不包括年份。“日”的数字如果是1～9，
+前面会补一个空格（也就是月份后面有两个空格），而“小时”、“分”、“秒”则在前面补“0”。月份取值包括：Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec
+时间后边跟一个空格，然后是主机名或者IP地址，主机名不得包括域名部分.
+	MSG部分又分为两个部分，TAG和Content。其中TAG部分是可选的。TAG后面用一个冒号隔开Content部分，这不是标准要求的，由实现程序自定义。
+	
+	rsyslog配置文件：/etc/rsyslog.conf
+	发送日志给远程日志服务器：
+		*.* @@remote-host:514
+		# 这里@@表示使用UDP传输
+	重启rsyslog服务：
+		systemctl restart rsyslog
+	手动记录日志
+		logger -t mytag 'hello'
+		#产生的日志
+		<13>Jan 15 15:03:20 c1 mytag: hello
+	
+	发送消息给指定终端登录的指定用户：
+		write root pts/1
+		#使用 Ctrl+D 退出
+	发送消息给所有终端登录的指定用户：
+		write root
+	发送消息给所有终端的所有登录用户：
+		wall 'message'
