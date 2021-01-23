@@ -494,8 +494,10 @@ defaults 包含rw、exec、auto、nouser、async
 	bash登录启动时，首先读取/etc/profile文件，在这个文件中，会读取 /etc/profile.d/下的配置文件，如果当前为非交互式启动，则输出将被重定向
 到/dev/null。然后继续按顺序搜索~/.bash_profile、~/.bash_login、~/.profile，找到其中一个就不再继续搜索。~/.bash_profile中
 会去读取~/.bashrc文件，~/.bashrc文件又会读取/etc/bashrc文件，/etc/bashrc文件又会读取/etc/profile.d/下的配置文件，非交互式模式下将输出
-重定向到/dev/null。
-	bash非登录启动时，不读取/etc/profile、~/.bash_profile、~/.bash_login、~/.profile这些文件，仅读取~/.bashrc文件。
+重定向到/dev/null。所以只要登录，不管是否为交互式启动，都会读取/etc/profile、/etc/profile.d/*、~/.bash_profile、/etc/bashrc设置环境。
+	bash交互式非登录启动时，不读取/etc/profile、~/.bash_profile、~/.bash_login、~/.profile这些文件，仅读取~/.bashrc文件。
+	非交互式非登录启动时，以上文件都不会被读取，而是读取环境变量 BASH_ENV 的值表示的文件来设置环境。
+	在ContOS7中，使用ssh远程执行命令，即使用非登录非交互式启动shell，会读取~/.bashrc文件，而环境变量 BASH_ENV的值为空。
 	在alpine中通过apk安装的5.0.17(1)-release版本的bash，使用ssh远程执行命令，即使用非登录非交互式启动shell，不会读取~/.bashrc文件，需要
 设置环境变量 BASH_ENV的值为~/.bashrc ：
 		修改sshd配置文件:/etc/ssh/sshd_config：
@@ -1028,3 +1030,89 @@ Booting paravirtualized kernel on bare hardware，则表示运行在物理机上
 		write root
 	发送消息给所有终端的所有登录用户：
 		wall 'message'
+
+	使用grep递归查询：
+		grep -r JAVA_HOME /etc/*
+
+	虚拟磁盘：
+	使用dd根据/dev/zero创建一个空文件vda：
+		dd if=/dev/zero of=vda bs=1M count=128
+	把创建的空文件vda连接到循环设备/dev/loop0（完成后文件被当作块设备）：
+		losetup /dev/loop0 vda
+	对该循环设备进行分区：
+		#使用parted查看分区信息
+		parted /dev/loop0 print
+		#使用fdisk进行MBR分区
+		fdisk /dev/loop0
+		#或使用gdisk进行GPT分区
+		gdisk /dev/loop0
+		#这里将/dev/loop0使用gdisk做成两个GPT分区
+	断开/dev/loop0和vda文件的连接
+		losetup -d /dev/loop0
+	使用kpartx将vda文件和其内的两个分区连接到/dev/loop0、/dev/mapper/loop0p1、/dev/mapper/loop0p2
+		kpartx -av vda
+		#/dev/mapper/loop0p1对应第一个分区，类型为标准主分区
+		#/dev/mapper/loop0p2对应第二个分区，类型为LVM分区
+	将/dev/mapper/loop0p1格式化为xfs
+		mkfs.xfs -b size=2048 -f /dev/mapper/loop0p1
+	挂载/dev/mapper/loop0p1到 /mnt/test
+		mount /dev/mapper/loop0p1 /mnt/test/
+	将/dev/mapper/loop0p2做为一个物理卷
+		pvcreate /dev/mapper/loop0p2
+	创建卷组
+		#有多个物理卷时，可以通过列出所有物理卷把它们都加入到卷组中
+		vgcreate vg1 /dev/mapper/loop0p2
+	创建逻辑卷lv1、lv2
+		lvcreate -n lv1 -L 12M vg1
+		lvcreate -n lv2 -L 12M vg1
+	格式化lv1
+		mkfs.ext4 -b 2048 /dev/vg1/lv1
+	挂载lv到/mnt/lv/
+		mount /dev/vg1/lv1 /mnt/lv
+	查看所有块设备：
+		lsblk
+		输出：
+			NAME            MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+			sda               8:0    0   50G  0 disk
+			├─sda1            8:1    0  247M  0 part /boot
+			└─sda2            8:2    0 49.8G  0 part
+				├─centos-root 253:0    0 38.5G  0 lvm  /
+				├─centos-swap 253:1    0  3.8G  0 lvm  [SWAP]
+				└─centos-var  253:2    0  7.5G  0 lvm  /var
+			sr0              11:0    1 1024M  0 rom
+			loop0             7:0    0  128M  0 loop
+			├─loop0p1       253:3    0   32M  0 part /mnt/test
+			└─loop0p2       253:4    0   94M  0 part
+				├─vg1-lv1     253:5    0   12M  0 lvm  /mnt/lv
+				└─vg1-lv2     253:6    0   12M  0 lvm
+	查看挂载的文件系统
+		df -hT
+		输出：
+			文件系统                类型      容量  已用  可用 已用% 挂载点
+			devtmpfs                devtmpfs  2.0G     0  2.0G    0% /dev
+			tmpfs                   tmpfs     2.0G     0  2.0G    0% /dev/shm
+			tmpfs                   tmpfs     2.0G  8.6M  2.0G    1% /run
+			tmpfs                   tmpfs     2.0G     0  2.0G    0% /sys/fs/cgroup
+			/dev/mapper/centos-root xfs        39G  3.7G   35G   10% /
+			/dev/sda1               xfs       244M  161M   84M   66% /boot
+			/dev/mapper/centos-var  xfs       7.5G  322M  7.2G    5% /var
+			tmpfs                   tmpfs     396M     0  396M    0% /run/user/0
+			/dev/mapper/loop0p1     xfs        30M  1.7M   28M    6% /mnt/test
+			/dev/mapper/vg1-lv1     ext4      9.7M   42K  8.8M    1% /mnt/lv
+	查看所有逻辑卷
+		lvs/lvdisplay/lvscan
+	卸载lv2
+		umount /mnt/lv
+	删除逻辑卷：
+		lvremove vg1/lv2
+	删除卷组
+		vgremove vg1
+	删除物理卷
+		pvremove /dev/mapper/loop0p2
+	卸载/dev/mapper/loop0p1
+		umount /dev/mapper/loop0p1
+	断开vda到/dev/loop0、/dev/mapper/loop0p1、/dev/mapper/loop0p2的连接
+		kpartx -dv vda
+	
+	查找提供命令的安装包：
+		yum whatprovides */lspci
