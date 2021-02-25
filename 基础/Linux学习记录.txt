@@ -916,7 +916,7 @@ Booting paravirtualized kernel on bare hardware，则表示运行在物理机上
 
 	locate命令是mlocate提供的命令，作用和find -name相同，但是它是通过检索索引库文件而不是搜索目录查找，所以效率更高。
 	安装mlocate:
-		yum install -u mlocate
+		yum install -y mlocate
 	手动更新索引库(默认为/var/lib/mlocate/mlocate.db，每天自动更新)：
 		updatedb
 	查询文件位置：
@@ -1015,7 +1015,7 @@ Booting paravirtualized kernel on bare hardware，则表示运行在物理机上
 	rsyslog配置文件：/etc/rsyslog.conf
 	发送日志给远程日志服务器：
 		*.* @@remote-host:514
-		# 这里@@表示使用UDP传输
+		# 这里@@表示TCP传输，@表示使用UDP传输
 	重启rsyslog服务：
 		systemctl restart rsyslog
 	手动记录日志
@@ -1116,3 +1116,15 @@ Booting paravirtualized kernel on bare hardware，则表示运行在物理机上
 	
 	查找提供命令的安装包：
 		yum whatprovides */lspci
+	
+	系统限制
+		查看系统限制：
+		ulimit -a
+			# 当前用户的单个进程所能同时打开的文件数最大值，默认为1024
+			open files (-n) 1024
+			# 当前用户能同时运行的进程数的最大值，默认为5875
+			max user processes (-u)
+		修改当前用户的单个进程所能同时打开的文件数最大值：
+			ulimit -n 65000
+		修改当前用户能同时运行的进程数的最大值：
+			ulimit -u 65000
