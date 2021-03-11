@@ -1,10 +1,12 @@
 										Linux学习记录
 	Linux是一个操作系统内核，RHEL、CentOS、Ubuntu等发行版是将linux内核和各种GNU工具打包在一起后发布的完整操作系统。几种
-常见linux发行版：早期 Red Hat --> Fedora		Debian -->		Slackware -->
-						|						   |				|
-					  RHEL --> 					  Ubuntu -->		SUSE -->
-						|
-					  CentOS --> 
+常见linux发行版：
+		早期 Red Hat --> Fedora		Debian -->		Slackware -->
+				|						   |				|
+				RHEL --> 					  Ubuntu -->		SUSE -->
+				|
+				CentOS --> 
+	
 	CentOS安装:基于Vmware Workstation
 	新建虚拟机：vmware中选择创建新的虚拟机，然后选择“稍后安装操作系统”，继续直到选择安装位置，选择一个有足够空间的盘符下的文件夹，
 输入虚拟机名，下一步设置分配的磁盘容量，使用默认20G就够了，下一步后点击“自定义硬件”，其中“CD/DVD”项不修改，网络设备
@@ -16,6 +18,7 @@
 选中“我要配置分区”，点击“完成”，进入分区界面，LVM下拉框选择“标准分区”，点击 + 号设置挂载点为 /boot，期望容量为 200M，然后
 添加挂载点。继续添加 swap 分区，4GB，根分区 /，期望容量留空，表示将剩下的空间全部给根挂载点。点击完成-->接受更改-->开始安装，
 点击“ROOT密码”设置root密码，然后继续直到安装完成，点击重启。输入root、root密码后登陆系统。
+
 	NAT网络连接模式设置：
 	1、检查宿主机的VMware DHCP Service 和VMwareNAT Service两个服务是否启动
 	2、设置宿主机的本地连接的属性：共享--允许其他网络用户通过此计算机的Internet连接来连接，选择VMnet8.
@@ -23,158 +26,309 @@
 	4、VMware的虚拟网络编辑器中选择NAT模式，子网ip设置为VMnet8设定的网段，NAT设置中网关地址设置为VMnet8的地址。
 	5、使用 dhclient 自动获取一个ip地址，使用 ip addr查看ip地址。使用 ping -c 4 www.baidu.com 测试网络联通性。
 	6、使用 vi /etc/sysconfig/network-scripts/ifcfg-ens33 设置静态ip：ONBOOT=no 改为yes（网卡驱动随着系统一起启动），
-BOOTPROTO=dhcp 改为static（静态ip），新增：
+		# BOOTPROTO改为static（静态ip）
+		BOOTPROTO=dhcp
+		# 设置静态ip
 		IPADDR=192.168.112.88（VMnet8设置的网段中的一个地址）
 		NETMASK=255.255.255.0
 		GATEWAY=192.168.112.2（VMnet8的地址）
 		DNS1=119.29.29.29（VMnet8设置的DNS地址，也就是宿主机的DNS）
 	7、使用 systemctl restart network.service 重启网络服务。
+
 	使用图形用户界面登陆，默认在tty1，但是tty命令显示是0，可以使用Ctrl+Alt+(F2~F6)不关闭图形服务切换到命令行，使用
 Ctrl+Alt+F1切换回图形用户界面。
 	图形用户界面使用 init 3 关闭图形服务并切换到命令行界面。
 	使用 startx 开启图形服务。（最好不使用）
-	centos 7.x 查询到当前所设定的状态:	systemctl get-default
-		multi-user.target 相当于以前的 level 3，也就是命令行终端；而 graphical.target 相当于以前的 level 5，也就是图形界面。
-	设置默认启动到图形界面:	systemctl set-default graphical.target
-	http://www.cnblogs.com/guo-rong/p/9621122.html
-	快捷键：Ctrl+D 退出当前终端 Ctrl+C 结束当前命令 Ctrl+Z暂停当前进程，使用fg恢复 Ctrl+A移动光标到行首，Ctrl+E移动
-光标到行尾。
-	关机：shutdown -h now/10   -r（重启） 关机前使用sync将内存中数据写到磁盘。
+	centos 7.x 查询到当前所设定的状态:	
+		systemctl get-default
+		# multi-user.target 相当于以前的 level 3，也就是命令行终端；
+		# graphical.target 相当于以前的 level 5，也就是图形界面。
+	设置默认启动到图形界面:	
+		systemctl set-default graphical.target
+	
+	快捷键：Ctrl+D 退出当前终端 Ctrl+C 结束当前命令 Ctrl+Z暂停当前进程，使用fg恢复 Ctrl+A移动光标到行首，Ctrl+E移动光标到行尾。
+
+	关机：
+		# 马上关机
+		shutdown -h now
+		# 1分钟后关机
+		shutdown -h 1
+		# 取消关机
+		shutdown -c
+		# 重启
+		shutdown -r
+		# 使用 init 0 也可以关机
+		init 0
+		# 关闭电源
+		poweroff
+	关机前将内存中数据写到磁盘:
+		sync
+
 	忘记root用户密码处理方法：
-	1重启系统，加载内核前使用下键停止继续启动，然后移动到第一行输入e进入编辑界面，找到linux16开头的行，修改ro为
-rw init=/sysroot/bin/bash，然后Ctrl+x进入emergency模式，使用chroot切换到sysroot（原始系统）[chroot /sysroot/]，使用LANG=en改变当前终端
+	1.重启系统，加载内核前使用下键停止继续启动，然后移动到第一行输入e进入编辑界面，找到linux16开头的行，修改ro为
+		rw init=/sysroot/bin/bash
+然后Ctrl+x进入emergency模式，使用chroot切换到sysroot（原始系统）[chroot /sysroot/]，使用LANG=en改变当前终端
 语言为英语，然后使用passwd输入新密码,touch /.autorelabel 使修改生效，然后使用Ctrl+D，reboot重启系统。
-	2使用rescue模式：虚拟机中电源处选择“打开电源进入固件”，进入BIOS后设置启动系统从光驱开始（将CD-ROM移到最前），F10
+	2.使用rescue模式：虚拟机中电源处选择“打开电源进入固件”，进入BIOS后设置启动系统从光驱开始（将CD-ROM移到最前），F10
 保存退出后进入光驱启动模式，使用下键选择Troubleshooting，回车后选择Rescue a CentOS...连续回车到输出提示，输入1继续，
 然后chroot /mnt/sysimage进入初试系统，使用passwd改密码。Ctrl+D退出Rescue模式，reboot重启。
 
 	远程登录
 	linux系统通过sshd服务提供远程登录功能，默认使用22号端口，通常安装完系统就默认安装并开启了该服务，所以不需要进行额外
 的配置。sshd服务的配置文件是：/etc/ssh/sshd_config
-	修改主机名：hostname asuser 永久修改：vi /etc/hostname
+	修改sshd配置文件不允许root远程登录：
+		PermitRootLogin no
+	查看登录用户：who -a
+	重启sshd服务：systemctl restart sshd.system
+	查看sshd进程：ps -ef|grep sshd
 	centos默认使用openssh-clients作为远程登录客户端，使用ssh -V查看软件版本，安装该工具：yum install -y openssh-clients
-	使用init 0 也可以关机
 	openssh-clients登陆远程主机：ssh root@192.168.1.103
+
+	修改主机名：hostname asuser 永久修改：vi /etc/hostname
+	
 	
 	基础命令
-	ls -ld /tmp		-d通常和-l一起使用，写出-ld。-d用于查看参数目录的信息而不是参数目录的下级内容的信息
-	cd 不加参数会直接进入用户主目录
-	mkdir -p /tmp/test/01	-p用于逐级创建目录，如果目录已存在也不会报错，也不会做其他事情
-	rmdir /tmp/test 只能删除空目录 -p可以从里到外逐级删除空目录
-	rm -r用于删除目录，-f用于取消提示 删除目录通常使用rm -rf /tmp/test 不用用/做参数，非常危险
-	which rmdir 用于查找某个命令的绝对路径
-	查看PATH环境变量：echo $PATH	输出：/usr/bin:/root/bin:...
-	将/root加入PATH变量：PATH=$PATH:/root
-	mv /tmp/test/test.txt /root/ 移动文件或目录
-	cp aaa bbb 复制文件 -r用于复制目录 CentOS中cp实际是cp -i
-	echo 'abc' > aaa 将'aaa'重定向写入aaa文件
-	cat test.txt -n 显示文件内容和行号
-	cat -A test.txt 显示所有内容，包括不可特殊字符（-A 会将中文作为特殊字符处理，即不能正确识别中文）
-	tac test.txt 倒序显示文件内容
-	more和less用于分页查看文件，使用ctrl+D(B)回翻到上一页，空格键到下一页，less中使用j和k进入下一行和上一行，可以使用
-/和?进行搜索，n跳转到下一个匹配项，/用于向下搜索，?用于向上搜索。
-	head test.txt 默认显示前10行，-n 20 显示前20行，也可以写 head -20 test.txt
-	tail用于查看文件末尾10行，-n 20显示最后20行，-f 动态查看最后10行
-	ls -l 输出的第一列第一位表示文件的类型：
-		d	目录	
-		-	普通文件
-		l	链接文件
-		b 	块设备文件
-		c	串行端口设备文件
-		s	套接字文件
-	ls -l 输出的第三列是节点数
-	groupadd testgroup 新增用户组
-	chgrp testgroup test.txt 修改文件所属组
-	chgrp -R testgroup /tmp 修改目录和子目录所属组
-	chown testuser[:testgroup] test.txt 修改文件所有者和所属组 -R用于同时修改目录和子目录
-	读写执行的数字表示：r--4, w--2, x--1, -:0
-	目录的默认权限是755(rwxr-xr-x)，文件的默认权限是644(rw-r--r--)
-	chmod 750 dir1 改变目录权限 -R用于目录权限的级联修改，还可以这样使用：
-		chmod u=rwx,go=rx dir2
-		chmod u-x,g+w dir3
-	umask 返回设置的umask值，文件的默认权限是根据umask值来设置的：普通文件权限使用666按位减去umask值，目录权限使用
-777减去umask值，比如root用户默认umask值为022，普通用户为002，所以root创建的普通文件权限是644，而目录式755
-	使用umask 002修改umask
-	chattr +i dir4	添加i属性后，文件不能删除、重命名、设定链接、写入和新增数据
-	chattr +a dir5  添加a属性后，文件只能追加不能删除，只有root才能设置这个属性
-	lsattr -aR dir6 列出目录下所有文件和递归子目录的特殊属性
-	set uid	 二进制可执行文件上的一种附加权限，可以让文件在执行时具有文件所有者的权限，比如passwd文件具有这个权限，
-所以普通用户可以执行passwd来修改自己的秘密。
-	set gid 和 set uid 一样，用于让文件在执行时具有文件所属组的权限
-	sticky bit 相当于防删除位，目录设置此权限后，对这个目录有写权限的用户不能删除其它用户的文件。
-		passwd的权限：rwsr-xr-x 如果没有x权限，则使用大写的S 
-		/tmp/的权限： rwxrwxrwt 
-	which vi 查找命令文件
-	where [-b/-s/-m] file 查找[二进制/源码/帮助]文件 在索引库中执行模糊查找
-	locate 类似于where，可以使用updatedb更新索引库，但是这个命令可能会需要一段时间
-	find /path [options]
-		find /path -mtime[-atime/-ctime] -10 10天以内进行过 “写入数据/访问文件/修改文件内容、属性”的文件 
-			stat file 查询文件的mtime、ctime、atime
-		find /path -name fileName 或 find /path -name "test*"
-		find /path -type d 按类型查询
-	查看支持的文件系统：cat /etc/filesystems
-	centos7默认使用xfs文件系统，centos6使用的文件系统是ext4
+
+		# -d通常和-l一起使用，写出-ld。-d用于查看参数目录的信息而不是参数目录的下级内容的信息
+		ls -ld /tmp		
+		
+		# 不加参数会直接进入用户主目录
+		cd /home
+	
+		# -p用于逐级创建目录，如果目录已存在也不会报错，也不会做其他事情
+		mkdir -p /tmp/test/01
+	
+		# 只能删除空目录 -p可以从里到外逐级删除空目录
+		rmdir /tmp/test
+	
+		# -r递归删除 -f取消提示
+		# 警惕误操作 rm -rf /
+		rm -rf /tmp/test
+
+		# 查找某个命令的绝对路径
+		which rmdir
+	
+		# 查看环境变量
+			echo $PATH
+
+		# 移动文件或目录
+			mv /tmp/test/test.txt /root/
+	
+		# 复制文件 -r用于复制目录 CentOS中cp实际是cp -i
+		cp aaa bbb 
+
+		# 通过重定向写文件
+		echo 'abc' > aaa 将'aaa'重定向写入aaa文件
+
+		# 显示文件内容和行号
+		cat test.txt -n
+		
+		# 显示所有内容，包括特殊字符（-A 会将中文作为特殊字符处理，即不能正确识别中文），在每行结束处显示"$"，将跳格字符显示为^I
+		cat -A test.txt 
+	
+		# 倒序显示文件内容
+		tac test.txt 
+	
+		# more和less用于分页查看文件
+		# 使用ctrl+D(B)回翻到上一页，空格键到下一页
+		# less中使用j和k进入下一行和上一行，可以使用/和?进行搜索，n跳转到下一个匹配项，/用于向下搜索，?用于向上搜索。
+		more test.txt
+		less test.txt
+	
+		# 默认显示前10行，-n 20 显示前20行，也可以写 head -20 test.txt
+		head test.txt 
+	
+		# 默认查看文件末尾10行，-n 20显示最后20行，-f 动态查看最后10行
+		tail test.txt
+	
+		# 列出目录下的子目录和文件
+		ls  /
+		# -l 显示详细信息，-a 显示所有文件和子目录，
+		# -l 输出的第一列第一位表示文件的类型：
+				d	目录	
+				-	普通文件
+				l	链接文件
+				b 	块设备文件
+				c	串行端口设备文件
+				s	套接字文件
+		# -l 输出的第三列是节点数
+
+		# 查找命令文件
+			which vi
+		# 查找[二进制/源码/帮助]文件 在索引库中执行模糊查找
+			whereis [-b/-s/-m] file 
+		# 类似于whereis，可以使用updatedb更新索引库，但是这个命令可能会需要一段时间
+			locate file
+		# 查找文件
+			find /path [options]
+			# 查找10天以内进行过 “写入数据/访问文件/修改文件内容、属性”的文件 
+			find /path -mtime[-atime/-ctime] -10
+			find /path -name fileName
+			find /path -name "test*"
+			# 按类型查询和名称查找
+			find . -type d -name solr
+
+		# 查询文件的mtime、ctime、atime
+			stat filename
+
+		# 查看支持的文件系统
+			cat /etc/filesystems
+			# centos7默认使用xfs文件系统，centos6使用的文件系统是ext4
+	
+
+	目录/文件权限
+		目录/文件的权限分为：读、写、执行；数字表示：r--4, w--2, x--1, -:0
+		目录/文件权限的三个维度：所属人、所属组、其他人
+		目录的默认权限是755(rwxr-xr-x)，文件的默认权限是644(rw-r--r--)
+			# 改变目录权限 -r 用于目录权限的递归修改
+			chmod 750 dir1
+			chmod u=rwx,go=rx dir2
+			chmod u-x,g+w dir3
+		文件的默认权限是根据umask值来设置的：普通文件权限使用666按位减去umask值，目录权限使用777减去umask值
+		每个用户都有自己的umask值，root用户默认umask值为022，普通用户为002，所以root创建的普通文件权限是 644，而目录为 755
+			#  返回用户的umask值
+			umask
+			# 修改umask
+			umask 002
+
+	为目录/文件添加其他属性
+		# 添加i属性后，文件不能删除、重命名、设定链接、写入和新增数据
+		chattr +i dir4	
+		# 添加a属性后，文件只能追加不能删除，只有root才能设置这个属性
+		chattr +a dir5  
+		# 列出目录下所有文件和递归子目录的特殊属性
+		lsattr -aR dir6 
+	
+			
+	修改文件所属组
+		chgrp testgroup test.txt 
+	修改目录和子目录所属组
+		chgrp -R testgroup /tmp 
+	修改文件所有者和所属组 -R 同时修改目录和子目录
+		chown testuser[:testgroup] test.txt 
+	
+	特殊权限
+		setuid（标识为s） 是二进制可执行文件上的一种附加权限，可以让执行人在文件执行时具有文件所有者的权限
+		setgid(标识为g) 和 setuid 一样，用于让执行人在文件执行时具有文件所属组的权限
+		sticky bit（标识t） 相当于防删除位，目录设置此权限后，对这个目录有写权限的用户不能删除其它用户的文件（除了root和文件所属人）
+		查看/etc/passwd和/usr/bin/passwd的权限
+			ls -l /etc/passwd /usr/bin/passwd
+			# /etc/passwd的权限：	 rw-r--r--
+			# /usr/bin/passwd的权限：rwsr-xr-x
+			# 执行/usr/bin/passwd时需要修改/etc/passwd，虽然普通用户没有该文件的写权限，但是由于/usr/bin/passwd设置了setuid权限，
+			# 所以普通用户在执行/usr/bin/passwd时，会获得/usr/bin/passwd所属用户root的权限，所以可以写入/etc/passwd	
+		查看/tmp的权限
+			ls -ld /tmp
+			# /tmp的权限： 		rwxrwxrwt 
+			# /tmp具有sticky bit权限
+
+	
 	现代linux支持最多可使用255个字符作为文件名
 	软链接和硬链接：
 		ln -s orifile soft-link 
 		ln orifile hard-link
-		软链接相当于windows的快捷方式，删除原文件后就不能打开了。
-		硬链接是复制了一个新的原文件的inode节点，这样删除原文件就不会实际删除文件，而只是删除了原文件名指向的
-		inode节点，这时使用硬链接仍然可以访问原文件。
-	查看系统内核版本：uname -r
+		# 删除原文件后软链接将不能打开。
+		# 硬链接是复制了一个新的原文件的inode节点，这样删除原文件就不会实际删除文件，而只是删除了原文件名指向的inode节点，这时使用硬链接仍然可以访问原文件。
+	查看系统内核版本：
+		uname -r
 	
+
 	用户管理
-	查看/etc/passwd文件：cat /etc/passwd | head
-	返回：root:x:0:0:root:/root:/bin/bash
+
+	查看/etc/passwd文件：
+		cat /etc/passwd | head
+	文件格式：
+		root:x:0:0:root:/root:/bin/bash
 	/etc/passwd文件中每一行被:分隔为7个字段：第一个是用户名，可以是大小写字母、数字(不能再首位)、减号、点号和下划线
 第二个字段是密码，现在不真正保存在这里，所以使用x占位，第三个字段是uid，root是0，自建的用户通常从1000开始；第四个字段
 是gid，第五个字段是用户信息说明，第六个字段是用户的家目录；第七个字段是用户的shell，如果是/sbin/nologin表示这个用户
 不能登陆。
 	查看所有用户名：
 		cut -d':' -f 1 /etc/passwd
-	查看/etc/shadow文件：cat /etc/shadow | head -n 3
-	返回：root:$6$xEeBczsD$U486aOPTUqBNei7PmpQVm9RqKIvy6XN3Rfr4F52sm1XP1WE6.T5HFdlmsLfyv6ltGZwvapet0rPlHzlF2
-uvhV.:17883:0:99999:7:::
+
+	查看/etc/shadow文件：
+		cat /etc/shadow | head -n 3
+	文件格式：
+		root:$6$xEeBczsD$U486aOPTUqBNei7PmpQVm9RqKIvy6XN3Rfr4F52sm1XP1WE6.T5HFdlmsLfyv6ltGZwvapet0rPlHzlF2uvhV.:17883:0:99999:7:::
 	/etc/shadow文件每条记录被:分隔为9个字段：第一个是用户名，第二个是加密后的密码，第三个是上一次修改密码的日期(距离
 1970年1月1日的天数，考虑闰年)，第四个字段表示要过多少天才能修改密码，默认为0，第五个是密码多少天后到期，第六个是密码
 到期前发出警告的天数，第七个是失效日期，即到期未修改密码过后多少天锁定账号，第八个字段是账号有效日期，即从1970年开始
 有效的天数，过了时间账号就被锁定，第九个是保留使用，没有意义
 	为了安全，/etc/shadow文件权限通常被设置为000，只有root能修改查看
+
+	用户组文件：/etc/group
+	用户组分为主要组和附加组，主要组是用户文件 /etc/passwd 中用户关联的组，附加组则不在 /etc/passwd 中体现
+	在 /etc/group 中，只包括一个组作为附加组时所关联的用户，而不包括作为主要组所关联的用户
 	查看所有用户组名：
 		cut -d':' -f 1 /etc/group
-	新增用户组：groupadd [-g gid] groupName 查看：tail -n3 /etc/group
-	删除用户组：groupdel groupName 不能删除具有用户的用户组，必须先删除用户
-	新增用户：useradd [-u uid] [-g gid] [-d homeDir] [-M] [-s shellDir] userName
-	-d表示自定义家目录，-M表示不创建家目录(/etc/passwd文件中会有家目录名，但是这个目录实际没有创建)，-s表示自定义shell
+	新增用户组：
+		groupadd [-g gid] groupName 
+		查看：
+			tail -n3 /etc/group
+	删除用户组：
+		groupdel groupName 不能删除具有用户的用户组，必须先删除用户
+	查看用户组信息：
+		getent group groupName
+
+	新增用户：
+		# -d表示自定义家目录，
+		# -M表示不创建家目录(/etc/passwd文件中会有家目录名，但是这个目录实际没有创建)，
+		# -s表示自定义shell
+		useradd [-u uid] [-g gid] [-d homeDir] [-M] [-s shellDir] userName
 	新增用户不指定用户组时默认会创建一个和用户同名的用户组，并把该用户加入该用户组。
 	查看用户所属group：
-		groups groupName
-	删除用户：userdel userName
+		groups userName
+	删除用户：
+		userdel userName
 	查看用户信息：
 		id userName
-	更改/etc/passwd记录的第五个字段-用户说明：chfn shanyu
-	根据关键词过滤查询：grep 'shanyu' /etc/passwd
-	更改密码：更改自己的秘密直接使用passwd
-	root用户可以使用 passwd userName修改指定用户的秘密
-	使用mkpasswd生成密码：先安装expect ： yum install -y expect 然后直接使用mkpasswd生成9位随机密码
-指定长度： mkpasswd -l 12
-	切换用户：su [-] userName [-]表示初始化用户环境变量，root切换普通用户不需要密码，使用exit返回原用户
+	更改密码：更改自己的秘密直接使用passwd，root用户可以使用 passwd userName修改指定用户的秘密
+	使用mkpasswd生成密码：
+		先安装expect ： 
+			yum install -y expect 
+		然后直接使用mkpasswd生成9位随机密码
+			# -l 12 指定长度
+			mkpasswd -l 12
+	更改/etc/passwd记录的第五个字段-用户说明：
+		chfn shanyu
+	根据关键词过滤查询：
+		grep 'shanyu' /etc/passwd
+	
+	将现有的用户添加到附加组:
+		usermod -G groupName userName
+		#将一个用户同时添加到多个附加组
+		usermod -G groupName1,groupName2 userName
+	更改用户的主要组：
+		usermod -g groupName userName
+	
+	切换用户：
+		# [-]表示初始化用户环境变量
+		su [-] userName
+	root切换普通用户不需要密码，使用exit返回原用户
 	普通用户使用su切换到root是需要root密码的，但是这不太安全，所以出现了sudo
-	sudo配置文件：/etc/sudoers
-	默认只有root能使用sudo，使用visudo 编辑/etc/sudoers文件（先安装 yum install -y sudo）:
-shanyu  ALL=(ALL)  ALL 允许shanyu用户在所有主机上以所有用户身份使用sudo执行所有命令
-	使用sudo：sudo cat /etc/shadow 使用sudo需要输入自己的秘密
+	sudo配置文件：
+		/etc/sudoers
+	默认只有root能使用sudo
+	使用visudo 编辑/etc/sudoers文件（先安装 yum install -y sudo）:
+		# 允许shanyu用户在所有主机上以所有用户身份使用sudo执行所有命令
+		shanyu  ALL=(ALL)  ALL 
+	使用sudo：
+		# 使用sudo需要输入自己的秘密
+		sudo cat /etc/shadow 
 	当用户以"sudo passwd"或者"sudo passwd root"方式运行命令的时候，可以直接把root用户的密码改掉，这是非常危险的，
 必须要把这两条命令禁止调，在命令前面加上"!"来表示不可执行的命令：
-	为用户组shanyu配置sudo：%shanyu  ALL=(root) !/usr/bin/passwd, /usr/bin/passwd [A-Za-z]*, !/usr/bin/passwd root
-	/etc/sudoers中配置用户别名：User_Alias USER_AUTH = shanyu,zhangwei
-	/etc/sudoers中配置命令别名：Cmnd_Alias SU = /usr/bin/su
-	/etc/sudoers中配置不需要密码切换用户：USER_AUTH ALL=(ALL) NOPASSWD:SU
+	为用户组shanyu配置sudo：
+		%shanyu  ALL=(root) !/usr/bin/passwd, /usr/bin/passwd [A-Za-z]*, !/usr/bin/passwd root
+	/etc/sudoers中配置用户别名：
+		User_Alias USER_AUTH = shanyu,zhangwei
+	/etc/sudoers中配置命令别名：
+		Cmnd_Alias SU = /usr/bin/su
+	/etc/sudoers中配置不需要密码切换用户：
+		USER_AUTH ALL=(ALL) NOPASSWD:SU
 	这样shanyu用户就可以使用 sudo su - root 直接切换到root，而不用输入密码
-	sshd配置文件：/etc/ssh/sshd_config,不允许root远程登录：PermitRootLogin no, 重启sshd服务：systemctl restart sshd.system
-	查看登录用户：who -a
-	查看sshd进程：ps -ef|grep sshd
 	
+	
+
 	磁盘管理
 	df 不加参数查看挂载的磁盘和目录情况，大小单位为KB。其中/和/boot是安装系统时划分的分区。/dev和/dev/shm是内存分区，
 保存在这两个分区的文件相当于保存在内存中，关机会丢失。/run等都是临时文件系统。
@@ -411,6 +565,9 @@ defaults 包含rw、exec、auto、nouser、async
 		执行：make install
 	yum-config-manager: command not found
 	这个是因为系统默认没有安装这个命令，这个命令在yum-utils 包里，可以通过命令yum -y install yum-utils 安装就可以了。
+	
+	查找提供命令的安装包：
+		yum whatprovides */lspci
 
 	centos默认使用的软件库提供的软件通常都是经过充分测试的版本，因此版本比较旧，scl软件仓库则较新的软件版本。
 	安装scl仓库：
@@ -1114,8 +1271,6 @@ Booting paravirtualized kernel on bare hardware，则表示运行在物理机上
 	断开vda到/dev/loop0、/dev/mapper/loop0p1、/dev/mapper/loop0p2的连接
 		kpartx -dv vda
 	
-	查找提供命令的安装包：
-		yum whatprovides */lspci
 	
 	系统限制
 		查看系统限制：

@@ -8,6 +8,7 @@
             unzip solr-8.2.0.zip
             或者
             tar zxf solr-8.2.0.tgz
+
     启动solr:
         cd  solr-8.2.0
         # 默认使用 standalone 模式，默认监听 8983 端口，使用 -p <portNum> 设置指定端口
@@ -21,27 +22,61 @@
         # 使用 SolrCloud 模式启动，可以使用 solr提供的 cloud 交互式示例创建节点
         # bin/solr start -e cloud
 
-        # 手动创建node工作目录
+        # 手动创建solr实例home目录
         # mkdir -p demo/cloud/node1/solr
         # mkdir -p demo/cloud/node2
         # cp server/solr/solr.xml demo/cloud/node1/solr/
         # cp server/solr/zoo.cfg  demo/cloud/node1/solr/
         # cp demo/cloud/node1/solr demo/cloud/node2/
-        # 启动 node1
+
+        # 启动 node1，使用 -s 指定启动的solr实例的home目录
         # bin/solr start -c -p 8983 -s demo/cloud/node1/solr
         # 启动 node2
         # bin/solr start -c -p 7574 -s demo/cloud/node2/solr -z localhost:9983
+        # 重启
+        # bin/solr restart
 
-        # 创建 core/collection (standalone模式创建core，SolrCloud模式创建collection)
+    查看状态(也可以通过浏览器访问 http://localhost:8983/solr 查看solr信息)
+        bin/solr status
+    查看版本
+        bin/solr version
+    健康检查
+        bin/solr healthcheck -c mycollection1 [-z localhost:9983]
+
+    创建 core/collection (standalone模式创建core，SolrCloud模式创建collection)
         # 可以使用 -d 参数指定创建的 core/collection的配置文件目录（包括solrconfig.xml、managed-schema等配置文件），
         # 默认为 _default，位于server/solr/configsets下，SolrCloud模式下指定的配置文件目录将被上传到zookeeper中
         bin/solr create -c mycore
         # SolrCloud模式下创建 collection 可指定 shard 和 replicas
         # bin/solr create -c mycollection1 -s 2 -rf 2 
+    删除 core/collection
+        # 可以使用 -deleteConfig false 不要删除 zookeeper 上的配置（默认会随 collection 一起删除）
+        bin/solr delete -c mycollection1
 
-    查看状态(也可以通过浏览器访问 http://localhost:8983/solr 查看solr信息)
-        bin/solr status
+    修改配置：
+        # 设置 mycollection1 的property updateHandler.autoCommit.maxDocs为100
+        bin/solr config -c mycollection1 -p 8983 -action set-property -property updateHandler.autoCommit.maxDocs -value 100
+        # 取消设置 mycollection1 的 property updateHandler.autoCommit.maxDocs
+        bin/solr config -c mycollection1 -p 8983 -action unset-property -property updateHandler.autoCommit.maxDocs
+        # 设置用户自定义的property
+        bin/solr config -c mycollection1 -p 8983 -action set-user-property -property update.autoCreateFields -value false
 
+    zookeeper相关操作：
+        # 查看使用说明
+        bin/solr zk -help
+        # 上传solr配置 到 zookeeper
+        bin/solr zk upconfig -n up_config -d /home/solr/solr_default_conf -z localhost:9983
+        # 下载配置
+        bin/solr zk downconfig -n rsa -d /home/solr/down_config -z localhost:9983
+        # 复制本地文件到zk，可以使用 -r 复制文件夹，另外交换 file:~ 和 zk:~ 的顺序可以从zk复制文件到本地
+        bin/solr zk cp file:/usr/local/solr-8.2.0/server/solr/mycore1/conf/managed-schema zk:/configs/up_config -z localhost:9983
+        # 删除zk节点
+        bin/solr zk rm -r /configs/up_config -z localhost:9983
+        # 列出zk节点的子节点
+        bin/solr zk ls [-r] /configs/_default -z localhost:9983
+        # 创建一个zk节点
+        bin/solr zk mkroot /configs/test -z localhost:9983
+    
     建立索引：
         # 使用 solr 为文档建立索引(这里使用solr提供的实例数据集)
         bin/post -c mycore example/exampledocs/*
@@ -62,21 +97,72 @@
         SOLR_HOME
             bin
             server
-                solr            # 默认的工作目录，保存索引数据
-                    solr.xml
+                solr                            # 默认的solr实例的home目录，保存索引数据，启动时可通过 -s 设置
+                    solr.xml                    # 当前solr实例的配置，如 支持的组合查询的最大组合条件数，zk连接超时时间等
                     zoo.cfg
                     core1
-                        conf    # -d 指定的配置文件目录内容被复制这里
-                        core.properties
-                        data    # 保存索引及其他元数据
+                        conf                    # standalone模式下 -d 指定的配置文件目录内容被复制这里；solrcloud模式则无此目录，配置文件被上传到zk的/configs/下
+                            managed-schema      # 主要是定义需索引文档的 field 和 fieldType以及field对应的analyzer
+                            solrconfig.xml      # 定义控制core的一些高层属性，如保存索引的位置等
+                            stopwords.txt       # 定义一些analyzer使用的停用词
+                            ...
+                        core.properties         # core的property，如shard总数，shard编号，name，所属collection等
+                        data                    # 保存索引及其他元数据，这是默认位置，可以在solrconfig.xml中修改
                     core2
-                solr-webapp     # 处理请求的代码目录
+                solr-webapp                     # 处理请求的代码目录
                 lib 
                 etc
                 logs
                 ...
-            example             # 示例
-            contrib
-            dist
+            example                             # 示例
+            contrib                             # 第三方库
+            dist                                # solr核心库
 
 
+    solr使用schema文件来描述需索引文档的field和fieldType，schema文件有两种：managed-schema 和 schema.xml，通过在solrconfig.xml配置
+<schemaFactory>来确定使用的schema类型，默认模式下，在solrconfig.xml没有显式配置<schemaFactory>，使用的是managed-schema，配置等效于：
+        <schemaFactory class="ManagedIndexSchemaFactory">
+            <bool name="mutable">true</bool>
+            <str name="managedSchemaResourceName">managed-schema</str>
+        </schemaFactory>
+    managed-schema支持通过Schema API来动态修改文件内容，不建议手动编辑这个文件。
+    schema.xml是传统的schema文件，只能手动修改，并且运行时collection加载后再修改schema.xml后不能直接生效，必须重新加载collection才能生效。
+配置使用schema.xml：
+        <schemaFactory class="ClassicIndexSchemaFactory"/>
+    从managed-schema迁移到schema.xml：
+        1.重命名 managed-schema 文件为 schema.xml
+        2.在solrconfig.xml删除ManagedIndexSchemaFactory配置，新增<schemaFactory class="ClassicIndexSchemaFactory"/>
+        3.重新加载collection
+    从schema.xml迁移到managed-schema：
+        1.在solrconfig.xml删除ClassicIndexSchemaFactory配置，新增ManagedIndexSchemaFactory配置
+        2.重启solr，solr重启后检测到schema.xml，将把这个文件重命名为schema.xml.bak，然后复制该文件并命名为managed-schema
+    schemaless模式是在managed-schema的基础上发展出的一种自动根据文档数据分析fieldType并添加field到schema文件的模式。所以要启用此模式，
+需要使用managed-schema，然后需要配置field类型猜测处理器，在默认配置中（server/solr/_default）中配置了AddSchemaFieldsUpdateProcessorFactory等
+updateProcessor组成的名为add-unknown-fields-to-the-schema的updateRequestProcessorChain，并且默认被应用到所有的更新请求处理器上。可以通过配置
+设置property：update.autoCreateFields为false来禁用schemaless模式：
+        bin/solr config -c mycollection1 -p 8983 -action set-user-property -property update.autoCreateFields -value false
+
+    Schema API支持通过http请求修改schema文件，在每次修改后，core或collection会自动重新加载，
+    获取mycollection1的schema的所有field：
+        curl http://localhost:8983/solr/mycollection1/schema/fields
+    获取mycollection1的schema的所有copyField
+        curl http://localhost:8983/solr/mycollection1/schema/copyfields
+    
+    在schema配置中，可以配置一个copyField：
+        <copyField source="*" dest="_text_"/>
+    这个配置会创建一个名为 _text_ 的field，这个field会包含所有其他field的item（项），这样就可以在查询时使用_text_作为df来避免用户搜索时需要指定
+field这样的麻烦，但是这个field会导致索引变得非常大，所以默认配置中没有启用。
+
+    修改了schema文件后，通常需要重新索引以前的文档，重建索引的几种策略：
+        1.删除原lucene索引后重新索引文档
+            # 通过http请求删除collection的索引，不会马上删除lucene索引，需要重新加载collection才会删除索引
+            curl -X POST -H 'Content-Type: application/json' --data '{"delete":{"query":"*:*" }}' http://localhost:8983/solr/mycollection1/update
+        2.索引文档到新的collection后为该新collection1创建别名
+        
+    Collections API支持通过http请求操作collection：
+    为collection创建别名：
+        curl http://localhost:8983/solr/admin/collections?action=CREATEALIAS&collections=mycollection1&name=mc1
+    删除collection：
+        curl http://localhost:8983/solr/admin/collections?action=DELETE&name=mycollection1
+    重新加载collection：
+        curl http://localhost:8983/solr/admin/collections?action=RELOAD&name=mycollection1
