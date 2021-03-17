@@ -97,7 +97,7 @@
         SOLR_HOME
             bin
             server
-                solr                            # 默认的solr实例的home目录，保存索引数据，启动时可通过 -s 设置
+                solr                            # 默认的solr实例的home目录，保存索引数据，启动时可通过 -s 设置为其他位置
                     solr.xml                    # 当前solr实例的配置，如 支持的组合查询的最大组合条件数，zk连接超时时间等
                     zoo.cfg
                     core1
@@ -118,7 +118,7 @@
             contrib                             # 第三方库
             dist                                # solr核心库
 
-
+    Schema文件
     solr使用schema文件来描述需索引文档的field和fieldType，schema文件有两种：managed-schema 和 schema.xml，通过在solrconfig.xml配置
 <schemaFactory>来确定使用的schema类型，默认模式下，在solrconfig.xml没有显式配置<schemaFactory>，使用的是managed-schema，配置等效于：
         <schemaFactory class="ManagedIndexSchemaFactory">
@@ -142,27 +142,140 @@ updateProcessor组成的名为add-unknown-fields-to-the-schema的updateRequestPr
 设置property：update.autoCreateFields为false来禁用schemaless模式：
         bin/solr config -c mycollection1 -p 8983 -action set-user-property -property update.autoCreateFields -value false
 
-    Schema API支持通过http请求修改schema文件，在每次修改后，core或collection会自动重新加载，
-    获取mycollection1的schema的所有field：
-        curl http://localhost:8983/solr/mycollection1/schema/fields
-    获取mycollection1的schema的所有copyField
-        curl http://localhost:8983/solr/mycollection1/schema/copyfields
-    
-    在schema配置中，可以配置一个copyField：
+    schema文件元素配置：
+    field配置：
+        <field name="fd_test" type="ft_test" indexed="true" stored="true" multiValued="true" />
+    fieldtype配置：
+        <fieldType name="ft_test" class="solr.TextField" positionIncrementGap="100">
+            <analyzer>
+                <charFilter class="solr.PatternReplaceCharFilterFactory" pattern="(\w+)(ing)" replacement="$1"/>
+                <tokenizer class="solr.StandardTokenizerFactory"/>
+                <filter class="solr.EnglishMinimalStemFilterFactory"/>
+            </analyzer>
+        </fieldType>
+        # 不指定analyzer的type属性则analyzer应用于建立索引和搜索两个过程，如果需要分别为建立索引和搜索使用不同的analyzer，则声明两个analyzer，
+          使用type属性值：index和 query指明analyzer应用的过程。
+        # charFilter用于在tokenizer创建语汇单元前修改源输入field的值，tokenizer将field的值处理为语汇单元流，filter则对tokenizer生成的语汇单元流进行
+          进一步处理。
+    copyField配置：
         <copyField source="*" dest="_text_"/>
-    这个配置会创建一个名为 _text_ 的field，这个field会包含所有其他field的item（项），这样就可以在查询时使用_text_作为df来避免用户搜索时需要指定
-field这样的麻烦，但是这个field会导致索引变得非常大，所以默认配置中没有启用。
+    这个配置会在分析field之前将所有其他field的内容都复制（追加）到名为 _text_ 的field中，然后为_text_建立索引，这样就可以在查询时使用_text_作为field来避免用户搜索时需要指定
+field这样的麻烦，但是这个field会导致索引变得非常大，所以默认配置中没有启用。因为_text_将包含其他field的内容，所以需要设置其property：multiValued为true。
+    copyField可以使用通配符：
+        <copyField source="*_str" dest="_text_"/>
+        <copyField source="*_str" dest="*_text"/>   //这里dest里的*将匹配source里的*
+    dynamicField配置：
+        <dynamicField name="*_i" type="pint" indexed="true" stored="true"/>
+    动态field配置用于匹配需索引文档中未匹配到schema中所有<field>、且name匹配的field，dynamicField指定的fieldType和analysis将应用到文档中匹配的field。
+    
+    docValues
+    docValues是lucene4开始提供的一种保存document-fieldValue的结构，使用docValue可以让facet、sort等操作快速完成和减少内存占用。对于facet来说，如果只使用倒排索引结构，则需要
+遍历所有搜索匹配的文档查找统计facetField，使用docValue保存document-facetField则既减少了加载所有匹配文档的内存占用，也减少了遍历文档查找facetField的CPU时间。
+    配置docValue:
+        <field name="author" type="strings" docValues="true" indexed="false" stored="false" useDocValuesAsStored="false"/>
+        # stored通常设置为false，useDocValuesAsStored 不设置则默认为true，为true时，搜索时指定返回所有field(fl=*)则会返回此field，如果设为false，要返回此field则需要指明（fl=*,author）
+    也可以为动态field规则配置使用docValue
+    docValues只能应用于部分fieldType上：StrField、UUIDField、*PointField、BoolField、Date fields、EnumFieldType、CurrencyFieldType
+
+    Schema API
+    Schema API支持通过http请求修改schema文件（managed-schema文件），在每次修改后，core或collection会自动重新加载（schema文件被重新加载）。
+    现代solr的API支持两个版本：V1和V2
+    操作shema的API：
+        Schema API V1:
+            POST    http://localhost:8983/solr/coreName/schema
+            http://localhost:8983/solr/collectionName/schema
+        Schema API V2:
+            POST    http://localhost:8983/api/cores/coreName/schema
+            POST    http://localhost:8983/api/collections/collectionName/schema
+    Schema API通过参数中的命令来指定具体需要执行的动作，这些命令包括：
+        add-field               新增一个field
+        delete-field            删除一个field
+        replace-field           替换一个field，替换时需要给出该field的所有property，因为采用的是完全替换而不是部分替换，被替换的field必须存在，否则将报错
+        add-dynamic-field       添加要给动态field规则    
+        delete-dynamic-field    删除一个动态field规则
+        replace-dynamic-field   替换一个动态field规则
+        add-field-type          新增一个fieldType
+        delete-field-type       删除一个fieldType
+        replace-field-type      替换一个fieldType
+        add-copy-field          新增一个copyField规则
+        lete-copy-field         删除一个copyField规则
+    通过Schema API V1向schema文件新增field实例：
+        curl -X POST -H 'Content-type:application/json' --data '{
+        "add-field":{
+        "name":"sell_by",
+        "type":"pdate",
+        "stored":true }
+        }' http://localhost:8983/solr/mycollection1/schema
+    通过Schema API V2向schema文件新增field实例：
+        curl -X POST -H 'Content-type:application/json' --data '{
+        "add-field":{
+        "name":"sell_by",
+        "type":"pdate",
+        "stored":true }
+        }' http://localhost:8983/api/collections/mycollection1/schema
+    删除field：
+        curl -X POST -H 'Content-type:application/json' --data '{
+        "delete-field" : { "name":"sell_by" }
+        }' http://localhost:8983/api/collections/mycollection1/schema
+
+    获取完整schema内容的API：
+        V1:
+            GET     http://localhost:8983/solr/coreName/schema
+            GET     http://localhost:8983/solr/collectionName/schema
+        V2：
+            GET     http://localhost:8983/api/cores/coreName/schema
+            GET     http://localhost:8983/api/collections/collectionName/schema
+    默认返回格式为json，可以通过wt参数指定返回的格式：
+        ?wt=xml             使用xml格式
+        ?wt=schema.xml      直接以schema文件格式返回
+    获取schema的所有field：
+        curl http://localhost:8983/solr/mycollection1/schema/fields
+    获取指定field：
+        curl http://localhost:8983/solr/mycollection1/schema/fields/name
+    获取schema的所有动态field规则
+        curl http://localhost:8983/solr/mycollection1/schema/dynamicfields
+    获取指定动态field规则
+        curl http://localhost:8983/solr/mycollection1/schema/dynamicfields/name
+    获取schema的所有copyField规则
+        curl http://localhost:8983/solr/mycollection1/schema/copyfields
+    获取指定copyField规则
+        curl http://localhost:8983/solr/mycollection1/schema/copyfields/name
+    获取schema的所有fieldType
+        curl http://localhost:8983/solr/mycollection1/schema/fieldtypes
+    获取指定fieldType
+        curl http://localhost:8983/solr/mycollection1/schema/fieldtypes/name
+    
+    其他Schema API:
+        GET /collection/schema/name
+        GET /collection/schema/version
+        GET /collection/schema/uniquekey
+        GET /collection/schema/similarity
 
     修改了schema文件后，通常需要重新索引以前的文档，重建索引的几种策略：
         1.删除原lucene索引后重新索引文档
             # 通过http请求删除collection的索引，不会马上删除lucene索引，需要重新加载collection才会删除索引
             curl -X POST -H 'Content-Type: application/json' --data '{"delete":{"query":"*:*" }}' http://localhost:8983/solr/mycollection1/update
         2.索引文档到新的collection后为该新collection1创建别名
-        
+
+    重新加载core/collection（的schema文件）：
+        curl "http://localhost:8983/solr/admin/cores?action=RELOAD&core=mycore1"
+        curl "http://localhost:8983/solr/admin/collections?action=RELOAD&name=mycollection1"
+
+    Collections API
     Collections API支持通过http请求操作collection：
     为collection创建别名：
-        curl http://localhost:8983/solr/admin/collections?action=CREATEALIAS&collections=mycollection1&name=mc1
+        curl "http://localhost:8983/solr/admin/collections?action=CREATEALIAS&collections=mycollection1&name=mc2&wt=json"
+    别名可以用于查询，相当于一个逻辑collection，并且一个别名可以映射到多个标准collection，这样通过使用别名就把业务逻辑和具体的collection索引分离开了，因而可以在运行时通过修改别名
+指向新的标准collection，实现索引的替换，这可以应用在重建索引和按时间段建立索引的情境中（solr支持通过collection API参数实现动态配置时间段索引）。
+    删除别名：
+        curl "http://localhost:8983/solr/admin/collections?action=DELETEALIAS&name=mc1&wt=json"
     删除collection：
-        curl http://localhost:8983/solr/admin/collections?action=DELETE&name=mycollection1
+        curl "http://localhost:8983/solr/admin/collections?action=DELETE&name=mycollection1"
     重新加载collection：
-        curl http://localhost:8983/solr/admin/collections?action=RELOAD&name=mycollection1
+        curl "http://localhost:8983/solr/admin/collections?action=RELOAD&name=mycollection1"
+
+    Config API
+        http://localhost:8983/solr/mycollection1/config
+    
+    faceting
+    facet是solr对搜索返回数据的分组统计实现，可以在搜索时开启facet：/select?facet=on&facet.field=fd1&facet.field=fd2
