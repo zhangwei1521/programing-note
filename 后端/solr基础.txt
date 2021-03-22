@@ -180,7 +180,7 @@ field这样的麻烦，但是这个field会导致索引变得非常大，所以�
     Schema API
     Schema API支持通过http请求修改schema文件（managed-schema文件），在每次修改后，core或collection会自动重新加载（schema文件被重新加载）。
     现代solr的API支持两个版本：V1和V2
-    操作shema的API：
+    操作schema的API：
         Schema API V1:
             POST    http://localhost:8983/solr/coreName/schema
             http://localhost:8983/solr/collectionName/schema
@@ -271,6 +271,8 @@ field这样的麻烦，但是这个field会导致索引变得非常大，所以�
         curl "http://localhost:8983/solr/admin/collections?action=DELETEALIAS&name=mc1&wt=json"
     删除collection：
         curl "http://localhost:8983/solr/admin/collections?action=DELETE&name=mycollection1"
+    删除core:
+        curl "http://localhost:8983/solr/admin/cores?action=UNLOAD&core=mycore2&deleteIndex=true&deleteDataDir=true&deleteInstanceDir=true"
     重新加载collection：
         curl "http://localhost:8983/solr/admin/collections?action=RELOAD&name=mycollection1"
 
@@ -279,3 +281,106 @@ field这样的麻烦，但是这个field会导致索引变得非常大，所以�
     
     faceting
     facet是solr对搜索返回数据的分组统计实现，可以在搜索时开启facet：/select?facet=on&facet.field=fd1&facet.field=fd2
+
+    搜索查询
+    SearchRequestHandlers使用查询解析器（query parser）处理搜索关键词，主要的 query parser包括：
+        The Standard Query Parser
+        The DisMax Query Parser
+        The Extended DisMax Query Parser
+    所有query parser都支持的公共查询参数：
+        defType：指定查询解析器（query parser）：defType=lucene/dismax
+        sort：指定排序：sort=name asc | sort=name asc,price desc | sort=field(name,min) asc/desc #用于multiValued="true"
+        start：指定返回查找到的文档集的子集的offset，默认为0，这个参数可以用于分页：start=10
+        rows：指定一次查询返回的文档数的最大值，默认为10：rows=20
+        fq：filter query，solr同时执行q和fq，然后缓存fq返回的文档，后续使用相同fq的搜索会直接在此fq缓存的文档集合里搜索，
+            可以加快搜索速度：fq=price:[10.0 TO 100.0]&popularity:1 也可以使用Bool查询语法：fq=+price:[10.0 TO 100.0] +popularity:1
+        fl：指定返回的field：fl=name cat | fl=name,cat | fl=* score 返回所有stored=true的field和文档的score
+        wt：指定Response Writer：wt=json/xml
+        cache：指定是否缓存搜索结果，solr默认缓存所有query和filter query的结果；停用缓存：cache=false
+    
+    solr默认使用 The Standard Query Parser，也称为lucene parser.
+    常用参数：
+        q：查询参数
+        q.op 指定查询表达式的默认行为，将覆盖solrconfig.xml中的定义，只能是AND或OR
+        df：默认查询field，将覆盖solrconfig.xml中的定义
+    通配符查询：
+        // ?匹配单个字符，*匹配多个字符
+        q=f1:hello | q=f1:hell? |  q=f1:he*
+    模糊查询：
+        // ~n 表示可以替换（包括增加删除）的字符数，默认为2
+        q=f1:hella~ | q=f1:hillo~1
+    临近搜索：
+        // ~n 表示将索引中与查询短语中匹配的term移动到查询短语中相同的位置允许的最大移动次数
+        // "name":"Test with some GB18030 encoded characters",
+        q=name:"some characters"~2
+        q=name:"test some characters"~3
+    范围搜索：
+        // 字符串使用字符序，大小写都会被转为小写处理，使用通配符则无论使用}还是]，作用都是}
+        q=f1:[10 TO 20]  | q=f1:[10 TO 20}    | q=f2:[apple TO berlin]  | q=f2:[a* TO b*]
+    term加权搜索：
+        // ^n 为前面的term增加一个权重因子n
+        q=name:ipod^5 apple | f1:"t1 t2"^4 "t3 t4"
+    为特定查询条件设置固定score：
+        q=(f1:hello)^=5 OR f2:solr
+    组合查询：
+        // AND 交集，也可以使用 &&
+        q=f1:hello AND f2:solr
+        // OR 并集，也可以使用 ||，是lucene parser的默认操作符
+        q=f1:hello || f2:solr
+        // NOT 差集，也可以使用 !
+        q=f1:hello ! f2:solr
+        // + 要求后面的条件必须满足
+        q=f1:hello +f2:solr
+        // - 要求后面的条件一定不匹配
+        q=f1:hello -f2:solr
+    DisMax parser只使用 + -两种操作符
+    查询中的特殊字符：
+        + - && || ! ( ) { } [ ] ^ " ~ * ? : /
+    特殊字符转义使用 \
+    在一个field中使用组合条件：
+        q=f1:(+hello +"solr core")
+    查询条件中可以使用/*...*/注释，/和*都需要转义
+    组合查询中使用filter()缓存：
+        q=f1:hello +filter(f2:solr)
+    日期时间：
+        q=f3:2006-02-13T15\:26\:37Z
+        q=f3:"2006-02-13T15:26:37Z"
+        q=f3:[2006-02-13T15:26:37Z TO NOW]
+    
+    dismax parser常用参数：
+        q       查询参数
+        q.alt   q为空时，把q.alt作为q传递给lucene parser
+        qf      查询q中关键词的field
+        mm      最小匹配条件数
+        pf      查询短语加权field
+        qs      查询短语slot，在field中为了匹配查询短语允许移动的最大次数，ps与此相同
+        tie     用于文档得分计算，默认为0，文档得分=查询匹配最高分 + tie*(其他查询条件得分之和)
+        bq      加权查询条件，用于将满足此查询条件的文档的得分加到q查询的当前文档的得分
+        bf      加权函数，计算匹配程度得到一个加权分数加到原分数上
+                recip(rord(myfield),1,1001,1000)
+                # 1001/(q中term在myfield中的逆位序*1+1000)
+    
+    Local Parameters in Queries
+    q查询条件中可以使用 {!...}来指定其他查询条件，条件通过key=value指定，如果没有指定key，则默认key为type，表示查询解析器：
+        q={!df=name}drive
+        q={!dismax qf=name}drive
+        q={!type=dismax qf=name v='drive'}
+        q={!df=name v=$qq}&qq=drive
+    
+    函数查询
+    函数查询可以用在q中调整文档得分，也可以用在fl中构造一个pseudo-field，也可以用于排序：
+        // 把popularity的值作为得分加到返回文档的得分上，_val_是在查询中使用函数的语法
+        q=price:{0 TO *] AND _val_:"def(popularity,0)"
+        // 返回pseudo-field
+        fl=*,score,div(price,def(popularity,1))
+        // 排序
+        sort=product(price,def(popularity,1)) desc
+    常用函数：
+        def(f1,n)   返回f1的值，不存在则返回默认值n
+        div(a,b)    a/b
+        product(a,b,c,...)  a*b*c*...
+        ord(f1)     匹配文档的f1的索引序
+        rord(f1)    ord的逆序
+        recip(x,m,a,b)     a/(m*x+b) 
+        sum(a,b,c,...)
+        
