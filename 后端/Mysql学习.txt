@@ -222,6 +222,9 @@ information_schema数据库中，从mysql5.7.6开始，global_variables 表和 s
         set @var1 = 1;
         set @var2 := 2;
         select @sum := (@var1 + @var2) as sum;      //使用select赋值只能使用 :=
+    使用用户会话变量获取行号：
+        select (@rownum :=@rownum + 1) AS rownum,t.* from TABLE t,(SELECT @rownum := 0) b;
+        # 查询后 @rownum 会继续保留新值
 
 常见系统变量：
     interactive_timeout     表示MySQL服务器关闭交互式连接前等待活动的秒数，默认值28800秒（8小时）

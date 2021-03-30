@@ -282,7 +282,7 @@ field这样的麻烦，但是这个field会导致索引变得非常大，所以�
     faceting
     facet是solr对搜索返回数据的分组统计实现，可以在搜索时开启facet：/select?facet=on&facet.field=fd1&facet.field=fd2
 
-    搜索查询
+    搜索/查询
     SearchRequestHandlers使用查询解析器（query parser）处理搜索关键词，主要的 query parser包括：
         The Standard Query Parser
         The DisMax Query Parser
@@ -294,6 +294,7 @@ field这样的麻烦，但是这个field会导致索引变得非常大，所以�
         rows：指定一次查询返回的文档数的最大值，默认为10：rows=20
         fq：filter query，solr同时执行q和fq，然后缓存fq返回的文档，后续使用相同fq的搜索会直接在此fq缓存的文档集合里搜索，
             可以加快搜索速度：fq=price:[10.0 TO 100.0]&popularity:1 也可以使用Bool查询语法：fq=+price:[10.0 TO 100.0] +popularity:1
+            fq的条件也会参与本次查询
         fl：指定返回的field：fl=name cat | fl=name,cat | fl=* score 返回所有stored=true的field和文档的score
         wt：指定Response Writer：wt=json/xml
         cache：指定是否缓存搜索结果，solr默认缓存所有query和filter query的结果；停用缓存：cache=false
@@ -329,9 +330,9 @@ field这样的麻烦，但是这个field会导致索引变得非常大，所以�
         q=f1:hello || f2:solr
         // NOT 差集，也可以使用 !
         q=f1:hello ! f2:solr
-        // + 要求后面的条件必须满足
+        // + 匹配后面条件的文档都返回
         q=f1:hello +f2:solr
-        // - 要求后面的条件一定不匹配
+        // - 匹配前面且不匹配后面条件的都返回
         q=f1:hello -f2:solr
     DisMax parser只使用 + -两种操作符
     查询中的特殊字符：
@@ -383,4 +384,46 @@ field这样的麻烦，但是这个field会导致索引变得非常大，所以�
         rord(f1)    ord的逆序
         recip(x,m,a,b)     a/(m*x+b) 
         sum(a,b,c,...)
-        
+    
+    solr还支持其他查询解析器，常用的有：
+        Boolean Query Parser    提供must must_not should filter四种条件，filter表示表示必须提供，但不影响文档评分
+            q={!bool must=name:drive must_not=manu:maxtor}
+        Boost Query Parser      使用b指定一个函数，将该函数返回值与文档原得分相乘得到文档新得分
+            {!boost b=log(popularity)}ipod
+
+    搜索查询端点：
+    /select 支持GET、POST方法：
+        curl http://localhost:8983/solr/techproducts/select?q=manu%3Amaxtor%20%2Bname%3Adrive
+    /query  支持GET、POST方法，默认接受json格式参数，也支持同时接收查询参数和json参数，并组合查询参数和json参数：
+        curl http://localhost:8983/solr/techproducts/query -d '
+        {
+            "query" : "name:drive",
+            "limit": 5,
+            "filter" : "inStock:true"
+        }'
+        //使用查询参数
+        curl 'http://localhost:8983/solr/techproducts/query?json.limit=2&json.filter="cat:electronics"' -d'
+        {
+            query: "memory",
+            limit: 5,
+            filter: "inStock:true"
+        }'
+        //使用solrj
+        ModifiableSolrParams overrideParams = new ModifiableSolrParams();
+        JsonQueryRequest request = new JsonQueryRequest(overrideParams)
+                .setQuery("memory")
+                .withFilter("inStock:true");
+        request.setLimit(5);
+        overrideParams.set("json.limit",2);
+        QueryResponse response = request.process(solrClient,coreName);
+
+    传统的查询参数和新的json参数对应关系：
+        查询参数            json参数     
+        q                   query
+        fq                  filter
+        start               offset
+        rows                limit
+        fl                  fields
+        sort                sort
+        json.facet          facet
+        json.<param_name>   <param_name>

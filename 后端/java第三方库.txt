@@ -1,0 +1,74 @@
+jackson
+    注解
+        @JsonAnyGetter      用于将Map中的k-v映射为json的property;
+        @JsonGetter         用于标记一个方法为getter方法，用于替换@JsonProperty，方法名（或此注解的value值）和返回值将映射为json的property;
+        @JsonPropertyOrder  用于设置序列化的property的顺序，参数可以是property数组，也可以是alphabetic=true/false
+        @JsonRawValue       用于标记使用原始值进行序列化的字段，value=true/false设置是否激活；通常用于原始值就是json格式的字段；
+        @JsonValue          用于标记字段或方法，Jackson将使用被标记的字段或方法来作为整个对象的序列化输出，每个类中只能使用一次
+        @JsonRootName       用于在启用wrapper时设置root名称，不使用这个注解，默认的root名称是类名；如果是序列化为xml，还可以指定namespace
+        @JsonSerialize      用于指定自定义的序列化类实现，自定义实现必须继承自JsonSerializer体系
+        @JsonIgnore         用于标记不需要序列化的字段或getter方法，getter方法默认会被序列化；
+            @JsonRootName("extBean")
+            @JsonPropertyOrder({"myKey","name"})
+            //@JsonPropertyOrder(alphabetic = true)
+            public class ExtendableBean {
+                //@JsonValue
+                public String name;
+                private Map<String, String> properties;
+                private String key;
+                @JsonRawValue
+                public String json;
+                @JsonSerialize(using = CustomDateSerializer.class)
+                public Date date;
+
+                public ExtendableBean(String name){
+                    this.name = name;
+                    this.key = name;
+                    properties = new HashMap<>();
+                }
+
+                public void add(String key,String val){
+                    properties.put(key,val);
+                }
+
+                @JsonAnyGetter
+                public Map<String, String> getProperties() {
+                    return properties;
+                }
+
+                @JsonGetter
+                //@JsonGetter("_key_")
+                //@JsonProperty("_key_")
+                public String getMyKey(){
+                    return key;
+                }
+            }
+
+            public class CustomDateSerializer extends StdSerializer<Date> {
+                private static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+                public CustomDateSerializer(){
+                    this(null);
+                }
+                public CustomDateSerializer(Class<Date> dateClass){
+                    super(dateClass);
+                }
+
+                @Override
+                public void serialize(Date value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+                    gen.writeString(formatter.format(value));
+                }
+            }
+
+            @Test
+            public void test01() throws JsonProcessingException {
+                ExtendableBean bean = new ExtendableBean("My bean");
+                bean.add("attr1", "val1");
+                bean.add("attr2", "val2");
+                bean.json = "{\"attr\":false,\"attr2\":\"dev\"}";
+                bean.date = new Date();
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.enable(SerializationFeature.WRAP_ROOT_VALUE);
+                String result = mapper.writeValueAsString(bean);
+                System.out.println(result);
+            }
