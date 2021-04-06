@@ -7,7 +7,31 @@ jackson
         @JsonValue          用于标记字段或方法，Jackson将使用被标记的字段或方法来作为整个对象的序列化输出，每个类中只能使用一次
         @JsonRootName       用于在启用wrapper时设置root名称，不使用这个注解，默认的root名称是类名；如果是序列化为xml，还可以指定namespace
         @JsonSerialize      用于指定自定义的序列化类实现，自定义实现必须继承自JsonSerializer体系
+        @JsonCreator        和@JsonProperty一起使用声明反序列化时使用的构造方法
+        @JacksonInject      用于使用jackson的api注入值，而不是从json字符串得到该值；
+        @JsonAnySetter      用于反序列化时把不存在对应字段的json字段保存到map中；
+        @JsonSetter         用于标记setter方法，替换@JsonProperty
+        @JsonDeserialize    用于为一个字段指定自定义的反序列化实现，通常用于日期时间类型字段，自定义实现必须继承自JsonDeserializer体系
+        @JsonAlias          用于为一个字段指定多个对应的json属性名
+        @JsonIgnoreProperties   指定需要忽略的字段列表，配置 ignoreUnknown = true 表示在反序列化时忽略不存在于bean中的属性，如果不配置这个值，jackson会抛出异常
         @JsonIgnore         用于标记不需要序列化的字段或getter方法，getter方法默认会被序列化；
+        @JsonIgnoreType         使用此注解标记的类的对象作为需序列化的对象的字段不会被序列化
+        @JsonInclude            指定特定状态的字段才被序列化（Include.NON_DEFAULT、NON_EMPTY、NON_NULL等）
+        @JsonAutoDetect         设置序列化字段的可见性阈值（Visibility.ANY、NON_PRIVATE、PROTECTED_AND_PUBLIC、PUBLIC_ONLY等）
+        @JsonTypeInfo           设置作为字段的对象序列化后的类型信息，
+        @JsonSubTypes           指明@JsonTypeInfo标记的类的子类，需要和@JsonTypeInfo配合使用
+        @JsonTypeName           用在@JsonTypeInfo标记的类的子类上设置@JsonTypeInfo的type对应的值
+        @JsonProperty           用在字段、getter、setter方法上设置json中的属性名
+        @JsonFormat             用在日期时间类型的字段上设置序列化、反序列化的格式
+        @JsonUnwrapped          用在字段上表示该字段（对象）的各个子字段被展开到上级json中
+        @JsonView               用在字段上，序列化时指定序列化视图，则只序列化相应的字段
+        @JsonManagedReference   用在互相引用关系中，表示需要完整序列化的对象，需要和@JsonBackReference配合使用
+        @JsonBackReference      用在互相引用关系中，表示不需要序列化的对象，需要和@JsonManagedReference配合使用
+        @JsonIdentityInfo       用在互相引用关系中，指示A-B-A时A的标识字段
+        @JsonFilter             设置过滤器名称，过滤器是BeanPropertyFilter的实例
+        @JacksonAnnotationsInside   和其他jackson注解共同使用，用于声明自定义注解
+        禁用jackson注解： ObjectMapper.disable(MapperFeature.USE_ANNOTATIONS);
+
             @JsonRootName("extBean")
             @JsonPropertyOrder({"myKey","name"})
             //@JsonPropertyOrder(alphabetic = true)
