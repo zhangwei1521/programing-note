@@ -383,3 +383,17 @@ nexus下载：https://help.sonatype.com/repomanager2/download/download-archives-
         4. ${project.build.finalName} 产出物名称，缺省为${project.artifactId}-${project.version}
         5. ${project.packaging} 打包类型，缺省为jar
         6. ${project.xxx} 当前pom文件的任意节点的内容 
+	
+	执行单元测试：
+		mvn test
+	执行指定单元测试类：
+		mvn -Dtest=com.zhangwei.tools.uuid.JdkUUIDTest test
+	配置package等跳过测试：
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-surefire-plugin</artifactId>
+			<version>2.18.1</version>
+			<configuration>
+				<skipTests>true</skipTests>
+			</configuration>
+		</plugin>

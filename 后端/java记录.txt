@@ -2717,6 +2717,11 @@ opens都不会导出(exports)模块中的包，如果其他模块需要直接访
     兼容旧的非模块化jar包：在classpath的所有jar(不管是否模块化)会共同组成一个unnamed module。unnamed modules会
 声明依赖所有的named module，且exports自己的所有包
 
+	远程调试
+	Java程序启动时可以设置参数以开启远程调试功能，参数如下：
+		// address不指定ip则默认为localhost，如果需要使用远程机器调试，则这里配置远程机器的ip地址
+		java -Xdebug -Xrunjdwp:transport=dt_socket,suspend=n,server=y,address=5005 Main
+	远程调试时，调试端和运行端的class文件必须一致。
 
 
 

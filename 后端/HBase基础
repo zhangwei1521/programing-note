@@ -1,0 +1,15 @@
+                                            HBase基础
+
+基础命令
+    使用habse shell连接到hbase:
+        bin/hbase shell
+    查看所有的表：
+        list
+    查看表结构：
+        describe 'table_name'
+    添加数据：
+        put 'table_name','row_key','col_family1:col_name1' ,'col_value1','col_family1:col_name2' ,'col_value2','col_family2:col_name3' ,'col_value3'
+    查询数据：
+        scan 'table_name',{STARTROW=>'row_key_start',ENDROW=>'row_key_end'}
+    删除行：
+        deleteall 'table_name','row_key'
