@@ -875,6 +875,8 @@ work.xml，即9个规则集。public.xml内容入下：
         sed -i 's/\>/#/g' file1
         # 替换行内第二个?为!：
         sed 's/\?/\!/2' file1
+		# 替换windows换行符为linux换行符
+		sed -i 's/\r$'
 
     awk(参考：【酷 壳】[AWK 简明教程] https://coolshell.cn/articles/9070.html)
     awk是一个文本处理工具，支持使用脚本文件来编写文本处理逻辑
@@ -1024,7 +1026,7 @@ work.xml，即9个规则集。public.xml内容入下：
 Booting paravirtualized kernel on bare hardware，则表示运行在物理机上。
 	
 	使用openssl自签CA证书并使用自签证书签发次级证书
-	1.生成CA密钥
+	1.生成CA密钥(pkcs1标准)
 		openssl genrsa -out caroot.key 2048
 	2.生成CA证书请求文件
 		openssl req -new -key caroot.key -out caroot.csr
@@ -1067,8 +1069,17 @@ Booting paravirtualized kernel on bare hardware，则表示运行在物理机上
 			#也可以使用openssl ca 签发
 			openssl ca -policy policy_anything -days 365 -cert caroot.crt -keyfile caroot.key -in sps2.csr -out sps2.crt -extfile dnsext.cnf
 	7.查看证书
-		openssl x509 -in sps1.crt -nonout -text
+		openssl x509 -in sps1.crt -noout -text
 		指定格式：openssl x509 -in iciba.cer -inform der -text -noout
+
+	openssl的其他用法：
+		加密文件：
+			openssl enc -e -des3 -a -salt -in D:\zhangwei.txt -out D:\zhangwei100.txt
+		解密文件：
+			openssl enc -d -des3 -a -salt -in D:\zhangwei100.txt 
+		计算文件的哈希值：
+			openssl dgst -md5 D:\zhangwei.txt
+			openssl dgst -sha256 D:\zhangwei.txt
 
 
 	locate命令是mlocate提供的命令，作用和find -name相同，但是它是通过检索索引库文件而不是搜索目录查找，所以效率更高。
@@ -1283,3 +1294,4 @@ Booting paravirtualized kernel on bare hardware，则表示运行在物理机上
 			ulimit -n 65000
 		修改当前用户能同时运行的进程数的最大值：
 			ulimit -u 65000
+	

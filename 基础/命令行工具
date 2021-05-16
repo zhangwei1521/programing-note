@@ -1,0 +1,116 @@
+git命令：
+查看所有本地分支
+	git branch
+查看所有远程分支
+	git branch -r
+查看所有本地和远程分支
+	git branch -a
+拉取指定远程分支到本地并切换到该分支
+	git checkout step1
+
+
+
+curl用法：
+发起get请求：
+	curl http://localhost:8080/servlet-action/test
+url中携带参数:
+	curl "http://localhost:8080/servlet-action/test?name=john&age=23"
+注：windows中cmd不能正确处理带参数的url，需要使用""包裹url
+发起post请求：
+	curl -X POST "http://localhost:8080/servlet-action/test?name=john&age=23"
+使用请求体传递参数：
+	curl -X POST -H "Content-Type: application/json" -d '{"name":"john","age":23}' http://localhost:8080/servlet-action/test
+注：windows中-d参数中的"需要使用\",json也必须用""引用
+	curl -H "Content-Type: application/json" -X POST -d "{\"username\":\"tom\",\"password\":\"123\"}" "http://localhost:8080/login"
+携带cookie：
+	curl http://localhost:8080/home --cookie "JSESSIONID=B9AFCA8314F6EE269F9545E56C578100"
+https请求不检查证书：
+	curl -k https://zhangwei.org/hello 
+https请求时不要检查证书是否吊销（windows默认会通过网络请求根证书的已吊销证书列表，如果是自签证书，通常会失败，所以会导致curl异常）：
+	curl https://zhangwei.org/hello --ssl-no-revoke
+https请求时添加信任的根证书：
+	curl -cacert /d/tmp/ssl-demo/caroot.crt https://zhangwei.org/hello --ssl-no-revoke
+输出响应的head:
+	# -D - 后面的 - 是必需的，表示输出http响应head到标准输出，如果需要输出到文件，就替换为文件名
+	curl -k -D - https://zhangwei.org/hello 
+自动重定向：
+	curl --location http://localhost:8080/hello
+
+
+SSL数字证书
+证书类型：
+	从编码区分：
+		二进制编码：der
+		ASCII编码： pem（使用base64编码der文件中的二进制数据）
+	从内容区分：
+		包括证书(公玥)和私钥：p12（pkcs12标准）、jks（Java平台标准）
+		仅包含证书（公玥），不包含私钥：crt、cer
+		包含证书签发链：p7b（pkcs7标准）
+	
+
+openssl使用：
+openssl生成私钥：
+	#标准RSA私钥文件（pkcs1标准），不支持加密，
+	openssl genrsa -out root_pkcs1.pem 2048
+	#文件内容格式：
+	-----BEGIN RSA PRIVATE KEY-----
+	...
+	-----END RSA PRIVATE KEY-----
+从生成的私钥中提取公玥：
+	#pkcs8标准（支持加密）
+	openssl rsa -in root_pkcs1.pem -pubout -out root_pkcs8.pub
+	#文件内容格式：
+	-----BEGIN PUBLIC KEY-----
+	...
+	-----END PUBLIC KEY-----
+	
+	#pkcs1标准
+	openssl rsa -in root_pkcs1.pem -RSAPublicKey_out -out root_pkcs1.pub
+	#文件内容格式：
+	-----BEGIN RSA PUBLIC KEY-----
+	...
+	-----END RSA PUBLIC KEY-----
+私钥pkcs1 <---> pkcs8转换
+	openssl pkcs8 -in root_pkcs1.pem -out root_pkcs8.pem -topk8 -nocrypt
+	openssl rsa -in root_pkcs8.pem -out root_pkcs1.pem
+公玥 pkcs8--> pkcs1 转换
+	openssl rsa -in root_pkcs8.pub -out root_pkcs1.pub -pubin -RSAPublicKey_out
+
+自签证书(pkcs8标准)：
+	openssl req -newkey rsa:2048 -nodes -keyout root.key -x509 -days 365 -out root.crt
+生成证书请求文件：
+	openssl req -newkey rsa:2048 -nodes -keyout client.key -out client.csr
+签发证书：
+	openssl x509 -req -days 365 -in client.csr -CAkey root.key -CA root.crt -CAcreateserial -out client.crt -extfile dnsext.cnf
+从crt证书和私钥（pkcs8标准）构造p12证书：
+	openssl pkcs12 -export -in client.crt -inkey client.key -out client.p12
+查看证书：
+	#默认为pem文本格式，二进制格式需要指明：-inform DER
+	openssl x509 -in client.crt -noout -text
+移除p12（pkcs12标准）文件的密码：
+	openssl pkcs12 -in myca.p12 -out myca_raw.p12
+
+加密：
+openssl enc -e -des3 -a -salt -in D:\document\personal\zhangwei.txt -out D:\document\personal\zhangwei100.txt
+openssl enc -d -des3 -a -salt -in D:\document\personal\zhangwei100.txt 
+解密：
+openssl dgst -md5 D:\document\personal\zhangwei.txt
+openssl dgst -sha256 D:\downloads\devtools\microsoft-jdk-11.0.11.9.1-windows-x64.zip
+
+
+
+keytool使用
+生成keystore:
+	keytool -genkey -alias mykeystore -keyalg RSA -keysize 2048 -keypass mykeystore -storepass mykeystore -keystore mykeystore.jks
+查看keystore中的证书和密钥：
+	keytool -list -v -keystore mykeystore.jks -storepass mykeystore 
+导入信任的根证书到keystore:
+	keytool -import -trustcacerts -keystore cacerts -storepass changeit -noprompt -alias yourAliasName -file path\to\certificate
+
+
+
+
+
+
+
+

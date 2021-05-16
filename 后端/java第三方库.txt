@@ -14,7 +14,7 @@ jackson
         @JsonDeserialize    用于为一个字段指定自定义的反序列化实现，通常用于日期时间类型字段，自定义实现必须继承自JsonDeserializer体系
         @JsonAlias          用于为一个字段指定多个对应的json属性名
         @JsonIgnoreProperties   指定需要忽略的字段列表，配置 ignoreUnknown = true 表示在反序列化时忽略不存在于bean中的属性，如果不配置这个值，jackson会抛出异常
-        @JsonIgnore         用于标记不需要序列化的字段或getter方法，getter方法默认会被序列化；
+        @JsonIgnore             用于标记不需要序列化的字段或getter方法，getter方法默认会被序列化；
         @JsonIgnoreType         使用此注解标记的类的对象作为需序列化的对象的字段不会被序列化
         @JsonInclude            指定特定状态的字段才被序列化（Include.NON_DEFAULT、NON_EMPTY、NON_NULL等）
         @JsonAutoDetect         设置序列化字段的可见性阈值（Visibility.ANY、NON_PRIVATE、PROTECTED_AND_PUBLIC、PUBLIC_ONLY等）
