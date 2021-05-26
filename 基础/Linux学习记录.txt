@@ -460,6 +460,14 @@ defaults 包含rw、exec、auto、nouser、async
 		:%!xxd
 	保存后返回正常模式：
 		:%!xxd -r
+	查看文件编码：
+		:set fileencoding
+	转换编码：
+		:set fileencoding=utf8
+	查看文档格式
+		:set fileformat
+	转换格式：
+		:set fileformat=unix
 	
 
 	压缩和打包

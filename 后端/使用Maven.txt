@@ -397,3 +397,19 @@ nexus下载：https://help.sonatype.com/repomanager2/download/download-archives-
 				<skipTests>true</skipTests>
 			</configuration>
 		</plugin>
+
+安装jar包到本地仓库：
+	# 安装 JDK的tools.jar到maven本地仓库
+	mvn install:install-file -DgroupId=jdk.tools -DartifactId=jdk.tools -Dpackaging=jar -Dversion=1.6 -Dfile=tools.jar -DgeneratePom=true
+	# 使用
+	<dependency>
+		<groupId>jdk.tools</groupId>
+		<artifactId>jdk.tools</artifactId>
+		<version>1.6</version>
+	</dependency>
+	# 注：使用JDK9以后的版本，JDK不再提供tools.jar包，导致某些以前的第三方库报错，可以把旧版本的tools.jar通过这种方式做成maven依赖解决。
+
+多模块项目中，有时只需要构建其中某个模块，如果该模块依赖其他模块，这时不能直接在该模块路径下构建，可以切换到父项目目录下构建，但是这样构建会逐个构建
+所有模块，此时可以使用构建选项：-pl 模块group:模块artifact -am 来构建指定模块和其依赖模块：
+	# -pl 指明需要构建的模块，可以通过模块相对路径或 group:artifactId 来指定，-am 表示构建其依赖的模块，-amd表示构建依赖当前模块的模块
+	mvn -pl org.zhangwei.app:springdemo -am package 

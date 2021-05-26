@@ -19,6 +19,7 @@ url中携带参数:
 发起post请求：
 	curl -X POST "http://localhost:8080/servlet-action/test?name=john&age=23"
 使用请求体传递参数：
+	# -H 等同于 --header 用于设置请求head
 	curl -X POST -H "Content-Type: application/json" -d '{"name":"john","age":23}' http://localhost:8080/servlet-action/test
 注：windows中-d参数中的"需要使用\",json也必须用""引用
 	curl -H "Content-Type: application/json" -X POST -d "{\"username\":\"tom\",\"password\":\"123\"}" "http://localhost:8080/login"
@@ -31,7 +32,7 @@ https请求时不要检查证书是否吊销（windows默认会通过网络请�
 https请求时添加信任的根证书：
 	curl -cacert /d/tmp/ssl-demo/caroot.crt https://zhangwei.org/hello --ssl-no-revoke
 输出响应的head:
-	# -D - 后面的 - 是必需的，表示输出http响应head到标准输出，如果需要输出到文件，就替换为文件名
+	# -D - 后面的 - 是必需的，表示输出http响应head到标准输出，如果需要输出到文件，就替换为文件名(-D 等同于  --dump-header)
 	curl -k -D - https://zhangwei.org/hello 
 自动重定向：
 	curl --location http://localhost:8080/hello

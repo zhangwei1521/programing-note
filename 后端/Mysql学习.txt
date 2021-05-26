@@ -116,6 +116,13 @@ centos7 安装 mariadb 10.4.10:
 
 		source /etc/bashrc
 
+MySQL默认不允许远程登录，配置支持远程登录：
+    在装有MySQL的机器上登录MySQL mysql -u root -p密码
+    执行use mysql;
+    执行update user set host = '%' where user = 'root';这一句执行完可能会报错，不用管它。
+    执行FLUSH PRIVILEGES;
+
+
 指定mysql读取运行时参数（系统变量）的路径：
     通过命令行参数指定：
         mysqld_safe --datadir=/data/sql_data
