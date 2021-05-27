@@ -51,26 +51,27 @@ SSL数字证书
 
 openssl使用：
 openssl生成私钥：
-	#标准RSA私钥文件（pkcs1标准），不支持加密，
+	#标准RSA私钥文件（pkcs1标准）
 	openssl genrsa -out root_pkcs1.pem 2048
 	#文件内容格式：
 	-----BEGIN RSA PRIVATE KEY-----
 	...
 	-----END RSA PRIVATE KEY-----
 从生成的私钥中提取公玥：
-	#pkcs8标准（支持加密）
+	#pkcs1标准公玥
+	openssl rsa -in root_pkcs1.pem -RSAPublicKey_out -out root_pkcs1.pub
+	#文件内容格式：
+	-----BEGIN RSA PUBLIC KEY-----
+	...
+	-----END RSA PUBLIC KEY-----
+	
+	#pkcs8标准公钥
 	openssl rsa -in root_pkcs1.pem -pubout -out root_pkcs8.pub
 	#文件内容格式：
 	-----BEGIN PUBLIC KEY-----
 	...
 	-----END PUBLIC KEY-----
 	
-	#pkcs1标准
-	openssl rsa -in root_pkcs1.pem -RSAPublicKey_out -out root_pkcs1.pub
-	#文件内容格式：
-	-----BEGIN RSA PUBLIC KEY-----
-	...
-	-----END RSA PUBLIC KEY-----
 私钥pkcs1 <---> pkcs8转换
 	openssl pkcs8 -in root_pkcs1.pem -out root_pkcs8.pem -topk8 -nocrypt
 	openssl rsa -in root_pkcs8.pem -out root_pkcs1.pem
@@ -98,7 +99,29 @@ openssl enc -d -des3 -a -salt -in D:\document\personal\zhangwei100.txt
 openssl dgst -md5 D:\document\personal\zhangwei.txt
 openssl dgst -sha256 D:\downloads\devtools\microsoft-jdk-11.0.11.9.1-windows-x64.zip
 
+非对称加密
+使用公玥加密(pkcs8):
+	openssl rsautl -encrypt -in plain.txt -inkey key1.pub -pubin -out enc1.txt
+使用私钥解密:
+	openssl rsautl -decrypt -in enc1.txt -inkey key1.pem -passin pass:123456 -out denc1.txt
 
+签名和验证
+使用私钥签名:
+	openssl rsautl -sign -in plain.txt -inkey key1.pem  -out sign1.txt
+使用公玥验证((pkcs8)):
+	openssl rsautl -verify -in sign1.txt -inkey key1.pub -pubin -out replain1.txt
+
+#使用公玥签名或私钥加密都不能处理太大的数据.
+使用证书做非对称加密:
+生成证书和私钥:
+	openssl req -newkey rsa:2048 -nodes -keyout key2.pem -x509 -days 365 -out key2.crt
+密钥添加密码保护：
+	openssl rsa -in key2.pem -des3 -passout pass:123456 -out key21.pem
+使用证书加密:
+	openssl smime -encrypt -in plain.txt -out enc1.txt key2.crt
+使用私钥解密：
+	openssl smime -decrypt -in enc2.txt -out denc2.txt -inkey key21.pem
+	
 
 keytool使用
 生成keystore:
