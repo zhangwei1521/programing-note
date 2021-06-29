@@ -69,8 +69,8 @@
 		在 /etc/docker/daemon.json 中写入如下内容（如果文件不存在则新建该文件）：
 			{
 				"registry-mirrors": [
-					"https://dockerhub.azk8s.cn",
-					"https://reg-mirror.qiniu.com"
+					"https://hub-mirror.c.163.com",
+    				"https://mirror.baidubce.com"
 				]
 			}
 		重启服务

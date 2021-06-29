@@ -2,13 +2,24 @@
 
 启动kafka:
     1、首先启动zookeeper：
-        zkServer.cmd
-        也可以使用kafka附带的zookeeper：
-        zookeeper-server-start.bat zookeeper.properties
+        bin/zookeeper-server-start.sh -daemon config/zookeeper.properties
     2、启动kafka：
-        kafka-server-start.bat server.properties
+        bin/kafka-server-start.sh -daemon config/server.properties
 使用kafka：
     建立topic并发送数据：
-        kafka-console-producer.bat --broker-list localhost:9092 --topic test
+        bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic topic_test
+    列出所有topic:
+        bin/kafka-topics.sh --list --zookeeper localhost:2181
     监听topic：
-        kafka-console-consumer.bat  --bootstrap-server localhost:9092 --topic test --from-beginning
+        bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic topic_test --from-beginning
+    发送消息到topic:
+        bin/kafka-console-producer.sh --broker-list localhost:9092 --topic topic_test
+
+
+问题：
+    producer 发送消息到broker，如何确定消息已发送成功，broker中的partition leader如何确认消息接收成功？
+        对于broker来说，当消息写入所有in-sync状态的副本后，消息才会认为已提交（committed）。这里的写入有可能只是写入到文件系统的缓存，不一定刷新到磁盘。
+        对于producer，可以设置参数 acks，这个参数可以设置 0、1或all，
+            0：producer发送出消息即认为消息发送成功；
+            1：接收到partition leader所在broker返回的【消息已写入该broker的文件（缓存）】确认消息后，即认为消息发送成功；
+            all：接收到partition leader所在的broker返回的【消息已提交】的确认消息后，才认为消息发送成功；

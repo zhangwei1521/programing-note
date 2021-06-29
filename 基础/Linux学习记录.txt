@@ -1303,3 +1303,23 @@ Booting paravirtualized kernel on bare hardware，则表示运行在物理机上
 		修改当前用户能同时运行的进程数的最大值：
 			ulimit -u 65000
 	
+	安装telnet
+		1. 安装 telnet 需要先安装 xinetd 
+			yum install xinetd
+		2. 安装 telnet
+			yum install telnet-server telnet
+		3. 设置开机启动 xinetd
+			systemctl enable xinetd
+		4. 启动 xinetd
+			systemctl start xinetd
+		5. 启动 telnet-server
+			systemctl start telnet.socket
+	centos7中不要在 /etc/xinetd.d/ 下配置telnet文件，否则不能启动telnet
+	注：xinetd已经被systemd取代，不建议再使用，同样，telnet也被ssh取代了，尽量不要再使用（telnet登录时没有加密用户名密码，不安全）
+
+	环境变量 TERM
+	终端是一类输入输出设备，linux支持的终端信息放在 /usr/share/terminfo下，终端映射文件为 /dev/tty*，/dev/tty代表当前终端，执行：
+echo "hello" > /dev/tty 会把 hello 输出到当前终端。伪终端是逻辑终端设备，多用于模拟终端程序，如通过 ssh 登录linux。伪终端映射文件
+为 /dev/pts/*
+	如果linux不能识别终端/伪终端，则环境变量 TERM 被设置为 dumb，这可能会造成输入输出异常，可以在 .bash_profile等文件中设置 TERM 的
+默认值，如果是通过是ssh登录，则可以在客户端设置环境变量 TERM，这个变量值将被设置为ssh终端的类型。

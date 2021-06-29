@@ -607,6 +607,7 @@ functions:
     conv(number2,from_base,to_base)     //进制转换
     floor(number2)                      //向下取整
     format(number,decimal_places)       //保留小数位数
+    truncate(x,D)                       //保留小数位数
     hex(decimalnumber)                  //转十六进制
     注：hex()中可传入字符串，则返回其ascll码，如hex('def')返回4142143,也可以传入十进制整数，返回其十六进制编码，如hex(25)返回19
     least(number , number2 [,..])       //求最小值
@@ -652,6 +653,7 @@ functions:
     to_days(datetime)                           //
     time('2006-02-15 04:34:33')                 //返回时间
     timestamp('2006-02-15 04:34:33')            //返回时间戳
+    timestampdiff(SECOND/HOUR/MINUTE,datetime1,datetime2)   //使用指定单位返回时间差
 其他函数：
     md5(x)                                      //获取MD5值（32位）
     version()                                   //获取mysql版本
@@ -968,3 +970,73 @@ sql中使用了非确定性函数，如uuid等）。
                 and dep_id='9f3ff336f6f84bc582a5a5d830192ac7'
             )
         order by date
+    
+常用监控性能指标:
+[索引]缓存：
+status variables:
+    Key_read_requests                       myisam引擎从缓冲区读索引的请求数（myisam使用自定义的key cache结构缓存索引，数据则使用操作系统的缓冲区缓存）
+    Key_reads                               myisam引擎从磁盘读索引的请求数
+    Innodb_buffer_pool_read_requests        innodb引擎从缓冲区读的请求数
+    Innodb_buffer_pool_reads                innodb引擎从磁盘读的请求数
+    # 读取索引总数先从缓冲区读取，读不到才会去读磁盘，所以通常使用 Key_reads/Key_read_requests 表示索引读失效率
+    Key_blocks_unused                       key cache中剩余的block数
+    # 使用 (1 - Key_blocks_unused * key_cache_block_size / key_buffer_size) 得到key cache使用率
+system variables:
+    key_buffer_size                         myisam索引缓冲区大小，mysql5.7默认为 8M
+    key_cache_block_size                    key cache中一个block的大小，mysql5.7默认为 1k
+    innodb_buffer_pool_size                 innodb引擎使用来缓存索引、表数据的缓冲区大小，mysql5.7默认为 128M
+
+线程池：
+status variables:
+    Threads_created                         历史创建的处理客户端连接的总线程数
+    Threads_cached                          线程池中剩余可用的线程数
+    Threads_connected                       已经建立的连接数
+    Threads_running                         正在处理请求的线程数
+    Max_used_connections                    历史同时连接的连接数最大值
+    Connections                             历史连接请求总次数（包括失败的连接）
+system variables:
+    thread_cache_size                       线程池中可以缓存的最大线程数量，mysql5.7默认为10
+
+查询结果缓存：
+system variables:
+    query_cache_size                        设置为0表示不启用查询缓存
+    query_cache_type                        0：不启用查询缓存；1：缓存所有没有禁用查询缓存（select SQL_NO_CACHE）的查询，2：缓存指明使用查询缓存（select SQL_CACHE）的查询
+status variables:
+    Qcache_hits                             查询缓存命中数
+    Qcache_inserts                          查询缓存未命中数
+
+临时表：
+status variables:
+    Created_tmp_disk_tables                 创建的磁盘临时表的数量
+    Created_tmp_files                       创建的临时文件的数量
+    Created_tmp_tables                      创建的临时表的数量
+system variables:
+    tmp_table_size                          内存临时表大小超过此值后就被转移到磁盘上
+    max_heap_table_size                     内存中表的最大容量（调整tmp_table_size需要考虑这个值是否需要同步调整）
+
+线程创建：
+status variables:
+    slow_launch_time                        创建一个线程的时间超过此值，就把 slow_launch_threads 的值加一
+system variables:
+    slow_launch_threads                     创建时间超过slow_launch_time值的线程数
+
+打开文件数：
+system variables:
+    open-files-limit                        mysqld进程可持有的最大打开文件数
+    innodb-open-files                       InnoDB引擎中表空间文件最大打开的数量
+status variables:
+    Open_files                              服务层打开的文件数
+    innodb_num_open_files                   innodb打开的文件数
+
+查看主从同步状态：
+    show slave status\G
+        Slave_IO_State                      slave节点连接到master节点的状态
+        Slave_IO_Running                    slave节点IO线程状态，IO线程负责把主库的bin日志(Master_Log)内容，抄写到从库的中继日志上(Relay_Log)
+        Slave_SQL_Running                   slave节点SQL线程状态，SQL线程负责把中继日志上的语句在从库上执行一遍
+        seconds_Behind_Master               slave节点当前的时间戳和master记录该事件时的时间戳的差值
+
+innodb引擎IO：
+status variables:
+    Innodb_data_read                        表示Innodb启动后，从物理磁盘上读取的字节数总和。
+    Innodb_data_reads                       表示Innodb启动后，对物理磁盘发起的IO请求次数总和。
+    # Innodb_data_read / Innodb_data_reads 得到的比值，越接近16K说明IO压力越倾向于随机IO，越远离16K说明IO从顺序预读中获得性能提升越多

@@ -413,3 +413,6 @@ nexus下载：https://help.sonatype.com/repomanager2/download/download-archives-
 所有模块，此时可以使用构建选项：-pl 模块group:模块artifact -am 来构建指定模块和其依赖模块：
 	# -pl 指明需要构建的模块，可以通过模块相对路径或 group:artifactId 来指定，-am 表示构建其依赖的模块，-amd表示构建依赖当前模块的模块
 	mvn -pl org.zhangwei.app:springdemo -am package 
+
+	如果在parent pom中配置了某些依赖，即使用<dependencies><dependency>配置，而child pom中想要排除这些依赖，可以通过在child pom中指定这些依赖的scope
+为provided、test等来实现。

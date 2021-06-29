@@ -36,6 +36,8 @@ https请求时添加信任的根证书：
 	curl -k -D - https://zhangwei.org/hello 
 自动重定向：
 	curl --location http://localhost:8080/hello
+curl关闭显示统计信息：
+	curl -k -D - https://zhangwei.org/hello -s
 
 
 SSL数字证书
@@ -112,7 +114,7 @@ openssl dgst -sha256 D:\downloads\devtools\microsoft-jdk-11.0.11.9.1-windows-x64
 	openssl rsautl -verify -in sign1.txt -inkey key1.pub -pubin -out replain1.txt
 
 #使用公玥签名或私钥加密都不能处理太大的数据.
-使用证书做非对称加密:
+使用证书做非对称加密可以加密大文件:
 生成证书和私钥:
 	openssl req -newkey rsa:2048 -nodes -keyout key2.pem -x509 -days 365 -out key2.crt
 密钥添加密码保护：
@@ -125,7 +127,7 @@ openssl dgst -sha256 D:\downloads\devtools\microsoft-jdk-11.0.11.9.1-windows-x64
 
 keytool使用
 生成keystore:
-	keytool -genkey -alias mykeystore -keyalg RSA -keysize 2048 -keypass mykeystore -storepass mykeystore -keystore mykeystore.jks
+	keytool -genkey -alias mykeystore -keyalg RSA -keysize 2048 -keypass mykeystore -storepass mykeystore -keystore mykeystore.p12 -storetype pkcs12
 查看keystore中的证书和密钥：
 	keytool -list -v -keystore mykeystore.jks -storepass mykeystore 
 导入信任的根证书到keystore:
