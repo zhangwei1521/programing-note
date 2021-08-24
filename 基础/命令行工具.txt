@@ -60,7 +60,7 @@ openssl生成私钥：
 	...
 	-----END RSA PRIVATE KEY-----
 从生成的私钥中提取公玥：
-	#pkcs1标准公玥
+	#标准RSA公钥文件(pkcs1标准)
 	openssl rsa -in root_pkcs1.pem -RSAPublicKey_out -out root_pkcs1.pub
 	#文件内容格式：
 	-----BEGIN RSA PUBLIC KEY-----
@@ -73,7 +73,9 @@ openssl生成私钥：
 	-----BEGIN PUBLIC KEY-----
 	...
 	-----END PUBLIC KEY-----
-	
+
+PKCS#8 是一个通用型的秘钥格式方案
+
 私钥pkcs1 <---> pkcs8转换
 	openssl pkcs8 -in root_pkcs1.pem -out root_pkcs8.pem -topk8 -nocrypt
 	openssl rsa -in root_pkcs8.pem -out root_pkcs1.pem
@@ -81,9 +83,9 @@ openssl生成私钥：
 	openssl rsa -in root_pkcs8.pub -out root_pkcs1.pub -pubin -RSAPublicKey_out
 
 自签证书(pkcs8标准)：
-	openssl req -newkey rsa:2048 -nodes -keyout root.key -x509 -days 365 -out root.crt
+	openssl req -newkey rsa:2048 -nodes -keyout root.key -x509 -days 365 -out root.crt -subj '/CN=caroot'
 生成证书请求文件：
-	openssl req -newkey rsa:2048 -nodes -keyout client.key -out client.csr
+	openssl req -newkey rsa:2048 -nodes -keyout client.key -out client.csr -subj '/CN=client'
 签发证书：
 	openssl x509 -req -days 365 -in client.csr -CAkey root.key -CA root.crt -CAcreateserial -out client.crt -extfile dnsext.cnf
 从crt证书和私钥（pkcs8标准）构造p12证书：

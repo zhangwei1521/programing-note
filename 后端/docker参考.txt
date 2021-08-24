@@ -237,3 +237,30 @@
 	从标准输入中读取 Dockerfile 进行构建：
 		docker build - < Dockerfile
 	这种形式由于直接从标准输入中读取 Dockerfile 的内容，它没有上下文，因此不可以像其他方法那样可以将本地文件 COPY 进镜像之类的事情。
+
+
+	mysql容器：
+	拉取mysql镜像：
+		docker pull mysql:latest
+	启动mysql容器：
+		# 使用数据卷(bind宿主机目录作为数据卷)
+		docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=root \
+		-v /usr/local/docker/mysql/conf:/etc/mysql/conf.d \
+		-v /usr/local/docker/mysql/data:/var/lib/mysql \
+		--name mysql_bind mysql
+	在宿主机 /usr/local/docker/mysql/conf/的文件将被映射到mysql容器的/etc/mysql/conf.d目录下，这个目录下的配置文件中的配置将覆盖mysql容器的默认
+配置文件。
+	mysql容器的默认数据目录是/var/lib/mysql，这里把这个目录映射到宿主机的/usr/local/docker/mysql/data目录，删除容器后数据就不会被删除。
+	进入mysql容器：
+		docker exec -it mysql_bind /bin/bash
+	查看运行中的所有容器：
+		docker ps
+	停止mysql容器：
+		docker container stop mysql_bind
+	启动停止的mysql容器：
+		docker container start mysql_bind
+	重启运行中的mysql容器：
+		docker container restart mysql_bind
+	删除已停止的mysql容器：
+		docker container rm mysql_bind
+	

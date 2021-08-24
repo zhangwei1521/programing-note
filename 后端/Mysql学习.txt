@@ -764,6 +764,7 @@ join语句执行过程：
         long_query_time=0.001   //单位为秒，默认为10s，建议值设小一点，如1ms
     指定是否记录未使用索引的sql:
         log_queries_not_using_indexes=ON    //记录所有没有使用索引的SQL
+    注：配置 slow_query_log=ON不生效，而 slow_query_log_file生效，是因为slow_query_log_file配置的日志文件所属用户不是mysql
 
 
 二进制日志：
@@ -861,7 +862,7 @@ sql中使用了非确定性函数，如uuid等）。
         Repeatable Read（可重复读），同一事务多次读取相同数据源时，会看到同样的数据行，但是会产生“幻读”，是MySQL的
                         默认事务隔离级别（InnoDB引擎已经解决了幻读问题）；
                         幻读：多次读取一定范围的数据，得到的数据范围不相同，这是其他事务提交insert或delete后的结果。
-        Serializable（串行化），在每个读的数据行上加上共享锁，提交事务释放共享锁后才能继续申请排它锁，导致锁竞争。
+        Serializable（串行化），在每个读的数据行（数据表）上加上共享锁，提交事务释放共享锁后，其他事务才能继续申请此表上的排它锁，导致锁竞争。
     mysql查询事务隔离级别：
         select @@tx_isolation;
     修改事务隔离级别：
@@ -970,32 +971,27 @@ sql中使用了非确定性函数，如uuid等）。
                 and dep_id='9f3ff336f6f84bc582a5a5d830192ac7'
             )
         order by date
-    
+
+
 常用监控性能指标:
-[索引]缓存：
+
+启动时间：
+status variables:
+    Uptime                                  当前时间和mysql启动时间的差（秒）
+
+索引缓存：
+system variables:
+    key_buffer_size                         myisam索引缓冲区大小，mysql5.7默认为 8M
+    key_cache_block_size                    key cache中一个block的大小，mysql5.7默认为 1k
+    innodb_buffer_pool_size                 innodb引擎使用来缓存索引、表数据的缓冲区大小，mysql5.7默认为 128M
 status variables:
     Key_read_requests                       myisam引擎从缓冲区读索引的请求数（myisam使用自定义的key cache结构缓存索引，数据则使用操作系统的缓冲区缓存）
     Key_reads                               myisam引擎从磁盘读索引的请求数
     Innodb_buffer_pool_read_requests        innodb引擎从缓冲区读的请求数
     Innodb_buffer_pool_reads                innodb引擎从磁盘读的请求数
-    # 读取索引总数先从缓冲区读取，读不到才会去读磁盘，所以通常使用 Key_reads/Key_read_requests 表示索引读失效率
+    # 读取索引总是先从缓冲区读取，读不到才会去读磁盘，所以通常使用 Key_reads/Key_read_requests 表示索引读失效率
     Key_blocks_unused                       key cache中剩余的block数
     # 使用 (1 - Key_blocks_unused * key_cache_block_size / key_buffer_size) 得到key cache使用率
-system variables:
-    key_buffer_size                         myisam索引缓冲区大小，mysql5.7默认为 8M
-    key_cache_block_size                    key cache中一个block的大小，mysql5.7默认为 1k
-    innodb_buffer_pool_size                 innodb引擎使用来缓存索引、表数据的缓冲区大小，mysql5.7默认为 128M
-
-线程池：
-status variables:
-    Threads_created                         历史创建的处理客户端连接的总线程数
-    Threads_cached                          线程池中剩余可用的线程数
-    Threads_connected                       已经建立的连接数
-    Threads_running                         正在处理请求的线程数
-    Max_used_connections                    历史同时连接的连接数最大值
-    Connections                             历史连接请求总次数（包括失败的连接）
-system variables:
-    thread_cache_size                       线程池中可以缓存的最大线程数量，mysql5.7默认为10
 
 查询结果缓存：
 system variables:
@@ -1005,20 +1001,31 @@ status variables:
     Qcache_hits                             查询缓存命中数
     Qcache_inserts                          查询缓存未命中数
 
+线程池：
+system variables:
+    thread_cache_size                       线程池中可以缓存的最大线程数量，mysql5.7默认为10
+status variables:
+    Threads_created                         历史创建的处理客户端连接的总线程数
+    Threads_cached                          线程池中剩余可用的线程数
+    Threads_connected                       已经建立的连接数
+    Threads_running                         正在处理请求的线程数
+    Max_used_connections                    历史同时连接的连接数最大值
+    Connections                             历史连接请求总次数（包括失败的连接）
+
+线程创建：
+system variables:
+    slow_launch_threads                     创建时间超过slow_launch_time值的线程数
+status variables:
+    slow_launch_time                        创建一个线程的时间超过此值，就把 slow_launch_threads 的值加一
+
 临时表：
+system variables:
+    tmp_table_size                          内存临时表大小超过此值后就被转移到磁盘上
+    max_heap_table_size                     内存中表的最大容量（调整tmp_table_size需要考虑这个值是否需要同步调整）
 status variables:
     Created_tmp_disk_tables                 创建的磁盘临时表的数量
     Created_tmp_files                       创建的临时文件的数量
     Created_tmp_tables                      创建的临时表的数量
-system variables:
-    tmp_table_size                          内存临时表大小超过此值后就被转移到磁盘上
-    max_heap_table_size                     内存中表的最大容量（调整tmp_table_size需要考虑这个值是否需要同步调整）
-
-线程创建：
-status variables:
-    slow_launch_time                        创建一个线程的时间超过此值，就把 slow_launch_threads 的值加一
-system variables:
-    slow_launch_threads                     创建时间超过slow_launch_time值的线程数
 
 打开文件数：
 system variables:
@@ -1027,6 +1034,21 @@ system variables:
 status variables:
     Open_files                              服务层打开的文件数
     innodb_num_open_files                   innodb打开的文件数
+
+打开表相关：
+system variables:
+    table_open_cache                        允许打开表数量最大值
+status variables:
+    Open_tables                             打开表数量
+
+DML相关：
+status variables:
+    Com_insert                              服务器启动后执行的insert语句数
+    Com_delete                              服务器启动后执行的delete语句数
+    Com_update                              服务器启动后执行的update语句数
+    Com_select                              服务器启动后执行的select语句数
+注：可以使用一段时间内这些变量值的增量来表示mysql的工作负载
+
 
 查看主从同步状态：
     show slave status\G
@@ -1040,3 +1062,6 @@ status variables:
     Innodb_data_read                        表示Innodb启动后，从物理磁盘上读取的字节数总和。
     Innodb_data_reads                       表示Innodb启动后，对物理磁盘发起的IO请求次数总和。
     # Innodb_data_read / Innodb_data_reads 得到的比值，越接近16K说明IO压力越倾向于随机IO，越远离16K说明IO从顺序预读中获得性能提升越多
+
+导出数据：
+mysqldump -u root -p RUNOOB runoob_tbl > dump.txt
