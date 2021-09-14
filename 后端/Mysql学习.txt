@@ -657,6 +657,7 @@ functions:
 其他函数：
     md5(x)                                      //获取MD5值（32位）
     version()                                   //获取mysql版本
+    group_concat(field1 SEPARATOR ';')          //连接多行的值为单个行(支持对field的值进行排序： group_concat(distinct field1 order by field1 asc SEPARATOR ';')  )
 
 使用rand函数和md5函数生成32位随机字符串：
     select md5(rand());
@@ -683,12 +684,14 @@ join语句执行过程：
             <where_condition>
     执行顺序如下:
         FROM：对left_table和right_table执行笛卡尔积，产生第一张虚拟表vt1。行数为n*m（n为左表的行数，m为右表的行数）；
-        ON：根据ON的条件逐行筛选vt1，将结果插入第一张虚拟表vt2中；
+        ON：根据ON的条件逐行筛选vt1，将结果插入第二张虚拟表vt2中；
         JOIN：添加外部行，如果指定的是LEFT JOIN(LEFT OUTER JOIN)，则先遍历一遍左表的每一行，其中不在vt2的行会被插入到vt2，该行的剩余字段将被填充为NULL，形成vt3，
             如果指定的是RIGHT JOIN则遍历右表并将不在vt2中的行加入vt2得到vt3。如果指定的是INNER JOIN，则不添加外部行，即vt2=vt3;
         WHERE：对vt3进行条件过滤，满足条件的行被输出到vt4
         SELECT：取出vt4的指定字段到vt5
 标准SQL还定义了FULL JOIN，单mysql不支持。FULL JOIN指的是在JOIN阶段会将左右表中不满足ON条件的行都加入虚拟表。
+    select * from table_A a,table_B b where a.col1=b.col2; 等同于
+    select * from table_A a inner join table_B b on a.col1=b.col2
 
 索引类型：
     B-tree索引，使用B+树保存索引数据，支持联合索引只使用左侧部分列进行查询，支持范围查询和排序。
@@ -1065,3 +1068,13 @@ status variables:
 
 导出数据：
 mysqldump -u root -p RUNOOB runoob_tbl > dump.txt
+
+正则表达式匹配查询：
+    # 查找name字段中以'st'为开头的所有数据
+    SELECT name FROM person_tbl WHERE name REGEXP '^st';
+    # 查找name字段中以'ok'为结尾的所有数据：
+    SELECT name FROM person_tbl WHERE name REGEXP 'ok$';
+    # 查找name字段中包含'mar'字符串的所有数据：
+    SELECT name FROM person_tbl WHERE name REGEXP 'mar';
+    # 查找name字段中以元音字符开头或以'ok'字符串结尾的所有数据：
+    SELECT name FROM person_tbl WHERE name REGEXP '^[aeiou]|ok$';
