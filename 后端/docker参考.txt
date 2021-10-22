@@ -190,6 +190,8 @@
 		docker rm 759454521566
 	删除指定镜像的容器：
 		docker rm $(docker ps -a -q -f ancestor=alpine:v2)
+	查看容器的详细信息：
+		docker container inspect web2
 
 	定制镜像：通过修改一个已有的镜像的文件和配置得到一个新的镜像的过程。通常使用Dockerfile文件来描述定制镜像的操作。
 	Dockerfile 是一个文本文件，其内包含了一条条的 指令，每一条指令描述了如何构建镜像的某一层。
@@ -230,9 +232,16 @@
 	docker中COPY 指令、ADD 指令等指令涉及到文件操作，指定文件路径时应该基于传入的上下文路径，例如：
 		COPY ./package.json /app/
 		#这里指的是复制 上下文路径下的 package.json而非执行docker build命令时所在的路径；后面的/app/是镜像中的路径，所以这里是把宿主机的
-一个文件复制到了镜像的文件系统中。
+一个文件复制到了镜像的文件系统中。ADD指令和COPY指令基本可以互换。
 	通常的做法是，将 Dockerfile 置于一个空目录下，或者项目根目录下，把涉及到的文件复制一份到这个目录下或其子目录下，对于存在于构建上下文
 路径下而不需要参与构建的文件，可以在一个.dockerignore文件中列出，这个文件的语法和.gitignore相同。
+	其他指令：
+		WORKDIR /app/
+			指定后续的指令中的容器内相对路径的根路径为 /app
+		VOLUMN ["/app/log","/tmp"]
+			指定在宿主机上创建数据卷关联到容器内的这两个路径(默认在宿主机的 /var/lib/docker/volumes/ 下创建数据卷)
+		ENTRYPOINT ["java","-jar","app.jar"]
+			指定启动容器时执行的命令为 java -jar app.jar
 	docker build 还支持从 URL 构建，比如可以直接从 Git repo 中构建、用给定的 tar 压缩包构建
 	从标准输入中读取 Dockerfile 进行构建：
 		docker build - < Dockerfile
@@ -263,4 +272,32 @@
 		docker container restart mysql_bind
 	删除已停止的mysql容器：
 		docker container rm mysql_bind
+	
+	安装 docker-compose
+		curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+	/usr/local/bin/如果不在 path环境变量中，需要把这个路径加到path变量中
+	检查 docker-compose版本：
+		docker-compose --version
+	springboot20应用 docker-compose配置文件：
+		# docker-compose.yml
+		version: "3.9"
+		services:
+		  springboot20:
+		    image: "springboot20:102203"
+			ports:
+			  - "8080:7999"
+			  - "54321:15149"
+			volumes:
+			  - applog:/app/log
+		  redis:
+			image: "redis:alpine"
+
+		volumes:
+		  applog:
+	通过docker-compose启动应用：
+		docker-compose up -d 
+	进入容器：
+		docker-compose exec springboot20 /bin/sh
+	停止应用容器并删除容器：
+		docker-compose down
 	

@@ -986,12 +986,9 @@ status variables:
 system variables:
     key_buffer_size                         myisam索引缓冲区大小，mysql5.7默认为 8M
     key_cache_block_size                    key cache中一个block的大小，mysql5.7默认为 1k
-    innodb_buffer_pool_size                 innodb引擎使用来缓存索引、表数据的缓冲区大小，mysql5.7默认为 128M
 status variables:
     Key_read_requests                       myisam引擎从缓冲区读索引的请求数（myisam使用自定义的key cache结构缓存索引，数据则使用操作系统的缓冲区缓存）
     Key_reads                               myisam引擎从磁盘读索引的请求数
-    Innodb_buffer_pool_read_requests        innodb引擎从缓冲区读的请求数
-    Innodb_buffer_pool_reads                innodb引擎从磁盘读的请求数
     # 读取索引总是先从缓冲区读取，读不到才会去读磁盘，所以通常使用 Key_reads/Key_read_requests 表示索引读失效率
     Key_blocks_unused                       key cache中剩余的block数
     # 使用 (1 - Key_blocks_unused * key_cache_block_size / key_buffer_size) 得到key cache使用率
@@ -1051,6 +1048,11 @@ status variables:
     Com_update                              服务器启动后执行的update语句数
     Com_select                              服务器启动后执行的select语句数
 注：可以使用一段时间内这些变量值的增量来表示mysql的工作负载
+
+innodb缓存
+    innodb_buffer_pool_size                 innodb引擎使用来缓存索引、表数据的缓冲区大小，mysql5.7默认为 128M
+    Innodb_buffer_pool_reads                从物理磁盘中读取数据的请求次数（每次读一个page,读完后就缓存到缓冲区 innodb_buffer_pool）
+    innodb_buffer_pool_read_requests        逻辑读总数（每次读一个page）
 
 
 查看主从同步状态：

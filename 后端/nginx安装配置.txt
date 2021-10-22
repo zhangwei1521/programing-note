@@ -1,0 +1,338 @@
+yum -y install gcc gcc-c++
+
+yum install -y openssl openssl-devel
+
+yum install -y pcre pcre-devel
+
+yum install -y zlib zlib-devel gd gd-devel
+
+useradd -s /sbin/nologin nginx 
+
+使用nginx用户安装
+./configure --prefix=/usr/local/nginx \
+--user=nginx \
+--group=nginx \
+--with-pcre \
+--with-http_ssl_module \
+--with-http_v2_module \
+--with-http_realip_module \
+--with-http_addition_module \
+--with-http_sub_module \
+--with-http_dav_module \
+--with-http_flv_module \
+--with-http_mp4_module \
+--with-http_gunzip_module \
+--with-http_gzip_static_module \
+--with-http_random_index_module \
+--with-http_secure_link_module \
+--with-http_stub_status_module \
+--with-http_auth_request_module \
+--with-http_image_filter_module \
+--with-http_slice_module \
+--with-mail \
+--with-threads \
+--with-file-aio \
+--with-stream \
+--with-mail_ssl_module \
+--with-stream_ssl_module
+如果提示：./configure: error: SSL modules require the OpenSSL library. 可以通过指定openssl的源码路径来处理：
+--with-openssl=/usr/local/openssl-1.1.1k-src
+
+其他编译参数：
+--conf-path=/etc/nginx/nginx.conf                	# 指定配置文件
+--http-log-path=/var/log/nginx/access.log        	# 指定访问日志
+--error-log-path=/var/log/nginx/error.log        	# 指定错误日志
+--lock-path=/var/lock/nginx.lock                 	# 指定lock文件
+--pid-path=/run/nginx.pid                        	# 指定pid文件
+--http-client-body-temp-path=/var/lib/nginx/body    # 设定http客户端请求临时文件路径
+--http-fastcgi-temp-path=/var/lib/nginx/fastcgi     # 设定http fastcgi临时文件路径
+--http-proxy-temp-path=/var/lib/nginx/proxy         # 设定http代理临时文件路径
+--http-scgi-temp-path=/var/lib/nginx/scgi           # 设定http scgi临时文件路径
+--http-uwsgi-temp-path=/var/lib/nginx/uwsgi         # 设定http uwsgi临时文件路径
+--with-debug                                        # 启用debug日志
+--with-pcre-jit                                     # 编译PCRE包含“just-in-time compilation”
+--with-ipv6                                         # 启用ipv6支持
+
+#使用root用户安装
+./configure --prefix=/usr/local/nginx \
+--with-pcre \
+--with-http_ssl_module \
+--with-http_v2_module \
+--with-http_realip_module \
+--with-http_addition_module \
+--with-http_sub_module \
+--with-http_dav_module \
+--with-http_flv_module \
+--with-http_mp4_module \
+--with-http_gunzip_module \
+--with-http_gzip_static_module \
+--with-http_random_index_module \
+--with-http_secure_link_module \
+--with-http_stub_status_module \
+--with-http_auth_request_module \
+--with-http_image_filter_module \
+--with-http_slice_module \
+--with-mail \
+--with-threads \
+--with-file-aio \
+--with-stream \
+--with-mail_ssl_module \
+--with-stream_ssl_module \
+--with-openssl=/usr/local/openssl-1.1.1k-src
+
+make && make install
+
+cd /usr/local/nginx/sbin
+./nginx
+#安装后执行报错：nginx: [emerg] getpwnam("nginx") failed，是因为安装前配置了用户和用户组为nginx，实际启动却是root
+
+操作nginx
+启动：
+	#使用默认配置文件启动：
+	sbin/nginx
+	#使用指定配置文件启动：
+	sbin/nginx -c conf/nginx.conf
+停止：
+	#快速停止：
+	sbin/nginx -s stop
+	#有序停止：
+	sbin/nginx -s quit
+重新加载配置文件：
+	sbin/nginx -s reload
+重新打开日志文件：
+	#先手动把当前的日志文件重命名，再执行此命令创建新的日志文件
+	sbin/nginx -s reopen
+检查配置文件：
+	#检查默认配置文件：
+	sbin/nginx -t
+	#检查指定配置文件：
+	sbin/nginx -t -c conf/nginx.conf
+查看nginx安装编译配置：
+	sbin/nginx -V
+
+nginx的默认配置文件路径【优先级从高到低】：
+	/etc/nginx/nginx.conf
+	/usr/local/etc/nginx/nginx.conf
+	/usr/local/nginx/conf/nginx.conf
+
+nginx.conf配置说明：nginx配置分为两类：context块和指令
+	# nginx.conf
+
+	# 全局域context
+	# worker_processes指令设置nginx启动的处理请求的工作进程的数量【普通指令，默认值为 1】
+	worker_processes  1;
+	# 使用CPU核心数
+	# worker_process auto;
+	
+	# error_log指令设置错误日志文件【error_log指令是数组指令，数组指令可以在相同的域context中设置多个同名指令】
+	error_log  logs/error.log;
+	# debug日志
+	error_log log/error_debug.log debug;
+	
+	# 设置一个nginx进程能打开的最大文件数，建议设置为 worker_connections*2，nginx可以字段增加这个值
+	worker_rlimit_nofile 2048; 
+	
+	# pid文件路径
+	pid        /var/run/nginx.pid; 
+	
+	# 事件域context
+	# 事件配置
+	events {
+		# 设置一个工作进程的最大并发连接数，默认为 1024
+		worker_connections  10240;
+		# 事件驱动类型		
+		use epoll;                
+	}
+	
+	# http域context
+	# http 服务相关设置 
+	http {
+		# 设置访问日志的格式
+		log_format  main  'remote_addr - remote_user [time_local] "request" '
+						  'status body_bytes_sent "$http_referer" '
+						  '"http_user_agent" "http_x_forwarded_for"'; 
+		# 设置访问日志的位置
+		access_log  /var/log/nginx/access.log  main;
+		
+		# 用于开启文件高效传输模式【使用内核提供的零拷贝api，直接实现 文件->内核缓冲区->网络接口，避免读文件到用户态缓冲区】，一般设置为on【默认为 off】
+		sendfile          on;
+		
+		# 减少网络报文段数量，当有数据时，先别着急发送, 确保数据包已经装满数据, 避免了网络拥塞【只在 sendfile 配置为 on 时生效，默认为 off】
+		tcp_nopush        on;
+		# 提高I/O性能，确保数据尽快发送, 提高可数据传输效率【默认为 on，linux2.5.9以后和 tcp_nopush 不再互斥】
+		tcp_nodelay       on;
+		# 可以同时设置 sendfile、tcp_nopush、tcp_nodelay为on，这里的逻辑是，当没有收到发送的小TCP包的ACK时，就使用tcp_nopush模式，当收到发送的小TCP包的ACK时就使用tcp_nodelay模式
+		
+		# 是否开启 gzip 压缩
+		gzip              on;
+		# 设置压缩级别，可设置值为0-10，0表示不压缩，10是最大压缩级别，压缩级别越高，消耗的CPU时间越多，压缩后文件越小
+		gzip_comp_level 5; 
+		# 设置要压缩的资源类型
+		gzip_types text/plain;
+		gzip_types text/css;
+		gzip_types application/javascript;
+		gzip_types application/json;
+		
+		# 设置长连接的超时时间，请求完成之后还要保持连接多久，不是请求时间多久，目的是保持长连接，减少创建连接过程给系统带来的性能损耗，类似于线程池，数据库连接池
+		keepalive_timeout  65;
+		
+		# 影响散列表的冲突率。types_hash_max_size 越大，就会消耗更多的内存，但散列key的冲突率会降低，检索速度就更快。types_hash_max_size越小，消耗的内存就越小，但散列key的冲突率可能上升
+		types_hash_max_size 2048;
+		
+		# 关联mime类型，关联资源的媒体类型(不同的媒体类型的打开方式)
+		include             mime.types;
+		# 根据文件的后缀来匹配相应的MIME类型，并写入Response header，导致浏览器播放文件而不是下载
+		default_type        application/octet-stream;
+		
+		# server域context，可以配置多个server域context，根据server_name区分这些虚拟服务器
+		# 虚拟服务器的相关设置 
+		server {
+			# 设置监听的[ip]端口
+			# 只允许从本机访问
+			#listen		127.0.0.1:80;
+			# 允许从任何网卡接口[网卡ip]访问，等同于 listen		*:80
+			listen      80; 
+			# 如果编译时启用了ipv6支持，可以配置监听ipv6地址和端口
+			# listen [::]:80;
+			
+			# 设置绑定的主机名、域名或ip地址
+			# 可以配置多个监听相同端口的server域context虚拟服务器，所以通过 server_name 来区分这些虚拟服务器，nginx根据http请求的请求头Host来匹配 server_name选择虚拟服务器，如果匹配不到就使用配置的第一个虚拟服务器
+			server_name  localhost example.org zhangwei.*;
+			
+			# 设置编码字符 
+			charset koi8-r;
+			
+			# root指令设置请求被映射到的根目录，如果请求 http://192.168.56.2/index.html 就会返回 /root/nginx/html/index.html
+			root /root/nginx/html;
+			# 配置了上面的路径，请求返回403，error日志：open() "/root/nginx/html/index.html" failed (13: Permission denied), client: 192.168.56.2, server: zhangwei.org, request: "GET /index.html HTTP/1.1", host: "192.168.56.2"
+			# 这是因为nginx启动后工作进程默认用户和用户组都是nobody，没有/root的读权限，可以修改/root的权限：chmod o+rx /root
+			
+			# location指令根据请求url设置配置【location指令格式： location [修饰符] path {...}】
+			location / {
+				# 设置服务器默认网站的根目录位置
+				root  /var/www/nginx;
+				# index指令设置默认打开的文档 
+				index  index.html index.htm;
+				
+				# 下面的配置会覆盖父级上下文中的指令
+				error_log logs/error_root.log;
+				
+				# 设置响应header
+				add_header Cache-Control no-cache;
+			}
+			
+			# http://localhost/fo   根据 location / {...}配置返回
+			# http://localhost/foo  根据 location /foo {...}配置返回
+			# http://localhost/foo/ 根据 location /foo/ {...}配置返回
+			location /foo {
+				return 200 "foo\n";
+			}
+			
+			location /foo/ {
+				return 200 "foo/\n";
+			}
+			
+			# location指令的修饰符有5类
+			# =			精确匹配
+			# ^~		高优先级前缀匹配【优先级高于正则表达式匹配和无修饰符前缀匹配】
+			# ~			正则表达式匹配【区分大小写】
+			# ~*		正则表达式匹配【不区分大小写】
+			# 无修饰符	前缀匹配【优先级低于正则表达式匹配】
+			location /match {
+				return 200 "match_prefix\n";
+			}
+			
+			location = /match {
+				return 200 "match\n";
+			}
+
+			location ^~ /match0 {
+				return 200 "^~match0\n";
+			}
+
+			location ~ /Match[0-9] {
+				return 200 "~match[0-9]\n";
+			}
+
+			location ~* /Match[0-9] {
+				return 200 "~*match[0-9]\n";
+			}
+			
+			# root指令设置的根路径不包括请求里的路径，如果请求 http://192.168.56.2/bash-action/index.html 则nginx去查找 /root/bash-action/bash-action/index.html文件
+			location /bash-action/ {
+				root /root/bash-action;
+			}
+			
+			# alias指令设置的路径包括了请求里的路径，如果请求 http://192.168.56.2/bash/index.html 则nginx去查找 /root/bash-action/index.html文件
+			location /bash/ {				
+				alias /root/bash-action/;
+			}
+
+			# try_files指令设置尝试返回的资源列表，不要在 server域context中设置 try_files
+			# $uri表示原请求路径
+			location /404/ {
+				try_files	$uri /404.html =404;
+			}
+			
+			# 设置错误信息返回页面 
+			error_page  500 502 503 504  /50x.html;
+			location = /50x.html {
+				root  html;
+			} 
+			
+			error_page 400 401 402 403 404 /40x.html;
+			location = /40x.html {
+				root /root/nginx/html;
+			}
+			
+			#反向代理配置
+			location /proxy/ {
+				proxy_set_header X-Real-Ip $remote_addr;
+				proxy_set_header X-Real-Port $remote_port;
+				proxy_set_header X-Proxy-Ip $server_addr;
+				proxy_set_header X-Proxy-Port $server_port;
+				proxy_set_header X-Proxy-Name $hostname;
+				#将当前代理服务器地址添加到请求头 X-Forwarded-For 数组中
+				proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+				
+				反向代理的服务器地址
+				proxy_pass http://192.168.56.1:8080;
+			}
+			
+			location /proxy2/ {
+				proxy_http_version 1.1;
+				proxy_set_header X-Real-Ip $remote_addr;
+				proxy_set_header X-Real-Port $remote_port;
+				proxy_set_header X-Proxy-Ip $server_addr;
+				proxy_set_header X-Proxy-Port $server_port;
+				proxy_set_header X-Proxy-Name $hostname;
+				proxy_pass http://backend;
+			}
+		}
+		
+		#负载均衡配置，默认使用轮询策略
+		upstream backend {
+			#根据客户端ip哈希选择后端服务器
+			#ip_hash;
+			# 设置权重，weight默认为 1
+			server 192.168.56.1:8080 weight=2;
+			server 192.168.56.1:8081;
+		}
+		
+		#配置https证书
+		server {
+			listen       443 ssl;
+			server_name  localhost;
+			
+			ssl_session_cache 		shared:SSL:10m;
+			ssl_session_timeout 	10m;
+			
+			ssl_certificate 		../cert/github.crt;
+			ssl_certificate_key		../cert/github.key;
+			
+			location / {
+				root html;
+				index  welcome.html;
+			}
+		}
+	}

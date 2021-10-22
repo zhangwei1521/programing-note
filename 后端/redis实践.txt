@@ -567,5 +567,26 @@ address，这个match部分是可选的，最后还可以使用可选的 count n
     添加测试数据：
         #添加1000条测试数据，格式为 key:n value:n
         debug populate 1000
+	
+	使用普通连接模式连接 redis cluster 中的某个节点，当节点发现键所在的槽并非自己负责处理的时候，节点就会向客户端返回一个MOVED错误，
+指引客户端转向至正在负责槽的节点。
+	使用集群模式连接 redis cluster 中的节点:
+		redis-cli -h 127.0.0.1 -p 6379 -a root -c
+	集群连接模式可以自动重定向，即把客户端自动重定向到负责处理查询的key所在slot的节点。
+	集群相关命令：
+		# 查询cluster命令的用法
+		cluster help
+		# 查看集群基本信息
+		cluster info
+		# 查看集群节点信息
+		cluster nodes
+		# 查看集群数据槽分布信息
+		cluster slots
+		# 添加新的节点到集群中
+		cluster meet 127.0.0.1 6380
+		# 计算key属于哪个槽：
+		cluster keyslot foo 
+		# 设置当前连接的节点为目标节点的从节点
+		cluster replicate <node-id>
     
 

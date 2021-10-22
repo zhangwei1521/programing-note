@@ -103,3 +103,8 @@ nginx简单bat脚本：ng.bat
     chcp 65001
 修改cmd窗口编码为GBK：
     chcp 936
+
+查询进程详细信息：
+    wmic process where  Caption="java.exe" > java.txt
+只查询启动进程的命令行：
+    wmic process where  Caption="java.exe" > java.txt get  CommandLine

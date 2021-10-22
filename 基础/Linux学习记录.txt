@@ -555,7 +555,8 @@ defaults 包含rw、exec、auto、nouser、async
 		baseurl=file:///mnt/cdrom
 		enabled=1
 		gpgcheck=0
-	刷新repos生成缓存：yum makecache
+	刷新repos生成缓存(缓存软件源中有哪些软件等信息，如果使用了fastestmirror插件，也会缓存各个软件源镜像地址列表中访问最快的镜像地址)：
+		yum makecache
 	然后就可以使用yum安装了：yum install -y tftp
 	恢复yum源：rm -rf /etc/yum.repos.d
 		mv /etc/yum.repos.bak /etc/yum.repos.d
@@ -1323,3 +1324,15 @@ echo "hello" > /dev/tty 会把 hello 输出到当前终端。伪终端是逻辑�
 为 /dev/pts/*
 	如果linux不能识别终端/伪终端，则环境变量 TERM 被设置为 dumb，这可能会造成输入输出异常，可以在 .bash_profile等文件中设置 TERM 的
 默认值，如果是通过是ssh登录，则可以在客户端设置环境变量 TERM，这个变量值将被设置为ssh终端的类型。
+
+	查询进程启动文件的位置
+	首先通过 ps 命令找到需要查找进程的进程ID：
+		ps aux | grep hadoop
+	然后使用 ls 查询进程ID对应的状态信息文件：
+		ls -al /proc/25346
+	这里列出的文件中：
+		exe 链接到启动文件
+		cwd 链接到执行进程的目录
+		cmdline 文件里存储了启动进程执行的命令
+		environ 记录了进程运行时的环境变量
+		fd目录下是进程打开或使用的文件的符号连接
