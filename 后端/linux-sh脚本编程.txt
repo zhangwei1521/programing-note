@@ -220,6 +220,11 @@
         else
                 echo "$i < " `expr $j \* 3 / 4`
         fi
+    字符串比较：
+        if [ $name = "john" ]
+        then
+            echo "hello $name"
+        fi 
 
     循环语句
         for循环：
@@ -522,3 +527,9 @@
             echo ${VAR21+"VAR21"}  //输出"VAR21"
     
     $IFS
+
+将命令执行输出保存为变量：
+    第一种方法：
+        ssh_status=$(service ssh status)
+    第二种方法：
+        ssh_status=`service ssh status`

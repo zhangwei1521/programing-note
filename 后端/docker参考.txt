@@ -173,8 +173,12 @@
 			webserver \
     		nginx:v2
 	保存的新镜像为 nginx:v2，--author和--message是可选部分。
+	查看镜像详细信息：
+		docker inspect nginx:v2
 	查看镜像内的历史记录：
 		docker history nginx:v2
+		#显示完整信息
+		docker history --no-trunc nginx:v2
 	运行新镜像：
 		docker run --name web2 -d -p 81:80 nginx:v2
 	使用 docker commit 生成的镜像也被称为 黑箱镜像，即是说构造镜像的过程难以被记录，导致镜像不能被理解。
@@ -301,3 +305,16 @@
 	停止应用容器并删除容器：
 		docker-compose down
 	
+	查看所有的docker网络：
+		docker network la
+	docker中的三种网络类型：
+		bridge 	桥接的虚拟局域网（docker安装后自动创建一个名为 docker0 的网络，网段为 172.17.0.x）（bridge网段的第一个地址保留给宿主机使用）
+		host	使用宿主机的网卡（会和宿主机争用端口）
+		none	不配置网络
+	创建新的网络(bridge网络)：
+		docker network create --subnet=192.168.33.0/24 docker33
+	创建新的容器时指定网络和ip：
+		docker run -d --network=docker33 --ip 192.168.33.2 -p 3306:3306 -e MYSQL_ROOT_PASSWORD=root \
+		-v /usr/local/docker/mysql/conf:/etc/mysql/conf.d \
+		-v /usr/local/docker/mysql/data:/var/lib/mysql \
+		--name mysql_bind2 mysql

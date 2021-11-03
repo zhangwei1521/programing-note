@@ -108,3 +108,47 @@ nginx简单bat脚本：ng.bat
     wmic process where  Caption="java.exe" > java.txt
 只查询启动进程的命令行：
     wmic process where  Caption="java.exe" > java.txt get  CommandLine
+
+使用指定用户进入wsl的指定linux发行版：
+    wsl -u root -d ubuntu
+设置root密码：
+    sudo passwd root
+列出所有的linux子系统
+    wsl -l 
+列出所有的wsl发行版和WSL版本：
+    wsl -l -v
+如果 VERSION 为1，说明wsl发行版运行在WSL1下，手工切换到WSL2中：
+    #先关闭正在运行中的wsl发行版
+    wsl --shutdown
+    #修改版本为wsl2
+    wsl --set-version <Linux发行版名称> 2
+设置wsl默认版本为wsl2:
+    wsl --set-default-version 2
+列出正在运行的linux子系统：
+    wsl -l --running
+停止正在运行的一个linux子系统：
+    wsl -t ubuntu
+wsl2中配置ubuntu默认使用root用户：
+    ubuntu config --default-user root
+另外一种修改默认用户的方式：在wsl的linux中编辑文件/etc/wsl.conf : 
+    # /etc/wsl.conf
+    [user]
+    default = root
+
+    # 修改 hostname
+    [network]
+    hostname = u1
+    generateHosts = false
+windows资源管理器中访问wsl文件系统：
+    \\wsl$
+使用powershell可以访问wsl：
+    cd \\wsl$\Ubuntu\
+WSL2中监听 0.0.0.0 的程序，Win10 可直接通过 localhost:port 访问。如仅监听 127.0.0.1，Win10宿主机不能直接访问
+
+设置端口转发（powershell管理员执行）：
+    netsh interface portproxy add v4tov4 listenport=22 listenaddress=192.168.56.1 connectport=22 connectaddress=127.0.0.1
+端口转发可能会被防火墙阻拦，如果不能转发，需要新建入站规则放开监听端口
+查看配置的端口转发：
+    netsh interface portproxy show all
+删除端口转发：
+    netsh interface portproxy delete v4tov4 listenport=22 listenaddress=192.168.56.1

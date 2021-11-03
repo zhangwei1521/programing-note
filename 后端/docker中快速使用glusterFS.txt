@@ -1,0 +1,48 @@
+#拉取glusterFS镜像
+docker pull gluster/gluster-centos
+
+#启动三个glusterFS容器
+docker run -d --name gluster1 --privileged=true gluster/gluster-centos
+docker run -d --name gluster2 --privileged=true gluster/gluster-centos
+docker run -d --name gluster3 --privileged=true gluster/gluster-centos
+
+#进入容器
+docker exec -it gluster1 /bin/sh
+
+#在一个容器（172.17.0.2）中把另外两个glusterFS容器加入当前glusterFS集群
+gluster peer probe 172.17.0.3
+gluster peer probe 172.17.0.4
+
+#在每个容器中分别创建目录
+mkdir /gluster/vol1
+
+#创建卷
+gluster volume create vol_1 transport tcp 172.17.0.2:/gluster/vol1 172.17.0.3:/gluster/vol1 172.17.0.4:/gluster/vol1 force
+
+#启动卷
+gluster volume start vol_1
+
+#安装 glusterFS 客户端
+yum install -y centos-release-gluster
+yum install -y glusterfs glusterfs-fuse
+
+#挂载 glusterFS 的卷 vol_1 到客户端主机的 /mnt 目录
+mount -t glusterfs 172.17.0.3:/vol_1 /mnt
+
+#客户端写入一些文件
+touch /mnt/file{1..9}.txt
+cp /root/anaconda-ks.cfg /mnt/
+
+#在glusterFS节点查看写入的文件
+ls -al /gluster/vol1
+
+#启用卷配额
+gluster volume quota vol_1 enable
+
+#设置卷配额
+gluster volume quota vol_1 limit-usage / 2GB
+#设置卷目录配额
+#gluster volume quota vol_1 limit-usage /demo 2GB
+
+#查看卷配额及使用量
+gluster volume quota vol_1 list

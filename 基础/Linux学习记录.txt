@@ -83,6 +83,15 @@ Ctrl+Alt+F1切换回图形用户界面。
 	查看sshd进程：ps -ef|grep sshd
 	centos默认使用openssh-clients作为远程登录客户端，使用ssh -V查看软件版本，安装该工具：yum install -y openssh-clients
 	openssh-clients登陆远程主机：ssh root@192.168.1.103
+	生产ssh密钥对：
+		ssh-keygen -t rsa -C "zhangwei@win1"
+	将生成的公玥文件 id_rsa.pub 发送给远程linux主机，远程linux将该公玥文件追加到 ~/.ssh/authorized_keys文件中，本地主机在
+~/.ssh/config文件中配置：
+		Host c1
+			User root
+			HostName 192.168.56.2
+			IdentityFile "~\.ssh\id_rsa"
+	即可使用 ssh root直接登录远程Linux主机。
 
 	修改主机名：hostname asuser 永久修改：vi /etc/hostname
 	
@@ -1336,3 +1345,16 @@ echo "hello" > /dev/tty 会把 hello 输出到当前终端。伪终端是逻辑�
 		cmdline 文件里存储了启动进程执行的命令
 		environ 记录了进程运行时的环境变量
 		fd目录下是进程打开或使用的文件的符号连接
+	
+	修改命令提示符：
+		命令提示符根据环境变量 PS1 设置，查看：echo $PS1，修改可以在/etc/profile中设置PS1变量：
+			PS1=[\u@\h \W]\$
+		\u 用户名
+		\h 主机名
+		\W 当前工作目录（只显示当前目录名）
+		\w 当前工作目录完整路径
+	
+	启动sshd服务报错：sshd: no hostkeys available -- exiting
+	执行以下命令处理报错：
+		ssh-keygen -A
+		/etc/init.d/ssh start

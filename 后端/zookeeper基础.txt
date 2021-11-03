@@ -21,12 +21,12 @@ Znode需要通过以 / 打头的绝对路径来引用，根节点下有一个默
         ctime                   节点创建时间
         mtime                   节点最后一次修改时间
         dataVersion             节点版本（节点创建后为0，每次修改加1）
-        cversion                子节点版本（子节点修改次数）
+        cversion                子节点版本（子节点创建/删除次数）
         aclVersion              acl版本（节点创建后为0，每次修改权限加1）
         ephermeralOwner         临时节点则为会话ID，否则为0
         dataLength              数据字节数
         numChildren             子节点数量
-        pZxid                   没有子节点则为自己的cZxid，否则为最新创建子节点的cZxid
+        pZxid                   没有子节点则为自己的cZxid，否则为创建/删除子节点的最新事务id
 
     zookeeper客户端命令：
         stat path [watch]
@@ -81,8 +81,10 @@ Znode需要通过以 / 打头的绝对路径来引用，根节点下有一个默
             #zoo.cfg内容
             #发送心跳的时间间隔（毫秒）（客户端也使用这里的心跳时间间隔和服务端维持会话）
             tickTime=2000
+            #快照日志保存路径，每隔一段时间zookeeper会把整个DataTree的数据序列化后存储到这个路径下的一个快照文件中
             dataDir=/usr/local/zk/data
-            #事务日志保存路径
+            # 事务日志保存路径，zookeeper系统在正常运行过程中，针对所有的更新操作，在返回客户端“更新成功”的响应前，
+            # zookeeper会保证已经将本次更新操作的数据记录到这个路径下的事务日志文件中
             dataLogDir=/usr/local/zk/dataLog        
             clientPort=2181
             #限制连接到Zookeeper的客户端数量，为零或忽略不进行设置将会取消对并发连接的限制
@@ -93,6 +95,10 @@ Znode需要通过以 / 打头的绝对路径来引用，根节点下有一个默
             # maxSessionTimeout=40000
             # 客户端可以设置单独的会话超时时间，告知zookeeper在没有收到当前客户端心跳的一段时间后销毁当前会话，客户端设置的时间必须在
             # 服务端配置的minSessionTimeout和maxSessionTimeout之间
+            # 自动清理保留的快照文件数（默认为3）
+            autopurge.snapRetainCount=4
+            # 自动清理的时间间隔（单位为小时，默认0表示不开启自动清理功能）
+            autopurge.purgeInterval=2
         启动：
             #zoo.cfg是默认的配置文件
             zkServer.sh start
@@ -178,3 +184,5 @@ Znode需要通过以 / 打头的绝对路径来引用，根节点下有一个默
             zkServer.sh start
     
     客户端使用 Zookeeper 时会连接到集群中的任意节点，所有的节点都能够直接对外提供读操作，但是写操作都会被从节点路由到主节点，由主节点进行处理。
+    查看事务日志：
+        Java -classpath .:slf4j-api-1.6.1.jar:zookeeper-3.4.9.jar  org.apache.zookeeper.server.LogFormatter   ../Data/datalog/version-2/log.1
