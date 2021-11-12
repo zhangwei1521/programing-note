@@ -1,0 +1,285 @@
+# 创建index必须使用 PUT 方法
+PUT schools
+#或
+PUT /schools
+
+#创建index时指定配置
+PUT /schools
+{
+	"aliases" : {
+		"alias_1" : {}, 
+		"alias_2" : {
+			"filter" : {
+				"term" : {
+					"user" : "manu" 
+				}
+			},
+			"routing" : "manu"
+		}
+	},
+	"settings" : {
+		"number_of_shards" : 3
+	},
+	"mappings" : {
+		"properties" : {
+			"college_name" : { 
+				"type" : "text",
+				"keyword":{
+				    "type":"keyword",
+				    "ignore_above":256
+				}
+			}, 
+			"college type" : {
+				"type":"text"
+			}
+		}
+	}
+}
+
+删除index
+DELETE /schools
+
+查看index
+GET /schools
+
+关闭
+POST /schools/_close
+
+打开
+POST /schools/_open
+
+# 使用 bulk api 批量索引文档
+# bulk api对json语法有严格的要求，每个json串不能换行，只能放到一行，同时一个json串和一个json串之间必须要换行
+POST /schools/_bulk
+{"index": {"_index": "schools","_id": "1"}}
+{"name":"Central School","description":"CBSE Affiliation","street":"Nagan","city":"paprola","state":"HP","zip":"176115","location":[31.8955385,76.8380405],"fees":2000,"tags":["Senior Secondary","beautiful campus"],"rating":"3.5"}
+{"index":{"_index":"schools","_id":"2"}}
+{"name":"Saint Paul School","description":"ICSE Afiliation","street":"Dawarka","city":"Delhi","state":"Delhi","zip":"110075","location":[28.5733056,77.0122136],"fees":5000,"tags":["Good Faculty","Great Sports"],"rating":"4.5"}
+{"index":{"_index":"schools","_id":"3"}}
+{"name":"Crescent School","description":"State Board Affiliation","street":"Tonk Road","city":"Jaipur","state":"RJ","zip":"176114","location":[26.8535922,75.7923988],"fees":2500,"tags":["Well equipped labs"],"rating":"4.5"}
+
+#索引单个文档(指定索引文档id)
+POST /schools/_doc/1
+{
+   "name":"City School", "description":"ICSE", "street":"West End", "city":"Meerut", 
+   "state":"UP", "zip":"250002", "location":[28.9926174, 77.692485], "fees":3500, 
+   "tags":["fully computerized"], "rating":"4.5"
+}
+
+#如果不指定文档id，则索引时生成随机id
+POST /schools/_doc
+{
+   "name":"City School", "description":"ICSE", "street":"West End", "city":"Meerut", 
+   "state":"UP", "zip":"250002", "location":[28.9926174, 77.692485], "fees":3500, 
+   "tags":["fully computerized"], "rating":"4.5"
+}
+
+#索引文档时，默认使用内部版本控制，文档版本号从1开始，每次重新索引/更新/删除文档都会把版本号+1
+POST /schools/_doc/1
+{
+   "name":"Central School", "description":"CBSE Affiliation", "street":"Nagan",
+   "city":"paprola", "state":"HP", "zip":"176115", "location":[31.8955385, 76.8380405],
+   "fees":2200, "tags":["Senior Secondary", "beautiful campus"], "rating":"3.3"
+}
+
+#可以手动指定使用外部版本号，es会检查传入的外部版本是否大于当前版本号，如果不大于就报错
+POST /schools/_doc/1?version=1105&version_type=external
+{
+   "name":"Central School", "description":"CBSE Affiliation", "street":"Nagan",
+   "city":"paprola", "state":"HP", "zip":"176115", "location":[31.8955385, 76.8380405],
+   "fees":2500, "tags":["Senior Secondary", "beautiful campus"], "rating":"3.3"
+}
+
+#使用操作类型参数避免覆盖原有文档
+POST /schools/_doc/1?op_type=create
+{
+   "name":"Central School", "description":"CBSE Affiliation", "street":"Nagan",
+   "city":"paprola", "state":"HP", "zip":"176115", "location":[31.8955385, 76.8380405],
+   "fees":2500, "tags":["Senior Secondary", "beautiful campus"], "rating":"3.3"
+}
+
+#设置索引超时时间（默认为1分钟）
+POST /schools/_doc/1?timeout=2m
+{
+   "name":"Central School", "description":"CBSE Affiliation", "street":"Nagan",
+   "city":"paprola", "state":"HP", "zip":"176115", "location":[31.8955385, 76.8380405],
+   "fees":2500, "tags":["Senior Secondary", "beautiful campus"], "rating":"3.3"
+}
+
+#GET API
+GET /schools/_doc/1
+
+#只返回指定的文档
+GET /schools/_doc/1/_source
+
+#查询所有文档
+POST /schools/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+#只返回文档
+POST /schools/_search?filter_path=hits
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+#删除文档
+DELETE /schools/_doc/1
+
+#更新指定field 
+POST /schools/_doc/1/_update
+{
+	"doc":{
+		"fees":2800,
+		"rating":"3.8"
+	}
+}
+
+#搜索API
+#当前最新版本（7.15.1）直接请求 /_search 端点会检索到es内部索引，官方备注未来会排除检索内部索引
+GET /_search?q=up
+
+#搜索指定index
+GET /schools/_search?q=up
+
+#指定搜索的field
+GET /schools/_search?q=state:up
+
+#指定多个index
+GET /schools,articles/_search?q=state:up
+
+#使用 Multi GET 获取多个不同index中的文档
+POST /_mget
+{
+   "docs":[
+      {
+         "_index": "schools", "_id": "1"
+      },
+      {
+         "_index":"es-article-index", "_id": "1"
+      }
+   ]
+}
+
+#使用搜索DSL
+POST /schools/_search
+{
+   "query":{
+      "query_string":{
+         "query":"up"
+      }
+   }
+}
+
+#指定匹配的field
+POST /schools/_search
+{
+  "query": {
+    "match": {
+      "description": "Board "
+    }
+  }
+}
+#同时在多个field中搜索
+POST /schools/_search
+{
+  "query": {
+    "multi_match": {
+      "query": "Board ",
+      "fields":["description","city"]
+    }
+  }
+}
+#关键字组合查询
+POST /schools/_search
+{
+  "query": {
+    "query_string": {
+      "query": "Board OR HP"
+    }
+  }
+}
+#term查询处理数字日期等结构化数据
+POST /schools/_search
+{
+  "query": {
+    "term": {
+      "zip": {
+        "value": "176115"
+      }
+    }
+  }
+}
+#范围查询（  gte:大于等于；gt:大于； lte:小于等于； lt:小于）
+POST /schools/_search
+{
+  "query": {
+    "range": {
+      "rating": {
+        "gte": 3,
+        "lte": 4
+      }
+    }
+  }
+}
+#字段非空查询
+POST /schools/_search
+{
+  "query": {
+    "exists": {
+      "field": "state"
+    }
+  }
+}
+#文档类型查询
+POST /schools/_search
+{
+  "query": {
+    "type": {
+      "value": "_doc"
+    }
+  }
+}
+#复合查询
+
+
+#对查询结果进行聚合计算
+#计算field的平均值
+POST /schools/_search
+{
+	"query":{
+      "query_string":{
+         "query":"Delhi OR HP"
+      }
+    },
+	"aggs":{
+		"avg_fees":{
+			"avg":{
+				"field":"fees",
+				 "missing":0	//设置缺少默认值为0(默认缺少不参加计算)
+			}
+		}
+	}
+}
+
+#查看集群节点信息
+GET /_nodes/_local
+或
+GET /_nodes/127.0.0.1
+
+#查看集群所有信息
+GET /_cluster/state
+
+#查看集群健康状态
+GET /_cluster/health
+
+#查看集群统计信息
+GET /_cluster/stats
+
+#查看es集群中存在的所有索引
+GET /_cat/indices
