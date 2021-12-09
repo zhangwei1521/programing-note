@@ -1,3 +1,22 @@
+
+#查看集群节点信息
+GET /_nodes/_local
+或
+GET /_nodes/127.0.0.1
+
+#查看集群所有信息
+GET /_cluster/state
+
+#查看集群健康状态
+GET /_cluster/health
+
+#查看集群统计信息
+GET /_cluster/stats
+
+#查看es集群中存在的所有索引
+GET /_cat/indices
+
+
 # 创建index必须使用 PUT 方法
 PUT schools
 #或
@@ -24,10 +43,12 @@ PUT /schools
 		"properties" : {
 			"college_name" : { 
 				"type" : "text",
-				"keyword":{
-				    "type":"keyword",
-				    "ignore_above":256
-				}
+				"fields" : {
+          "keyword" : {
+            "type" : "keyword",
+            "ignore_above" : 256
+          }
+        }
 			}, 
 			"college type" : {
 				"type":"text"
@@ -48,6 +69,19 @@ POST /schools/_close
 打开
 POST /schools/_open
 
+ES7新建索引时，如果没有显示设置mapping中的dynamic为false，默认启用了动态映射，所以索引新文档时，如果有新的字段，则该字段会被自动加入索引字段中，
+所以可以直接根据该字段进行搜索。如果新建索引时设置了mapping中的dynamic为false，则索引新文档时，新的字段不会被自动加入索引字段中，所以不能通过该
+字段进行搜索，如果需要根据该字段搜索，需要添加该字段到mapping中，添加之后再参加索引的文档才能通过该字段搜索。
+添加新字段映射
+PUT /test-index-dynamic/_mappings
+{
+    "properties":{
+        "baiduIdxId":{
+            "type":"long"
+        }
+    }
+}
+
 # 使用 bulk api 批量索引文档
 # bulk api对json语法有严格的要求，每个json串不能换行，只能放到一行，同时一个json串和一个json串之间必须要换行
 POST /schools/_bulk
@@ -59,11 +93,18 @@ POST /schools/_bulk
 {"name":"Crescent School","description":"State Board Affiliation","street":"Tonk Road","city":"Jaipur","state":"RJ","zip":"176114","location":[26.8535922,75.7923988],"fees":2500,"tags":["Well equipped labs"],"rating":"4.5"}
 
 #索引单个文档(指定索引文档id)
-POST /schools/_doc/1
+PUT /schools/_doc/1
 {
-   "name":"City School", "description":"ICSE", "street":"West End", "city":"Meerut", 
-   "state":"UP", "zip":"250002", "location":[28.9926174, 77.692485], "fees":3500, 
-   "tags":["fully computerized"], "rating":"4.5"
+   "name":"City School", 
+   "description":"ICSE", 
+   "street":"West End", 
+   "city":"Meerut", 
+   "state":"UP", 
+   "zip":"250002", 
+   "location":[28.9926174, 77.692485], 
+   "fees":3500, 
+   "tags":["fully computerized"], 
+   "rating":"4.5"
 }
 
 #如果不指定文档id，则索引时生成随机id
@@ -75,7 +116,7 @@ POST /schools/_doc
 }
 
 #索引文档时，默认使用内部版本控制，文档版本号从1开始，每次重新索引/更新/删除文档都会把版本号+1
-POST /schools/_doc/1
+PUT /schools/_doc/1
 {
    "name":"Central School", "description":"CBSE Affiliation", "street":"Nagan",
    "city":"paprola", "state":"HP", "zip":"176115", "location":[31.8955385, 76.8380405],
@@ -83,7 +124,7 @@ POST /schools/_doc/1
 }
 
 #可以手动指定使用外部版本号，es会检查传入的外部版本是否大于当前版本号，如果不大于就报错
-POST /schools/_doc/1?version=1105&version_type=external
+PUT /schools/_doc/1?version=1105&version_type=external
 {
    "name":"Central School", "description":"CBSE Affiliation", "street":"Nagan",
    "city":"paprola", "state":"HP", "zip":"176115", "location":[31.8955385, 76.8380405],
@@ -91,7 +132,7 @@ POST /schools/_doc/1?version=1105&version_type=external
 }
 
 #使用操作类型参数避免覆盖原有文档
-POST /schools/_doc/1?op_type=create
+PUT /schools/_doc/1?op_type=create
 {
    "name":"Central School", "description":"CBSE Affiliation", "street":"Nagan",
    "city":"paprola", "state":"HP", "zip":"176115", "location":[31.8955385, 76.8380405],
@@ -99,7 +140,7 @@ POST /schools/_doc/1?op_type=create
 }
 
 #设置索引超时时间（默认为1分钟）
-POST /schools/_doc/1?timeout=2m
+PUT /schools/_doc/1?timeout=2m
 {
    "name":"Central School", "description":"CBSE Affiliation", "street":"Nagan",
    "city":"paprola", "state":"HP", "zip":"176115", "location":[31.8955385, 76.8380405],
@@ -133,6 +174,14 @@ DELETE /schools/_doc/1
 
 #更新指定field 
 POST /schools/_doc/1/_update
+{
+	"doc":{
+		"fees":2800,
+		"rating":"3.8"
+	}
+}
+#ES7的api
+POST /schools/_update/1
 {
 	"doc":{
 		"fees":2800,
@@ -245,8 +294,46 @@ POST /schools/_search
     }
   }
 }
-#复合查询
 
+#复合查询
+#查询 type 字段值为 search或cat，baiduIdxId字段不存在或者baiduIdxId字段值为-1
+#这里需要注意，should和must并列时，不会作为过滤条件，只会影响评分
+POST /schools/_search
+{
+    "query":{
+        "bool":{
+            "must":[
+                {
+                  "terms":{
+                    "type":["search","cat"],
+                    "boost":1
+                  }
+                },
+                {
+                  "bool":{
+                    "should":[
+                      {
+                        "bool":{
+                          "must_not":{
+                            "exists":{
+                              "field":"baiduIdxId",
+                              "boost":1
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "term":{
+                          "baiduIdxId":-1
+                        }    
+                      }
+                    ]
+                  }
+                }
+            ]
+        }
+    }
+}
 
 #对查询结果进行聚合计算
 #计算field的平均值
@@ -267,19 +354,42 @@ POST /schools/_search
 	}
 }
 
-#查看集群节点信息
-GET /_nodes/_local
-或
-GET /_nodes/127.0.0.1
+分页查询：第一个文档编号为0
+GET /schools/_search
+{
+  "query":{
+    "match_all":{}
+  },
+  "from": 0,
+  "size": 10
+}
 
-#查看集群所有信息
-GET /_cluster/state
+排序：文本字段(text)默认不支持聚合计算和排序，文档字段需要配置为keyword才能进行聚合计算和排序：
+PUT /schools/_mappings
+{
+  "properties":{
+    "level":{
+      "type":"text",
+      "fields":{
+        "keyword" : {
+          "type" : "keyword",
+          "ignore_above" : 256
+        }
+      }
+    }
+  }
+}
 
-#查看集群健康状态
-GET /_cluster/health
-
-#查看集群统计信息
-GET /_cluster/stats
-
-#查看es集群中存在的所有索引
-GET /_cat/indices
+GET /schools/_search
+{
+  "query":{
+    "match_all":{}
+  },
+  "from": 0,
+  "size": 10,
+  "sort":{
+    "level.keyword":{
+      "order":"asc"
+    }
+  }
+}

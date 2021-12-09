@@ -225,20 +225,24 @@
 			&& apt-get install -y $buildDeps \
 			...
 			&& apt-get purge -y --auto-remove $buildDeps
+	
 	构建镜像命令：
 		docker build [选项] <上下文路径/URL/->
 		示例：
 		docker build -t nginx:v3 .
+	
 	Docker 引擎使用REST API提供对外接口，docker 命令实际上是一个客户端工具，它通过Docker 引擎的REST API 与 Docker 引擎交互。那么当
 执行docker build 时，docker引擎不能直接知道从哪里开始构建，这就需要传入参数告诉docker引擎构建的开始位置，这个参数就是后面的上下文路径。
 通常Dockerfile就保存在这个上下文路径下，所以不需要给出Dockerfile的位置，如果Dockerfile不在这个路径下，就需要使用-f path传入Dockerfile
 的路径。
+
 	docker中COPY 指令、ADD 指令等指令涉及到文件操作，指定文件路径时应该基于传入的上下文路径，例如：
 		COPY ./package.json /app/
 		#这里指的是复制 上下文路径下的 package.json而非执行docker build命令时所在的路径；后面的/app/是镜像中的路径，所以这里是把宿主机的
 一个文件复制到了镜像的文件系统中。ADD指令和COPY指令基本可以互换。
 	通常的做法是，将 Dockerfile 置于一个空目录下，或者项目根目录下，把涉及到的文件复制一份到这个目录下或其子目录下，对于存在于构建上下文
 路径下而不需要参与构建的文件，可以在一个.dockerignore文件中列出，这个文件的语法和.gitignore相同。
+
 	其他指令：
 		WORKDIR /app/
 			指定后续的指令中的容器内相对路径的根路径为 /app
@@ -246,6 +250,16 @@
 			指定在宿主机上创建数据卷关联到容器内的这两个路径(默认在宿主机的 /var/lib/docker/volumes/ 下创建数据卷)
 		ENTRYPOINT ["java","-jar","app.jar"]
 			指定启动容器时执行的命令为 java -jar app.jar
+		CMD ["<可执行文件或命令>","<param1>","<param2>",...] 
+			指定在docker run 时,启动的容器默认要运行的程序
+		CMD ["<param1>","<param2>",...]
+			该写法是为 ENTRYPOINT 指令指定的程序提供默认参数
+		ARG <参数名>[=<默认值>]
+			定义/声明一个变量，变量作用域为Dockerfile，可以在在构建时设置/覆盖变量值：--build-arg <参数名>=<值>
+		ENV key value
+			定义环境变量，作用域为Dockerfile和构建的容器内部
+		USER <用户名>[:<用户组>]
+			指定执行后续命令的用户和用户组(用户和用户组必须提前已经存在)
 	docker build 还支持从 URL 构建，比如可以直接从 Git repo 中构建、用给定的 tar 压缩包构建
 	从标准输入中读取 Dockerfile 进行构建：
 		docker build - < Dockerfile

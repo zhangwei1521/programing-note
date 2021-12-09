@@ -94,6 +94,8 @@ Ctrl+Alt+F1切换回图形用户界面。
 	即可使用 ssh root直接登录远程Linux主机。
 
 	修改主机名：hostname asuser 永久修改：vi /etc/hostname
+	永久修改主机名命令：
+		hostnamectl set-hostname c1
 	
 	
 	基础命令
@@ -1358,3 +1360,12 @@ echo "hello" > /dev/tty 会把 hello 输出到当前终端。伪终端是逻辑�
 	执行以下命令处理报错：
 		ssh-keygen -A
 		/etc/init.d/ssh start
+	
+	查看内存、swap空间使用量：
+		free -m
+	临时关闭swap：
+		swapoff -a 
+	永久关闭swap
+		sed -ri 's/.*swap.*/#&/' /etc/fstab
+	安装了新的systemd管理的服务后，加载新的unit 配置文件 :
+		systemctl daemon-reload
