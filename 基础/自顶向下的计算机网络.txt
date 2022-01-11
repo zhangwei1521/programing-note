@@ -181,6 +181,13 @@ Last-modified首部行的值作为If-modified-since的值
         254.x.x.x
     255.255.255.255 用于本网络内广播
 	
+TCP三次握手
+	1、client发送SYN到server，将状态修改为SYN_SEND，如果server收到请求，则将状态修改为SYN_RCVD，并把该请求放到syns queue队列中。
+	2、server回复SYN+ACK给client，如果client收到请求，则将状态修改为ESTABLISHED，并发送ACK给server。
+	3、server收到ACK，将状态修改为ESTABLISHED，并把该请求从syns queue中放到accept queue。
+	注：client收到server的SYN+ACK就认为连接已经建立了，可以马上发送数据，如果server没有收到client的ACK或者在收到client的ACK后没有
+	把连接放进accept queue（可能accept queue已经满了），则server不能处理client发送的数据，而是继续回复SYN+ACK给client，client收到
+	后就继续发送ACK给server，如果一直重复此过程，当server的SYN+ACK重试次数超过系统设置值后，断开连接，发送Rst包给client
 	
 	
 	

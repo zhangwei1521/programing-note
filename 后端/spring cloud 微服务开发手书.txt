@@ -178,7 +178,7 @@ application文件->7.@Configuration注解修饰类中@propertySource修饰的属
                 register-with-eureka: false
                 fetch-registry: false
                 service-url:
-                defaultZone: http://localhost:8761/eureka/
+                	defaultZone: http://localhost:8761/eureka/
             server:
                 enable-self-preservation: false
                 eviction-interval-timer-in-ms: 5000

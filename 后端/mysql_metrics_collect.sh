@@ -6,6 +6,10 @@ performanceIndex() {
     password=$5
     indexList=$6
 
+    #单位：秒
+    connectTimeout=5
+	readTimeout=5
+
     tempFile="$$.temp"
     errFile="$$.err"
     flag=0
@@ -212,7 +216,9 @@ switchFun() {
 }
 
 collectKeyBufferReadHitRate() {
-    mysql -h $host -P $port -u $username -p$password <<EOF >$tempFile 2>$errFile
+    #mysql -h $host -P $port -u $username -p$password <<EOF >$tempFile 2>$errFile
+    mysql -h $host -P $port -u $username -p$password --connect-timeout=$connectTimeout  <<EOF >$tempFile 2>$errFile
+        set @@session.wait_timeout=$readTimeout;
         show global status like 'key_read%';
         exit
 EOF

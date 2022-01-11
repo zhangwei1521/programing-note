@@ -1312,9 +1312,17 @@ Booting paravirtualized kernel on bare hardware，则表示运行在物理机上
 			max user processes (-u)
 		修改当前用户的单个进程所能同时打开的文件数最大值：
 			ulimit -n 65000
+		永久修改： vim /etc/security/limits.conf 添加
+			# * 表示所有用户，如果只需要修改特定用户进程限制，配置为用户名即可
+			# soft表示警告的限制，hard表示真正限制
+			* hard nofile 1000000
+			* soft nofile 1000000
 		修改当前用户能同时运行的进程数的最大值：
 			ulimit -u 65000
-	
+		查看所有线程能同时打开的文件数最大值：
+			cat /proc/sys/fs/file-max
+		所有线程能同时打开的文件数最大值修改：vim /proc/sys/fs/file-max
+			修改 fs.file-max=1000000
 	安装telnet
 		1. 安装 telnet 需要先安装 xinetd 
 			yum install xinetd

@@ -332,3 +332,13 @@
 		-v /usr/local/docker/mysql/conf:/etc/mysql/conf.d \
 		-v /usr/local/docker/mysql/data:/var/lib/mysql \
 		--name mysql_bind2 mysql
+	
+	导出 docker 镜像中的文件
+		1 将镜像保存为tar文件
+			docker save -o springboot20.tar springboot20:102203
+		2 解包tar文件
+			tar xf springboot20.tar 
+		3 查看 manifest.json文件，manifest.json文件中Layers数组最后一项就是最新的layer
+		4 解包 layer.tar后即可看到打包的文件
+			tar xf ec12616cdd736751f41ba8d32cb9e9553ec33fc9d0bd1df92d4d8995b3dbc8ea/layer.tar
+		

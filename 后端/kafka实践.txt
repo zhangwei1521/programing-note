@@ -3,18 +3,33 @@
 启动kafka:
     1、首先启动zookeeper：
         bin/zookeeper-server-start.sh -daemon config/zookeeper.properties
+        
+        bin\windows\zookeeper-server-start.bat config\zookeeper.properties
     2、启动kafka：
         bin/kafka-server-start.sh -daemon config/server.properties
+        
+        bin\windows\kafka-server-start.bat config\server.properties
 使用kafka：
     建立topic并发送数据：
         bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic topic_test
+
+        bin\windows\kafka-topics.bat --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic topic_test
     列出所有topic:
         bin/kafka-topics.sh --list --zookeeper localhost:2181
+
+        bin\windows\kafka-topics.bat --list --zookeeper localhost:2181
     监听topic：
         bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic topic_test --from-beginning
+
+        bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic topic_test --from-beginning
+        bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic topic_test --group 0 --offset earliest --partition 1
     发送消息到topic:
         bin/kafka-console-producer.sh --broker-list localhost:9092 --topic topic_test
 
+        bin\windows\kafka-console-producer.bat --broker-list localhost:9092 --topic topic_test
+    删除 consumer-offsets
+        bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic topic_test --delete-consumer-offsets
+        bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic topic_test --delete-consumer-offsets
 
 问题：
     producer 发送消息到broker，如何确定消息已发送成功，broker中的partition leader如何确认消息接收成功？
@@ -23,3 +38,19 @@
             0：producer发送出消息即认为消息发送成功；
             1：接收到partition leader所在broker返回的【消息已写入该broker的文件（缓存）】确认消息后，即认为消息发送成功；
             all：接收到partition leader所在的broker返回的【消息已提交】的确认消息后，才认为消息发送成功；
+
+    生产者如何发送消息？
+        生产者根据消息特征，计算得到消息将被投递的topic分区，然后选择该分区所在的broker发送消息，生产者客户端将保证消息被均匀地发送给各个分区。
+    消费组如何消费消息？
+        消费者可以加入消费者组，也可以不加入成为单消费者，消费消息时可以选择提交/不提交消费offset（默认提交），提交消费offset后，则下次消费消息时
+        就可以从下一条消息开始继续消费，不提交offset，则下次消费根据配置从分区第一条消息或最新消息开始消费。
+            设置消费者组：group.id=1
+            设置提交/不提交消费offset: enable.auto.commit=true/false
+            设置没有消费offset时消费策略：auto.offset.reset=earliest/latest/none    #默认为latest，设置为none将在没有消费offset时抛出异常
+    如何保存消费offset？
+        broker使用 _consumer_offsets 这个topic来保存消费者组信息，所有单消费者可以认为属于同一个默认消费者组，消费者组每次变动 broker就向
+        _consumer_offsets 写入一条消息，key为 版本+消费者组id，value为消费者组信息；消费者每次提交消费offset，broker也向
+        _consumer_offsets 写入一条消息，key为 消费者组id+topic+分区id，value为对应的offset，并且可以设置消息过期时间（默认为1天），
+        单消费者提交消费offset也会写入该类消息，当消费者组没有active成员，并且该消费者组关联的消费offset消息都已过期，broker就向
+        _consumer_offsets写入一条新消息，key为 版本+消费者组id，value为null，broker的后台线程执行检查任务时，读到这类value为null的消息
+        就删除该消费组相关消息。
