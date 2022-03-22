@@ -420,6 +420,23 @@ nexus下载：https://help.sonatype.com/repomanager2/download/download-archives-
         5. ${project.packaging} 打包类型，缺省为jar
         6. ${project.xxx} 当前pom文件的任意节点的内容 
 	
+	自定义变量：
+		可以在pom的<properties>元素下自定义maven变量：
+			<properties>
+				<app.author>xxx</app.author>
+			</properties>
+		引用自定义变量：
+			${app.author}
+	
+	引用settings.xml文件中元素的值：
+		${settings.localRepository}
+	
+	引用Java系统属性（执行maven命令时启动的JVM的系统属性）：
+		${user.home}
+	
+	引用操作系统的环境变量：
+		${env.JAVA_HOME}
+
 	执行单元测试：
 		mvn test
 	执行指定单元测试类：
@@ -513,7 +530,51 @@ nexus下载：https://help.sonatype.com/repomanager2/download/download-archives-
 		testResources : 复制test resources到test output directory。默认绑定到process-test-resources生命周期阶段；
 		copy-resources : 用于自定义配置资源文件的复制处理。
 	maven-resources-plugin插件配置中，<filtering>true</filtering>指明在处理的资源文件中的${var}变量将被替换，实际的替换值可以在
-<<properties>中定义，也可以使用配置来指定一个变量文件（此元素配置在<build>元素下）：
+<properties>中定义，也可以使用配置来指定一个变量文件（此元素配置在<build>元素下）：
 		<filters>
 			<filter>filter-values.properties</filter>
 		</filters>
+	
+	maven-compiler-plugin
+	默认的编译插件，从maven3开始，默认编译器为javax.tools.JavaCompiler，而非javac，如果需要使用javac编译器，需要为该插件配置
+		<forceJavacCompilerUse>true</forceJavacCompilerUse>
+	目前此插件默认的 source 为1.5，并且默认的target也为1.5，调整source和target版本有两种方式：
+	  1. 配置 properties：
+		<properties>
+			<maven.compiler.source>1.8</maven.compiler.source>
+			<maven.compiler.target>1.8</maven.compiler.target>
+		</properties>
+	  2. 配置插件：
+		<build>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>3.8.0</version>
+					<configuration>
+						<source>1.8</source>
+						<target>1.8</target>
+					</configuration>
+				</plugin>
+			</plugins>
+		</build>
+	使用其他JDK（默认使用环境变量 JAVA_HOME指向的JDK）：
+		<build>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>3.8.0</version>
+					<configuration>
+						<!-- <forceJavacCompilerUse>true</forceJavacCompilerUse> -->
+						<source>11</source>
+						<target>11</target>
+						<encoding>UTF-8</encoding>
+						<verbose>true</verbose>
+						<fork>true</fork>
+						<executable>${env.OPENJDK11}/bin/javac</executable>
+					</configuration>
+				</plugin>
+			</plugins>
+		</build>
+

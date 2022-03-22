@@ -38,7 +38,12 @@ https请求时添加信任的根证书：
 	curl --location http://localhost:8080/hello
 curl关闭显示统计信息：
 	curl -k -D - https://zhangwei.org/hello -s
+保存文件：
+	curl -o github.hosts https://gitee.com/isevenluo/github-hosts/raw/master/hosts
+自动重定向：
+	curl -L https://gitee.com/isevenluo/github-hosts/raw/master/hosts
 
+注： curl 使用POST方法提交数据时，不能正确处理中文！！！
 
 SSL数字证书
 证书类型：

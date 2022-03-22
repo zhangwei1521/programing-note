@@ -880,7 +880,22 @@ reference，局部变量就只能从slot 1开始存放。静态方法不需要�
 后返回这条指令对应的实际方法的地址，然后就可以去调用这条指令代表的方法了。
 	虚拟机字节码执行引擎的解释执行模型：执行引擎使用操作数栈代替传统的寄存器，执行操作总是将数据压入操作数栈或从操作数栈出栈执行运算或保存到局部变量表。
 
-
+	JDK8虚拟机线程：
+		Reference Handler
+		Finalizer
+		Signal Dispatcher
+		Attach Listener
+		RMI TCP Accept-0
+		RMI Scheduler(0)
+		JMX server connection timeout 15
+		RMI TCP Connection(1)-192.168.56.1
+		RMI TCP Connection(2)-192.168.56.1
+		RMI TCP Connection(3)-192.168.56.1
+		RMI TCP Connection(4)-192.168.56.1
+		RMI TCP Connection(5)-192.168.56.1
+		main
+	JDK11虚拟机新增线程：
+		Common-Cleaner
 
 
 

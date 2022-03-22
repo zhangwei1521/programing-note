@@ -158,3 +158,5 @@ WSL2中监听 0.0.0.0 的程序，Win10 可直接通过 localhost:port 访问。
 
 打开计划任务管理器
     taskschd.msc 
+刷新dns缓存：
+    ipconfig /flushdns

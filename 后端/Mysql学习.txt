@@ -212,6 +212,7 @@ information_schema数据库中，从mysql5.7.6开始，global_variables 表和 s
         set session wait_timeout=3600;
         set @@session.wait_timeout=5400;
         set wait_timeout=7200;
+    
     用户变量可分为局部变量和用户会话变量。
     局部变量一般用在sql语句块中，比如存储过程中，其作用域仅限于该语句块；局部变量一般用declare来声明，可以使用default来说明默认值。
         drop procedure if exists myprocedure1;
@@ -232,6 +233,22 @@ information_schema数据库中，从mysql5.7.6开始，global_variables 表和 s
     使用用户会话变量获取行号：
         select (@rownum :=@rownum + 1) AS rownum,t.* from TABLE t,(SELECT @rownum := 0) b;
         # 查询后 @rownum 会继续保留新值
+
+状态变量和系统变量
+    状态变量显示MySQL服务实例的状态信息，这些状态信息是动态的，包括MySQL服务器连接的会话状态、变量信息等。默认情况下状态变量都是以大写字母开头。
+    查看状态变量：
+        show status;
+        show session status;
+        show global status;
+    MySQL系统变量是指MySQL服务实例的各种系统变量(包括全局系统变量、会话系统变量、静态变量)，这些变量包含MySQL编译时的参数默认值，或者my.cnf配置
+    文件里配置的参数值。系统变量是一个静态的参数，默认情况下系统变量都是小写字母。
+    查看系统变量：
+        show variables;
+        show session variables;
+        show global variables;
+    示例：状态变量 Connection_errors_max_connections 表示当MySQL的最大并发连接数超过设置的 max_connections 系统变量的值后被拒绝的次数。
+        show global status like 'Connection_errors_max_connections';
+        show global variables like 'max_connections';
 
 常见系统变量：
     interactive_timeout     表示MySQL服务器关闭交互式连接前等待活动的秒数，默认值28800秒（8小时）
@@ -689,7 +706,7 @@ join语句执行过程：
             如果指定的是RIGHT JOIN则遍历右表并将不在vt2中的行加入vt2得到vt3。如果指定的是INNER JOIN，则不添加外部行，即vt2=vt3;
         WHERE：对vt3进行条件过滤，满足条件的行被输出到vt4
         SELECT：取出vt4的指定字段到vt5
-标准SQL还定义了FULL JOIN，单mysql不支持。FULL JOIN指的是在JOIN阶段会将左右表中不满足ON条件的行都加入虚拟表。
+标准SQL还定义了FULL JOIN，但是mysql不支持。FULL JOIN指的是在JOIN阶段会将左右表中不满足ON条件的行都加入虚拟表。
     select * from table_A a,table_B b where a.col1=b.col2; 等同于
     select * from table_A a inner join table_B b on a.col1=b.col2
 
@@ -747,7 +764,7 @@ join语句执行过程：
 索引优化：
     1、使用联合索引替换多个独立索引，因为多个独立索引占用更多内存空间；
     2、建立联合索引时，左侧的列会被优先使用，所以应该选择最常使用、选择性高（列重复数据少）、宽度小的列作为左侧的列。
-    3、使用覆盖索引作为缓存，即把select子句、from子句、order by子句以及group by子句中的列建立联合索引。
+    3、使用覆盖索引作为缓存，即把select子句、where子句、order by子句以及group by子句中的列建立联合索引。
     4、使用索引可以优化锁，因为索引可以减少锁定的行数，同时也加快了处理的速度，也就使得锁的释放更快了。
 更新索引统计信息：
     analyze table table_name;   //innodb引擎执行这个命令更新索引统计信息并不十分靠谱
@@ -854,7 +871,7 @@ sql中使用了非确定性函数，如uuid等）。
             //被阻塞
         再进入session2：
             update t set s1=19 where s1=18;
-            //出现死锁，mysql将会回滚当前事务并推出事务
+            //出现死锁，mysql将会回滚当前事务并退出事务
             //ERROR 1213 (40001): Deadlock found when trying to get lock; try restarting transaction
             //session1执行成功
 事务隔离级别：
@@ -999,11 +1016,11 @@ system variables:
     query_cache_type                        0：不启用查询缓存；1：缓存所有没有禁用查询缓存（select SQL_NO_CACHE）的查询，2：缓存指明使用查询缓存（select SQL_CACHE）的查询
 status variables:
     Qcache_hits                             查询缓存命中数
-    Qcache_inserts                          查询缓存未命中数
+    Qcache_inserts                          缓存查询结果次数
 
 线程池：
 system variables:
-    thread_cache_size                       线程池中可以缓存的最大线程数量，mysql5.7默认为10
+    thread_cache_size                       线程池中应该缓存的线程数量，mysql5.7默认为10
 status variables:
     Threads_created                         历史创建的处理客户端连接的总线程数
     Threads_cached                          线程池中剩余可用的线程数
@@ -1014,9 +1031,9 @@ status variables:
 
 线程创建：
 system variables:
-    slow_launch_threads                     创建时间超过slow_launch_time值的线程数
+    slow_launch_time                        创建一个线程的时间超过此值，就把 Slow_launch_threads 的值加一
 status variables:
-    slow_launch_time                        创建一个线程的时间超过此值，就把 slow_launch_threads 的值加一
+    Slow_launch_threads                     创建时间超过slow_launch_time值的线程数
 
 临时表：
 system variables:
@@ -1033,7 +1050,7 @@ system variables:
     innodb-open-files                       InnoDB引擎中表空间文件最大打开的数量
 status variables:
     Open_files                              服务层打开的文件数
-    innodb_num_open_files                   innodb打开的文件数
+    Innodb_num_open_files                   innodb打开的文件数
 
 打开表相关：
 system variables:
@@ -1050,9 +1067,11 @@ status variables:
 注：可以使用一段时间内这些变量值的增量来表示mysql的工作负载
 
 innodb缓存
+status variables:
     innodb_buffer_pool_size                 innodb引擎使用来缓存索引、表数据的缓冲区大小，mysql5.7默认为 128M
+status variables:
     Innodb_buffer_pool_reads                从物理磁盘中读取数据的请求次数（每次读一个page,读完后就缓存到缓冲区 innodb_buffer_pool）
-    innodb_buffer_pool_read_requests        逻辑读总数（每次读一个page）
+    Innodb_buffer_pool_read_requests        逻辑读总数（每次读一个page）
 
 
 查看主从同步状态：

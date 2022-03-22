@@ -341,4 +341,7 @@
 		3 查看 manifest.json文件，manifest.json文件中Layers数组最后一项就是最新的layer
 		4 解包 layer.tar后即可看到打包的文件
 			tar xf ec12616cdd736751f41ba8d32cb9e9553ec33fc9d0bd1df92d4d8995b3dbc8ea/layer.tar
+	
+	启动redis容器设置密码：
+		docker run -d --name myredis -p 6379:6379 redis --requirepass "mypassword"
 		

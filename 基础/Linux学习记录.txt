@@ -1377,3 +1377,17 @@ echo "hello" > /dev/tty 会把 hello 输出到当前终端。伪终端是逻辑�
 		sed -ri 's/.*swap.*/#&/' /etc/fstab
 	安装了新的systemd管理的服务后，加载新的unit 配置文件 :
 		systemctl daemon-reload
+
+timed out waiting for input: auto-logout问题
+	为了增强linux系统的安全性，需要在用户输入空闲一段时间后自动断开，这个操作是TMOUT值来实现的，可以在/etc/profile等文件中修改这个配置：
+	#/etc/profile
+	#设置自动断开时间为半小时
+	TMOUT=1800
+
+根据命令获取进程id:
+	ps -ef|grep -v grep | grep 'r-dataos-jtdp-service-1.0.0.jar'|awk '{ print $2 }'
+
+查看进程树：
+	pstree 
+统计jvm进程的线程数：
+	pstree -p 11223 | wc -l
