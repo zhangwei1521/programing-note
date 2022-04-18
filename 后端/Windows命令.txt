@@ -160,3 +160,8 @@ WSL2中监听 0.0.0.0 的程序，Win10 可直接通过 localhost:port 访问。
     taskschd.msc 
 刷新dns缓存：
     ipconfig /flushdns
+
+停用hiberfil.sys文件：
+    powercfg -h off
+启用hiberfil.sys文件：
+    powercfg -h on

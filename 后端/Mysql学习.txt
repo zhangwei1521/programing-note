@@ -786,10 +786,11 @@ join语句执行过程：
         log_queries_not_using_indexes=ON    //记录所有没有使用索引的SQL
     注：配置 slow_query_log=ON不生效，而 slow_query_log_file生效，是因为slow_query_log_file配置的日志文件所属用户不是mysql
 
-
-二进制日志：
+binlog
+    binlog用于记录数据库执行的写入性操作(不包括查询)信息，以二进制的形式保存在磁盘中。binlog是mysql的逻辑日志，并且由Server层进行记录，
+使用任何存储引擎的mysql数据库都会记录binlog日志。
 查看二进制日志状态：
-    show variables like 'log_bin';
+        show variables like 'log_bin';
 查看二进制日志列表：
     #如果没有开启二进制日志，将返回提示
     show binary logs;
@@ -800,7 +801,7 @@ join语句执行过程：
     log-bin=mysql-bin-log
     # 可以指定保存二进制日志的完整路径（需要注意路径命名不能是bin开始）
     # log-bin=D:\devtools\mysql-5.7.25-winx64\log\mbinlog\mysql-bin-log
-    # 指定二进制日志格式，可选row/statement/mixed
+    # 指定二进制日志格式，可选row/statement/mixed，MySQL 5.7.7之后，默认值是row，之前默认为statement
     binlog-format=Row
     # windows开启二进制日志必须要配置server-id，随意指定一个数值
     server-id=123456
@@ -808,6 +809,23 @@ join语句执行过程：
     set session binlog_format=statement;
 刷新使用新的日志文件：
     flush logs;
+binlog使用场景:
+    主从复制：在Master端开启binlog，然后将binlog发送到各个Slave端，Slave端重放binlog从而达到主从数据一致。
+    数据恢复：通过使用mysqlbinlog工具来恢复数据。
+binlog刷盘时机:
+    对于InnoDB存储引擎而言，只有在事务提交时才会记录binlog，此时记录还在内存中,mysql通过 sync_binlog 参数控制biglog的刷盘时机，
+取值范围是0-N：
+    0：不去强制要求，由系统自行判断何时写入磁盘；
+    1：每次commit的时候都要将binlog写入磁盘；（MySQL 5.7.7之后版本的默认值）
+    N：每N个事务，才会将binlog写入磁盘。
+binlog日志格式
+    statement：基于SQL语句的复制(statement-based replication, SBR)，每一条会修改数据的sql语句会记录到binlog中。
+        优点：不需要记录每一行的变化，减少了binlog日志量，节约了IO, 从而提高了性能
+        缺点：某些特定情况下的存储过程、或function、或trigger的调用和触发导致的数据不一致
+    row: 基于行的复制(row-based replication, RBR)，不记录每条sql语句的上下文信息，仅需记录哪条数据被修改了。
+        优点：不会出现某些特定情况下的存储过程、或function、或trigger的调用和触发无法被正确复制的问题；
+        缺点：会产生大量的日志，尤其是alter table的时候会让日志暴涨
+    mixed: 一般的复制使用 statement 模式保存binlog，对于 statement 模式无法复制的操作使用 row 模式保存binlog
 使用 mysqlbinlog 工具查看二进制日志：
     mysqlbinlog mysql-bin-log.000004
 使用 row 格式的二进制日志记录行数据的改变，mysql5.6开始提供下面这个参数来控制记录列的范围
@@ -815,7 +833,9 @@ join语句执行过程：
     # FULL会记录被影响行的所有列的前后值
     # MINIMAL只记录被影响行的被改变列的前后值
     # NOBLOB记录被影响行的除了BLOG、TEXT字段的所有列的前后值（BLOB、TEXT列没有改变就不记录，否则要被记录）
-使用mysqlbinlog -vv mysql-bin-log.000005 查看 row 格式日志。
+
+查看 row 格式日志：
+    mysqlbinlog -vv mysql-bin-log.000005 
 binlog_row_image默认为FULL，执行 update book set name='hello java' where id=1001; 日志如下：
     ### UPDATE `java`.`book`
     ### WHERE
@@ -1110,3 +1130,56 @@ mysqldump -u root -p RUNOOB runoob_tbl > dump.txt
     select @@foreign_key_checks;
 设置删除数据时不检查外键约束：
     set foreign_key_checks=0;
+
+redo log
+    写入数据的事务可能只修改一个数据页的几个字节，也可能修改多个数据页的内容，如果每次提交事务都直接把数据页写出到磁盘，就会导致IO的频繁使用和
+大量的随机IO，这样数据库的性能就难以保证；innodb引擎通过写 redo log代替直接写数据页到磁盘，既能保证数据得到持久化保证，也提高了写出
+性能，因为写 redo log 是顺序写出。
+    提交事务后，innodb引擎把数据页的修改内容保存到 redo log缓存中，根据系统参数 innodb_flush_log_at_trx_commit 决定什么时候再把 redo log缓存
+写出到redo log日志文件，之后innodb引擎再异步的根据 redo log从数据页缓存中写出到磁盘数据页，如果遇到数据库崩溃，数据库恢复后可以从 redo log
+中拿到修改的数据再写出到磁盘数据页中。这种技术称为 WAL(Write-Ahead Logging)。
+    innodb_flush_log_at_trx_commit：
+        0： 延迟写，事务提交时不会将redo log buffer中日志写入到os buffer，而是每秒写入os buffer并调用fsync()写入到redo log file中。也就是说
+            设置为0时是(大约)每秒刷新写入到磁盘中的，当系统崩溃，会丢失1秒钟的数据。
+        1： 实时写，实时刷，事务每次提交都会将redo log buffer中的日志写入os buffer并调用fsync()刷到redo log file中。这种方式即使系统崩溃也不会丢失任何数据，
+            但是因为每次提交都写入磁盘，IO的性能较差。（默认值）
+        2： 实时写，延迟刷，每次提交都仅写入到os buffer，然后是每秒调用fsync()将os buffer中的日志写入到redo log file。
+
+undo log
+    innodb引擎使用 undo log实现事务回滚和可重复读。
+    在一个事务中，修改数据行时，先把改行数据写出到 undo log中，然后修改缓存中的数据页，如果事务进行回滚，就从 undo log中取回原数据写入缓存数据页。
+    可重复读的实现：在一个事务中，第一次读一行数据时，先读数据页（缓存）中的数据行，如果该行没有被修改，则直接读取该行，并记录其事务id，如果改行
+处于修改未提交状态，就去读取 undo log中的记录，然后记录该行数据的事务id；这个事务中对该行的后续读操作，都会根据第一次读记录的事务id去读数据页缓存
+或 undo log中的记录。
+    undo log是一个链式结构，数据页中行数据会记录其上一次事务提交的数据行在 undo log中的链接，undo log中的数据行也保存其上一次事务提交的数据行在 
+undo log中的链接。
+    mysql 5.5版本及之前，undo log保存在系统表空间中，所以系统表空间会随着使用越来越大，即使删除了用户表空间的数据也不会删除 undo log中的记录。
+    mysql 5.6开始支持把 undo log保存到单独的表空间，相关系统变量：
+        innodb_undo_directory：指定单独存放undo表空间的目录，默认为.（即datadir），可以设置相对路径或者绝对路径。该参数实例初始化之后虽然不可
+            直接改动，但是可以通过先停库，修改配置文件，然后移动undo表空间文件的方式去修改该参数。
+        innodb_undo_tablespaces：指定单独存放的undo表空间个数，例如如果设置为3，则undo表空间为undo001、undo002、undo003，每个文件初始大小默认
+            为10M，推荐设置为大于等于3，该参数实例初始化之后不可改动。
+        innodb_undo_logs：指定回滚段的个数，默认128个。每个回滚段可同时支持1024个在线事务。这些回滚段会平均分布到各个undo表空间中。
+    mysql 5.7开始支持把拆出来的 undo 表空间在线收缩，在线收缩需要满足两个条件：
+            1：innodb_undo_tablespaces>=2；在线收缩时，undo表空间处于 inactive状态，所以需要至少两个undo表空间，在一个收缩时，另一个可以继续
+                写undo log；
+            2：innodb_undo_logs>=35；由于默认第一个回滚段位于系统表空间，之后的32个回滚段位于临时表空间，所以要再为每个undo表空间至少设置一个回滚段，
+                所以回滚段数量至少为35；
+        开启在线收缩：
+            innodb_undo_log_truncate，设置为 ON，即可开启自动收缩；
+            innodb_max_undo_log_size，undo表空间文件超过此值即标记为可收缩，默认1G，可在线修改   
+            innodb_purge_rseg_truncate_frequency,指定purge操作被唤起多少次之后才释放回滚段。当undo表空间里面的回滚段被释放时，undo表空间才会
+                被truncate。由此可见，该参数越小，undo表空间被尝试truncate的频率越高。       
+
+insert
+    insert时先申请行共享锁，用于检查主键等是否冲突。这里可以理解为待插入的那一行已经存在一个虚拟行，insert前需要先读取该行，检查该行有没有其他
+事务加的排它锁，如果有则等待，没有则获取排它锁。
+
+查看表的约束：
+    select * from information_schema.TABLE_CONSTRAINTS where table_schema='java' and table_name='worker';
+新增单列约束：
+    alter table worker add constraint name unique(name);
+新增多列联合约束：
+    alter table worker add constraint name_dep unique(name,dep);
+删除已有约束：
+    alter table worker drop key name_dep;
