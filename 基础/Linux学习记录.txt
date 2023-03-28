@@ -105,6 +105,8 @@ Ctrl+Alt+F1切换回图形用户界面。
 		
 		# 不加参数会直接进入用户主目录
 		cd /home
+		# 返回上一步所在目录
+		cd -
 	
 		# -p用于逐级创建目录，如果目录已存在也不会报错，也不会做其他事情
 		mkdir -p /tmp/test/01
@@ -477,7 +479,7 @@ defaults 包含rw、exec、auto、nouser、async
 		:set fileencoding=utf8
 	查看文档格式
 		:set fileformat
-	转换格式：
+	转换格式(文档换行符)：
 		:set fileformat=unix
 	
 
@@ -816,6 +818,10 @@ work.xml，即9个规则集。public.xml内容入下：
 		tee -a ./file1 << -EOF
 		hello
 		-EOF
+	从新的一行开始追加：
+		tee -a ./file1 <<- EOF
+		hello
+		EOF
 	
 	debian系使用APT工具集管理软件包，常用的工具包括apt-get、apt-cache等。
 	Ubuntu1604开始可以使用apt命令部分代替原来的apt-get使用。
@@ -845,7 +851,11 @@ work.xml，即9个规则集。public.xml内容入下：
 	查看端口占用：
 		lsof -i:3306
 		或者
+		# -t 表示tcp, -u 表示udp, -n 表示使用ip地址而不是主机名, -l 表示显示监听端口, -p 表示显示进程id和进程名
 		netstat -tunlp | grep 3306
+	查询指定进程监听的端口：
+		netstat -nltp | grep pid | grep LISTEN
+		# port_for_14602=`netstat -nltp | grep 14602| grep LISTEN | awk '{print $4}' | awk -F':' '{print $NF}'`
     
     sed
     sed是一个流式编辑器，它逐行处理文件。sed运行时使用一个称为模式空间的缓冲区来保存读入的文件行，然后对该缓冲区的行数据进行
@@ -897,6 +907,8 @@ work.xml，即9个规则集。public.xml内容入下：
         sed 's/\?/\!/2' file1
 		# 替换windows换行符为linux换行符
 		sed -i 's/\r$'
+		# sed替换换行符：
+		echo file.txt | sed -e ':label;N;s/\n//;b label'
 
     awk(参考：【酷 壳】[AWK 简明教程] https://coolshell.cn/articles/9070.html)
     awk是一个文本处理工具，支持使用脚本文件来编写文本处理逻辑
@@ -1336,6 +1348,8 @@ Booting paravirtualized kernel on bare hardware，则表示运行在物理机上
 			systemctl start telnet.socket
 	centos7中不要在 /etc/xinetd.d/ 下配置telnet文件，否则不能启动telnet
 	注：xinetd已经被systemd取代，不建议再使用，同样，telnet也被ssh取代了，尽量不要再使用（telnet登录时没有加密用户名密码，不安全）
+	使用telnet验证远程服务器的某端口是否启用：
+		telnet ip port
 
 	环境变量 TERM
 	终端是一类输入输出设备，linux支持的终端信息放在 /usr/share/terminfo下，终端映射文件为 /dev/tty*，/dev/tty代表当前终端，执行：
@@ -1391,3 +1405,28 @@ timed out waiting for input: auto-logout问题
 	pstree 
 统计jvm进程的线程数：
 	pstree -p 11223 | wc -l
+
+使用tcpdump抓包：
+	tcpdump tcp/udp/ip port 9999 -i eth0 -s0 -nn -v -w p9999.cap host 192.168.56.1
+	说明：
+	tcp/udp/ip 指定协议
+	port 指定端口 
+	-i eth0 指定网卡
+	-s0 指定抓取完整的数据包（默认只会抓每个包的前96个字节，-sn指定抓取的字节数，-s0表示抓取完整的数据包）
+	-v 指定显示协议相关的更多信息
+	-nn 指定不解析域名和端口，-n表示不解析域名（不获取ip对应的域名，只记录ip）
+	-w p9999.cap 指定保存抓的包到文件
+	-A 指定使用 ASCII 字符串打印报文的全部数据
+	-X 指定使用十六进制和 ASCII 字符串打印报文的全部数据
+	host 192.168.56.1 指定抓取目的地和源 IP 地址为 192.168.56.1 的数据包，如果只需要抓单向的数据包，可以用src/dst host
+	net 192.168.56 指定所有发往网段 192.168.56.x 或从网段 192.168.56.x 发出的数据包，如果只需要抓单向的数据包，可以用src/dst net
+
+使用 管道符| 和 xargs 把标准输出转换为其他程序的命令参数
+	# 默认使用空格" "作为分割符，-d "\t" 设置知道字符为分割符
+	# -0参数表示用null当作分隔符，可以使用 -0 保留特殊字符（换行符等）
+	printf "hello\njj" | xargs -0 echo -e -n
+
+查询进程端口：
+	ss -tnlp | grep ssh
+ssh使用指定端口登录：
+	ssh root@u1 -p 22222

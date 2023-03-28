@@ -163,7 +163,7 @@ Survivor块，每次都在Eden和一个Survivor中创建对象，回收时将存
 				object space 10240K, 40% used [0x00000000fec00000,0x00000000ff000010,0x00000000ff600000)
 			Metaspace       used 2570K, capacity 4486K, committed 4864K, reserved 1056768K
 				class space    used 282K, capacity 386K, committed 512K, reserved 1048576K
-	PSYoungGen即表示使用Parallel( Scavenge)收集器的年轻代，ParOldGen表示使用Parallel Old收集器的老年代。
+	PSYoungGen即表示使用 Parallel( Scavenge)收集器的年轻代，ParOldGen表示使用Parallel Old收集器的老年代。
 	Metaspace表示元空间的数据，即方法区（以前的永久代）的GC数据。
 	Heap部分详细的输出了堆空间的内存内容，包括新生代的eden区和两个survivor区（from和to），以及老年代和元空间。
 	

@@ -52,6 +52,9 @@ Unix套接字。
 	获取redis实例状态信息：redis-cli交互环境中使用INFO命令，查看单项(内存)状态信息：
 INFO sec(Memory)	
 	直接在shell中获取redis实例状态信息：redis-cli INFO
+	显示中文问题：
+		直接使用redis-cli连接到redis后查询结果数据中如果有中文，中文无法正常显示，需在使用redis-cli加参数 --raw
+		bin/redis-cli --raw
 	
 	Redis使用单线程、非阻塞、多路复用的I/O模型。它有一个异步事件支持库，称为ae，这个库封装了各个操
 作系统提供的polling支持，即内核对异步调用的支持。

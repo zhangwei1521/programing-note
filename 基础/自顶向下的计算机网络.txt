@@ -188,6 +188,11 @@ TCP三次握手
 	注：client收到server的SYN+ACK就认为连接已经建立了，可以马上发送数据，如果server没有收到client的ACK或者在收到client的ACK后没有
 	把连接放进accept queue（可能accept queue已经满了），则server不能处理client发送的数据，而是继续回复SYN+ACK给client，client收到
 	后就继续发送ACK给server，如果一直重复此过程，当server的SYN+ACK重试次数超过系统设置值后，断开连接，发送Rst包给client
+TCP四次挥手
+	1、A端发送 [FIN, ACK] 给B端
+	2、B端返回 [ACK] 给A端
+	3、B端发送 [FIN, ACK] 给A端
+	4、A端返回 [ACK] 给B端
 	
 	
 	

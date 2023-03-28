@@ -66,7 +66,7 @@ maven统一管理着项目中很多琐碎的信息，方便了查找这些信息
 	<plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
-        <version>2.3</version>
+        <version>3.3.0</version>
         <configuration>
           <appendAssemblyId>false</appendAssemblyId>
           <descriptorRefs>
@@ -83,7 +83,7 @@ maven统一管理着项目中很多琐碎的信息，方便了查找这些信息
             <id>make-assembly</id>
             <phase>package</phase>
             <goals>
-              <goal>assembly</goal>
+              <goal>single</goal>
             </goals>
           </execution>
         </executions>
@@ -154,12 +154,12 @@ groupId/...(groupId分级路径)/artifactId/version/artifactId-version-classifie
 				<url>http://repository.jboss.com/maven2/</url>
 				<releases>
 					<enabled>true</enabled>
-				<releases>
+				</releases>
 				<snapshots>
 					<enabled>true/false</enabled>
 					<updatePolicy>daily</updatePolicy><!-- 这条和下一条配置都只在前面enabled为true时配置，这条配置表示更新策略 -->
 					<checksumPolicy>ignore</checksumPolicy><!-- 检测文件校验和策略-->
-				<snapshots>
+				</snapshots>
 				<layout>default</layout>
 			</repository>
 		</repositories>

@@ -2722,8 +2722,11 @@ opens都不会导出(exports)模块中的包，如果其他模块需要直接访
 		// address不指定ip则默认为localhost，如果需要使用远程机器调试，则这里配置远程机器的ip地址
 		java -Xdebug -Xrunjdwp:transport=dt_socket,suspend=n,server=y,address=5005 Main
 	远程调试时，调试端和运行端的class文件必须一致。
+	开启jmx远程监控功能：
+		java -Djava.rmi.server.hostname=192.168.56.2 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=10099 \
+		-Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -jar Hello.jar
 
-
+	_JAVA_OPTIONS
 
 
 

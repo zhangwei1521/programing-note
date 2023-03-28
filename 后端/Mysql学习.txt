@@ -633,6 +633,7 @@ functions:
     rand([seed])                        //随机数
     round(number [,decimals ])          //四舍五入,decimals为小数位数] 注：返回类型并非均为整数，
     sqrt(number2)                       //开平方
+    cast('str' as decimal(9,2))         //字符串转为保留两位小数的decimal数字类型
 日期时间函数：
     addtime(date2 ,time_interval )              //将time_interval加到date2
     convert_tz(datetime2 ,fromtz ,totz )        //转换时区
@@ -644,7 +645,23 @@ functions:
     sysdate()                                   //执行这个函数时的系统时间，返回类型和now()相同
     date(datetime)                              //返回datetime的日期部分
     date_add(date2, interval d_value d_type)    //在date2中加上日期或时间
-    date_format(datetime,formatcodes)           //使用formatcodes格式显示datetime
+    date_format(datetime,formatcodes)           //使用formatcodes格式显示datetime: 
+                                                %Y(year[xxxx]) 
+                                                %y(year[yy])
+                                                %m(month[mm]) 
+                                                %M(month name[en])
+                                                %d(day[00~31]) 
+                                                %e(day[0~31]) 
+                                                %h(hour[00~12]) 
+                                                %H(hour[00~23])
+                                                %I(hour[01~12]) 
+                                                %k(hour[0~23])
+                                                %l(hour[0~12])
+                                                %i(minute/60) 
+                                                %s/%S(second/60)
+                                                %j(day[001~366])
+                                                %r(time[hh:mm:ss AM/PM])
+                                                %T(time[HH:mm:ss])
     date_sub(date2, interval d_value d_type)    //在date2上减去一个时间
     datediff(date1,date2)                       //两个日期差
     day(date)                                   //返回日期的天
@@ -671,6 +688,9 @@ functions:
     time('2006-02-15 04:34:33')                 //返回时间
     timestamp('2006-02-15 04:34:33')            //返回时间戳
     timestampdiff(SECOND/HOUR/MINUTE,datetime1,datetime2)   //使用指定单位返回时间差
+    unix_timestamp(timestamp)                        //返回时间戳对应的整数
+    注：如果向数据类型为timestamp的字段插入time类型的数据，mysql不会报错，而是把当天0点加上插入的time得到的时间戳插入；如果插入date数据类型
+的数据，则实际插入的是该日期0点的时间戳。
 其他函数：
     md5(x)                                      //获取MD5值（32位）
     version()                                   //获取mysql版本
@@ -688,6 +708,11 @@ functions:
 	from task_instance t 
 	where CREATE_TIME>='2020-08-27 16:44:25' and CREATE_TIME<'2020-09-28 16:44:25'
 	group by OWNER
+使用 str_to_date 函数转换字符串为时间类型（date/time/datetime）
+    # 这里是前缀匹配
+    select str_to_date('2019-02-15 04:34:33','%Y-%m-%d');
+    select str_to_date('04:34:33','%H:%i:%s');
+    select str_to_date('2019-02-15 04:34:33','%Y-%m-%d %H:%i:%s');
 	
 join语句执行过程：
     sql: 
@@ -813,7 +838,7 @@ binlog使用场景:
     主从复制：在Master端开启binlog，然后将binlog发送到各个Slave端，Slave端重放binlog从而达到主从数据一致。
     数据恢复：通过使用mysqlbinlog工具来恢复数据。
 binlog刷盘时机:
-    对于InnoDB存储引擎而言，只有在事务提交时才会记录binlog，此时记录还在内存中,mysql通过 sync_binlog 参数控制biglog的刷盘时机，
+    对于InnoDB存储引擎而言，只有在事务提交时才会记录binlog，此时记录还在内存中,mysql通过 sync_binlog 参数控制binlog的刷盘时机，
 取值范围是0-N：
     0：不去强制要求，由系统自行判断何时写入磁盘；
     1：每次commit的时候都要将binlog写入磁盘；（MySQL 5.7.7之后版本的默认值）
@@ -1133,8 +1158,8 @@ mysqldump -u root -p RUNOOB runoob_tbl > dump.txt
 
 redo log
     写入数据的事务可能只修改一个数据页的几个字节，也可能修改多个数据页的内容，如果每次提交事务都直接把数据页写出到磁盘，就会导致IO的频繁使用和
-大量的随机IO，这样数据库的性能就难以保证；innodb引擎通过写 redo log代替直接写数据页到磁盘，既能保证数据得到持久化保证，也提高了写出
-性能，因为写 redo log 是顺序写出。
+大量的随机IO，这样数据库的性能就难以保证；innodb引擎通过写 redo log代替直接写数据页到磁盘，既能保证数据得到持久化保证，也提高了写出性能，因为
+写 redo log 是顺序写出。
     提交事务后，innodb引擎把数据页的修改内容保存到 redo log缓存中，根据系统参数 innodb_flush_log_at_trx_commit 决定什么时候再把 redo log缓存
 写出到redo log日志文件，之后innodb引擎再异步的根据 redo log从数据页缓存中写出到磁盘数据页，如果遇到数据库崩溃，数据库恢复后可以从 redo log
 中拿到修改的数据再写出到磁盘数据页中。这种技术称为 WAL(Write-Ahead Logging)。
@@ -1144,11 +1169,12 @@ redo log
         1： 实时写，实时刷，事务每次提交都会将redo log buffer中的日志写入os buffer并调用fsync()刷到redo log file中。这种方式即使系统崩溃也不会丢失任何数据，
             但是因为每次提交都写入磁盘，IO的性能较差。（默认值）
         2： 实时写，延迟刷，每次提交都仅写入到os buffer，然后是每秒调用fsync()将os buffer中的日志写入到redo log file。
+    redo log文件命名：ib_logfile数字编号。如：ib_logfile0,ib_logfile1,...
 
 undo log
-    innodb引擎使用 undo log实现事务回滚和可重复读。
-    在一个事务中，修改数据行时，先把改行数据写出到 undo log中，然后修改缓存中的数据页，如果事务进行回滚，就从 undo log中取回原数据写入缓存数据页。
-    可重复读的实现：在一个事务中，第一次读一行数据时，先读数据页（缓存）中的数据行，如果该行没有被修改，则直接读取该行，并记录其事务id，如果改行
+    innodb引擎使用 undo log实现事务回滚和可重复读。undo log是逻辑文件，保存在ibd文件的undo log页面中。
+    在一个事务中，修改数据行前，先把该行数据写出到 undo log中，然后修改缓存中的数据页，如果事务进行回滚，就从 undo log中取回原数据写入缓存数据页。
+    可重复读的实现：在一个事务中，第一次读一行数据时，先读数据页（缓存）中的数据行，如果该行没有被修改，则直接读取该行，并记录其事务id，如果该行
 处于修改未提交状态，就去读取 undo log中的记录，然后记录该行数据的事务id；这个事务中对该行的后续读操作，都会根据第一次读记录的事务id去读数据页缓存
 或 undo log中的记录。
     undo log是一个链式结构，数据页中行数据会记录其上一次事务提交的数据行在 undo log中的链接，undo log中的数据行也保存其上一次事务提交的数据行在 
@@ -1183,3 +1209,240 @@ insert
     alter table worker add constraint name_dep unique(name,dep);
 删除已有约束：
     alter table worker drop key name_dep;
+    删除外键：
+    alter table java.worker_account drop foreign key worker_account_ibfk_1;
+
+查看mysql通用日志设置：
+    show variables like '%general%';
+    # 通用日志开关变量：
+    general_log
+    # 通用日志文件
+    general_log_file
+通用日志默认没有启用，启用通用日志：
+    set @@global.general_log=1
+
+sql预编译：
+    普通sql语句执行分为三个阶段：
+        1、语义解析
+        2、sql语句优化制定执行计划
+        3、执行并返回结果
+    这种普通sql语句被称为 Immediate Statements。
+    如果某些sql语句需要重复执行许多次，每次执行时只有其中的数据值不同，则可以将这类sql语句中的数据值使用占位符替换，即构造为sql语句模板，然后由服务器对这类sql语句
+进行语义解析、优化、制定执行计划后缓存结果，后续执行该类sql语句就只需要替换占位符为数据值即可省去解析、优化、制定执行计划这些处理过程，实现sql语句执行的效率提升。
+预编译还可以防止sql注入。
+    mysql预编译语法：
+        # 编译
+        prepare stmt_name from 'sql_template';
+        prepare stmt_name from 'insert into table_A select ?,?';
+        # 执行
+        execute stmt_name
+        # 使用参数替换占位符
+        set @a=1,@b=2
+        execute stmt_name using @a,@b
+        #释放预编译语句
+        deallocate prepare stmt_name
+    预编译相关变量：
+    # 服务器存储预编译sql数量的最大值
+    max_prepared_stmt_count
+
+select if语法
+    select if(true,1,2);
+select into语法
+    # 保存值到临时变量
+    select 1 into @tmp_val;
+当index不存在时新建index：
+    select if (
+        exists(select distinct index_name from information_schema.statistics where table_name = 'QRTZ_FIRED_TRIGGERS' and index_name like 'IDX_QRTZ_FT_TRIG_INST_NAME'),
+        'select 1',
+        'create index IDX_QRTZ_FT_TRIG_INST_NAME on QRTZ_FIRED_TRIGGERS(SCHED_NAME,INSTANCE_NAME)'
+    ) into @tmp_val;
+    prepare stmt1 from @tmp_val;
+    execute stmt1;
+    deallocate prepare stmt1;
+
+数据页评估：
+    一页 16KB
+    假设数据表有7列，每列30字节，共80万行数据
+    一行7列，每列30字节，则一行约200字节，一个数据页则约80行数据
+    假设索引列4字节，页地址4字节，则一个索引页可以索引约2000个数据页
+    表空间80万行数据，表空间文件总大小约160MB，一共需要约10000个数据页，5个索引页
+
+表分区：
+    mysql5.1开始支持对表做水平分区，分区后，每个分区都有一个自己的表空间文件（innodb引擎是idb文件）。
+    MySQL数据库的分区是局部分区索引，即每个分区表空间文件保存自己分区的数据和索引，创建分区时使用的分区列必须是表的主键的一部分。
+    目前MySQL支持以下几种类型的分区，RANGE分区，LIST分区，HASH分区，KEY分区。
+    RANGE分区是使用最多的一类分区，创建分区时设置了分区列的值范围，插入数据时根据分区列的值决定把数据保存到哪个分区，查询数据时最好在条件里包含
+分区列，否则就会去查询每一个分区。RANGE分区适用于数字型、日期型列。
+    LIST分区中分区列的值是离散的，创建分区时使用VALUES IN 定义多个具体的值。
+    HASH分区计算分区列值（必须是整数或转换为整数）的hash值，根据hash值决定把数据保存到哪个分区。HASH分区分为常规HASH分区和线性HASH分区，
+常规HASH分区使用列值（非整数类型需先转换为整数）除以分区数取余即得需要保存数据的分区编号（分区从0开始编号），线性HASH分区使用另一种算法，
+线性分区中数据会更随机地分散在各个分区。
+    KEY分区和HASH分区差不多，但是KEY分区支持除text和BLOB之外的所有数据类型的分区,可以直接基于字段做分区无需转换成整数。
+    创建RANGE分区：
+        CREATE TABLE `java`.`sale_order` (
+            `id` INT NOT NULL AUTO_INCREMENT,
+            `create_time` datetime NOT NULL,
+            `create_date` INT NOT NULL,
+            `product_id` VARCHAR(32) NOT NULL,
+            `product_total` INT NOT NULL,
+            PRIMARY KEY (`id`,`create_date`)
+        )  ENGINE=MyISAM DEFAULT CHARSET=utf8 
+        /*!50100PARTITION BY RANGE (create_date) (
+            PARTITION part_201901 VALUES LESS THAN (20190131) , 
+            PARTITION part_201902 VALUES LESS THAN (20190228) , 
+            PARTITION part_201903 VALUES LESS THAN (20190331) , 
+            PARTITION part_201904 VALUES LESS THAN (20190430) , 
+            PARTITION part_201905 VALUES LESS THAN (20190531)
+        )*/;
+    添加新的分区：
+        ALTER TABLE `java`.`sale_order` ADD PARTITION (
+            PARTITION part_201906 VALUES LESS THAN (20190630),
+            PARTITION part_201907 VALUES LESS THAN (20190731),
+            PARTITION part_201908 VALUES LESS THAN (20190831),
+            PARTITION part_201909 VALUES LESS THAN (20190930),
+            PARTITION part_201910 VALUES LESS THAN (20191031),
+            PARTITION part_201911 VALUES LESS THAN (20191130),
+            PARTITION part_201912 VALUES LESS THAN (20191231),
+            PARTITION part_max VALUES LESS THAN MAXVALUE
+        );
+    删除分区（删除分区后，分区的数据也会被删除）：
+        ALTER TABLE `java`.`sale_order` DROP PARTITION part_201904;
+    通过查看执行计划查看需要查询的分区：
+        explain partitions select * from sale_order where create_date=20190515;
+    创建LIST分区：
+        CREATE TABLE `java`.`sale_order` (
+            `id` INT NOT NULL AUTO_INCREMENT,
+            `create_time` datetime NOT NULL,
+            `create_date` INT NOT NULL,
+            `product_id` VARCHAR(32) NOT NULL,
+            `product_type` INT NOT NULL,
+            `product_total` INT NOT NULL,
+            PRIMARY KEY (`id`,`product_type`)
+        ) DEFAULT CHARSET=utf8 
+        PARTITION BY LIST(product_type) (
+            PARTITION a VALUES IN (1,2,3),
+            PARTITION b VALUES IN (4,5),
+            PARTITION c VALUES IN (6,7,8)
+        );
+    创建常规HASH分区：
+        CREATE TABLE `java`.`sale_order` (
+            `id` INT NOT NULL AUTO_INCREMENT,
+            `create_time` datetime NOT NULL,
+            `create_date` INT NOT NULL,
+            `product_id` VARCHAR(32) NOT NULL,
+            `product_total` INT NOT NULL,
+            PRIMARY KEY (`id`,`create_date`)
+        ) DEFAULT CHARSET=utf8 
+        PARTITION BY HASH(id) PARTITIONS 4;
+        或者：
+        CREATE TABLE `java`.`sale_order` (
+            `id` INT NOT NULL AUTO_INCREMENT,
+            `create_time` datetime NOT NULL,
+            `create_date` INT NOT NULL,
+            `product_id` VARCHAR(32) NOT NULL,
+            `product_total` INT NOT NULL,
+            PRIMARY KEY (`id`,`create_time`)
+        ) DEFAULT CHARSET=utf8 
+        PARTITION BY HASH(YEAR(create_time)) PARTITIONS 4;
+    创建线性HASH分区：
+        CREATE TABLE `java`.`sale_order` (
+            `id` INT NOT NULL AUTO_INCREMENT,
+            `create_time` datetime NOT NULL,
+            `create_date` INT NOT NULL,
+            `product_id` VARCHAR(32) NOT NULL,
+            `product_total` INT NOT NULL,
+            PRIMARY KEY (`id`,`create_time`)
+        ) DEFAULT CHARSET=utf8 
+        PARTITION BY LINEAR HASH(YEAR(create_time)) PARTITIONS 4;
+    创建KEY分区：
+        CREATE TABLE `java`.`sale_order` (
+            `id` INT NOT NULL AUTO_INCREMENT,
+            `create_time` datetime NOT NULL,
+            `create_date` INT NOT NULL,
+            `product_id` VARCHAR(32) NOT NULL,
+            `product_total` INT NOT NULL,
+            PRIMARY KEY (`id`,`create_date`)
+        ) DEFAULT CHARSET=utf8 
+        PARTITION BY KEY(id) PARTITIONS 3;
+    合并 HASH/KEY 分区：
+        # 删除2个分区，被删除分区的数据会被合并到剩下的分区中，不会丢失数据
+        ALTER TABLE `java`.`sale_order` COALESCE PARTITION 2;
+    增加 HASH/KEY 分区：
+        # 增加3个分区，原分区的数据会有一部分被转移到新增加的分区
+        ALTER TABLE `java`.`sale_order` add PARTITION partitions 3;
+    移除分区：
+        # 把表转为无分区模式，不会删除表中数据
+        ALTER TABLE `java`.`sale_order` REMOVE PARTITIONING;
+    为已有的表新建分区：
+        # 把表转为KEY分区模式，不会删除表中数据
+        ALTER TABLE `java`.`sale_order` PARTITION BY KEY(id) PARTITIONS 3;
+    KEY分区和HASH分区都不能删除分区：
+        # KEY分区和HASH分区会报错
+        ALTER TABLE `java`.`sale_order` DROP PARTITIONING;
+    查询表的分区信息：
+        select partition_name, partition_description as val from information_schema.partitions where table_name='sale_order';
+
+全文索引：
+    在MySQL 5.6版本以前，只有MyISAM存储引擎支持全文引擎。在5.6版本中，InnoDB加入了对全文索引的支持，但是不支持中文全文索引。在5.7.6版本，MySQL
+内置了ngram全文解析器，用来支持亚洲语种的分词。
+    创建表时定义全文索引：
+        create table articles (
+            id int unsigned auto_increment not null primary key,
+            title varchar(32),
+            content text,
+            fulltext (title,content) with parser ngram
+        ) engine=innodb default charset=utf8mb4 comment='文章表';
+    给字段添加全文索引：
+        alter table articles add fulltext index title_content_index (title,content) with parser ngram;
+    准备数据：
+        insert into articles(title,content) values
+        ('Red And Black','There is a rectangular room, covered with square tiles. Each tile is colored either red or black. A man is standing on a black tile. From a tile, he can move to one of four adjacent tiles. But he can’t move on red tiles, he can move only on black tiles.'),
+        ('Mysql 全文索引','全文索引,通过建立倒排索引,可以极大的提升检索效率,解决判断字段是否包含的问题. 例如: 有title字段,需要查询所有包含 "政府"的记录. 需要 like "%政府%"方式查询,查询速度慢,当查询包含"政府" OR "中国"的需要是,sql难以简单满足.全文索引就可以实现这个功能.');
+    使用全文索引查询：
+        select * from articles where match (title,content) against ('room');
+        -- 指明使用自然语言模式，自然语言模式是默认的模式
+        select * from articles where match (title,content) against ('room' in natural language mode);
+        select * from articles where match (title,content) against ('倒排索引');
+    查看支持的组合查询操作符：
+        show variables like '%ft_boolean_syntax%';
+    使用组合查询模式：
+        select * from articles where match (title,content) against ('+倒排索引' in boolean mode);
+        select * from articles where match (title,content) against ('+倒排索引 -mysql' in boolean mode);
+    match 后必须指定完整的全文索引列
+        -- 执行将报错
+        select * from articles where match (content) against ('+倒排索引' in boolean mode);
+
+修改自增主键的初始值
+    直接修改自增主键的初始值：（设置的初始值不能小于表中已有数据主键的最大值，否则将无效）
+        ALTER TABLE 'table_name' AUTO_INCREMENT= 10000;
+    清空表中所有数据后自增主键初始值恢复为0：
+        truncate table 'table_name';
+group by 分组后查询某列值最大行对应的其他列值：
+    drop table if exists table_a;
+    create table table_a(
+        col1 varchar(32) null,
+        col2 int null,
+        col3 int null,
+        col4 varchar(32) null
+    ) engine = InnoDB;
+
+    insert into table_a values
+    ('a',1,10,'j'),
+    ('a',2,9,'k'),
+    ('b',10,100,'m'),
+    ('b',20,90,'n');
+
+    select a.col1,
+        max(a.col2) col2,
+        substring_index(group_concat(a.col4 order by a.col2 desc),',',1) col24,
+        max(a.col3) col3,
+        substring_index(group_concat(a.col4 order by a.col3 desc),',',1) col34
+    from table_a a
+    group by a.col1;
+    注：group_concat 函数用于把分组内指定列的所有行的值连接为一行，默认连接符为逗号(,)
+        用法：group_concat([distinct] 列名 [order by asc/desc 排序列名] [separator '连接符'])
+    注： substring_index 函数用于获取第n个分隔符之前的子串
+        用法：substring_index('目标串','分隔符',n)
+
+查询多行常量：
+    select 1 as id union select 2 union select 3

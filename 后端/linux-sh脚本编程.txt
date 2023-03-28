@@ -129,6 +129,19 @@
             echo ${city[*]}     #没有赋值的单元将被忽略
         返回数组元素数量：
             echo ${#city[*]}    #不计算没有赋值的单元
+        判断数组是否包含某个元素：
+            arr=("hello" "world" "helloworld")
+            echo ${arr[@]} | grep -wq "hello" && echo "YES" || echo "NO"
+            # YES
+            arr=("hello1" "world" "helloworld")
+            echo ${arr[@]} | grep -wq "hello" && echo "YES" || echo "NO"
+            # NO
+        数组添加新元素：
+            arr=(1 2 3)
+            # 添加到结尾
+            arr=(${arr[@]} 4)
+            # 添加到开头
+            arr=(0 ${arr[@]})
 
     字符串：
         sh的字符串可以使用单引号和双引号。
@@ -151,6 +164,14 @@
             echo `expr index "$str1" s`
             idx_s=`expr index "$str1" s`
             echo $idx_s
+        字符串 split
+            spNo="11,22 , 33"
+            arr=(${spNo//,/ })
+            #echo ${arr[@]}
+            for it in ${arr[@]}
+            do
+                echo '"'$it'"'
+            done
 
     条件判断语句：
         只有if有执行内容，else没有执行内容时不能写else：
@@ -184,14 +205,14 @@
         可用参数：
             -z string 测试指定字符是否为空，空着真，非空为假
             -n string 测试指定字符串是否为不空，空为假 非空为真
+            string 测试变量是否存在，存在为真
             -e FILE 测试文件是否存在
             -f file 测试文件是否为普通文件
             -d file 测试指定路径是否为目录
             -r file 测试文件对当前用户是否可读
             -w file 测试文件对当前用户是否可写
             -x file 测试文件对当前用户是都可执行
-            -z  是否为空  为空则为真
-            -a  是否不空
+
     #eleventh.sh
         #!/bin/sh
         i=10

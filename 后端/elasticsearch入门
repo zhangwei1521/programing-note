@@ -107,7 +107,7 @@ PUT /schools/_doc/1
    "rating":"4.5"
 }
 
-#如果不指定文档id，则索引时生成随机id
+#如果不指定文档id，则索引时生成随机id(需要使用POST方法)
 POST /schools/_doc
 {
    "name":"City School", "description":"ICSE", "street":"West End", "city":"Meerut", 
@@ -218,11 +218,11 @@ POST /_mget
 #使用搜索DSL
 POST /schools/_search
 {
-   "query":{
-      "query_string":{
-         "query":"up"
-      }
-   }
+  "query":{
+    "query_string":{
+        "query":"up"
+    }
+  }
 }
 
 #指定匹配的field
@@ -300,39 +300,39 @@ POST /schools/_search
 #这里需要注意，should和must并列时，不会作为过滤条件，只会影响评分
 POST /schools/_search
 {
-    "query":{
-        "bool":{
-            "must":[
+  "query":{
+    "bool":{
+      "must":[
+          {
+            "terms":{
+              "type":["search","cat"],
+              "boost":1
+            }
+          },
+          {
+            "bool":{
+              "should":[
                 {
-                  "terms":{
-                    "type":["search","cat"],
-                    "boost":1
+                  "bool":{
+                    "must_not":{
+                      "exists":{
+                        "field":"baiduIdxId",
+                        "boost":1
+                      }
+                    }
                   }
                 },
                 {
-                  "bool":{
-                    "should":[
-                      {
-                        "bool":{
-                          "must_not":{
-                            "exists":{
-                              "field":"baiduIdxId",
-                              "boost":1
-                            }
-                          }
-                        }
-                      },
-                      {
-                        "term":{
-                          "baiduIdxId":-1
-                        }    
-                      }
-                    ]
-                  }
+                  "term":{
+                    "baiduIdxId":-1
+                  }    
                 }
-            ]
-        }
+              ]
+            }
+          }
+      ]
     }
+  }
 }
 
 #对查询结果进行聚合计算
@@ -343,12 +343,12 @@ POST /schools/_search
       "query_string":{
          "query":"Delhi OR HP"
       }
-    },
+  },
 	"aggs":{
 		"avg_fees":{
 			"avg":{
 				"field":"fees",
-				 "missing":0	//设置缺少默认值为0(默认缺少不参加计算)
+				"missing":0	//设置缺少默认值为0(默认缺少不参加计算)
 			}
 		}
 	}

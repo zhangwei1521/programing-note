@@ -30,7 +30,7 @@ https请求不检查证书：
 https请求时不要检查证书是否吊销（windows默认会通过网络请求根证书的已吊销证书列表，如果是自签证书，通常会失败，所以会导致curl异常）：
 	curl https://zhangwei.org/hello --ssl-no-revoke
 https请求时添加信任的根证书：
-	curl -cacert /d/tmp/ssl-demo/caroot.crt https://zhangwei.org/hello --ssl-no-revoke
+	curl https://zhangwei.org/hello --cacert /d/tmp/ssl-demo/caroot.crt --ssl-no-revoke
 输出响应的head:
 	# -D - 后面的 - 是必需的，表示输出http响应head到标准输出，如果需要输出到文件，就替换为文件名(-D 等同于  --dump-header)
 	curl -k -D - https://zhangwei.org/hello 
@@ -44,6 +44,16 @@ curl关闭显示统计信息：
 	curl -L https://gitee.com/isevenluo/github-hosts/raw/master/hosts
 
 注： curl 使用POST方法提交数据时，不能正确处理中文！！！
+
+解压缩返回的数据：
+	curl --compressed -X POST "http://localhost:8080/servlet-action/test?name=john&age=23" 
+
+使用jq解析curl请求返回的json数据：
+	apt install jq
+	curl -X POST "http://localhost:8080/servlet-action/test?name=john&age=23" | jq '.data[0].name'
+使用python解析curl返回的json数据：
+	curl -X POST "http://localhost:8080/servlet-action/test?name=john&age=23" -s | python2.7 -c "import sys, json; print json.load(sys.stdin)['data'][0].get('name'))"
+
 
 SSL数字证书
 证书类型：
@@ -100,13 +110,22 @@ PKCS#8 是一个通用型的秘钥格式方案
 	openssl x509 -in client.crt -noout -text
 移除p12（pkcs12标准）文件的密码：
 	openssl pkcs12 -in myca.p12 -out myca_raw.p12
+注：不能给内网ip签发证书
+从p12证书库导出私钥：
+	openssl pkcs12 -in ca.p12 -nodes -nocerts -out ca.key
+	openssl pkcs12 -in ca.p12 -nodes -nokeys -cacerts -out ca.crt
+	openssl pkcs12 -in ca.p12 -nodes -nokeys -clcerts -out ca.crt
 
 加密：
 openssl enc -e -des3 -a -salt -in D:\document\personal\zhangwei.txt -out D:\document\personal\zhangwei100.txt
-openssl enc -d -des3 -a -salt -in D:\document\personal\zhangwei100.txt 
 解密：
+openssl enc -d -des3 -a -salt -in D:\document\personal\zhangwei100.txt 
+计算文件的hash值：
 openssl dgst -md5 D:\document\personal\zhangwei.txt
 openssl dgst -sha256 D:\downloads\devtools\microsoft-jdk-11.0.11.9.1-windows-x64.zip
+计算字符串hash:
+# echo默认会在字符串后面添加一个换行符，所以要使用 -n选项
+echo -n '202206271503005671000-access-keycommandProxy' | openssl dgst -sha256 -hex
 
 非对称加密
 使用公玥加密(pkcs8):
@@ -129,16 +148,20 @@ openssl dgst -sha256 D:\downloads\devtools\microsoft-jdk-11.0.11.9.1-windows-x64
 使用证书加密:
 	openssl smime -encrypt -in plain.txt -out enc1.txt key2.crt
 使用私钥解密：
-	openssl smime -decrypt -in enc2.txt -out denc2.txt -inkey key21.pem
+	openssl smime -decrypt -in enc2.txt -out denc2.txt -inkey key2.pem
 	
 
 keytool使用
-生成keystore:
-	keytool -genkey -alias mykeystore -keyalg RSA -keysize 2048 -keypass mykeystore -storepass mykeystore -keystore mykeystore.p12 -storetype pkcs12
+生成keystore和密钥:(-ext SAN=dns:zhangwei.org 设置签发证书的域名，这里域名可以是公网ip，不能是内网ip)
+	keytool -genkey -keyalg RSA -keysize 2048 -alias mykey -keypass mykey -keystore mykeystore.p12 -storepass mykeystore -storetype pkcs12 -ext SAN=dns:zhangwei.org
 查看keystore中的证书和密钥：
-	keytool -list -v -keystore mykeystore.jks -storepass mykeystore 
+	keytool -list -v -keystore mykeystore.p12 -storepass mykeystore 
 导入信任的根证书到keystore:
 	keytool -import -trustcacerts -keystore cacerts -storepass changeit -noprompt -alias yourAliasName -file path\to\certificate
+导出证书：(-rfc表示使用base64编码证书(pem格式)，配置postman和curl使用本地信任根证书都只能使用pem格式的证书)
+	keytool -exportcert -keystore mykeystore.p12 -storepass mykeystore -alias mykey -file trustca.cer -rfc
+curl 使用导出的证书作为信任的根证书：(这里的域名需要和 -ext SAN=dns:zhangwei.org 配置的相同)
+	curl 'https://zhangwei.org:11433/portal/testCert' --cacert /d/tmp/ssl-demo/trustca.cer --ssl-no-revoke
 
 
 
