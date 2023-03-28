@@ -289,3 +289,5 @@ git status 查看冲突文件，冲突文件看起来像是这样：
 	
 	Git更新远程分支列表:
 		git remote update origin --prune
+	clone时只拉取最近一次提交历史
+		git clone xxx.git --depth 1
